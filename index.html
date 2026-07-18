@@ -135,6 +135,22 @@ padding:4px 8px;color:#fff;font-size:11px;line-height:1.2;white-space:nowrap;ove
 .lz small{font-family:Consolas,"SF Mono",monospace;font-size:8.5px;opacity:.8}
 .lz1{background:var(--ocre)}.lz2{background:var(--ard)}.lz3{background:var(--vert)}
 .fleche{align-self:center;color:var(--mut);font-size:15px;line-height:1}
+.fiche-agent{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:12px 14px;margin:0 0 10px}
+.fiche-agent header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px}
+.fiche-agent h3{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:17px;margin:0;border:0;padding:0}
+.fiche-agent .eq{font-family:Consolas,"SF Mono",monospace;font-size:10px;color:var(--mut);
+background:#eef2f8;border-radius:4px;padding:2px 6px;margin-right:auto}
+.evo{font-size:12.5px;color:#3d4a5e;margin:0 0 10px;line-height:1.4}
+.mesures{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 9px}
+.mesure{flex:1 1 auto;min-width:76px;background:#f2f5fa;border-radius:6px;padding:6px 8px;text-align:center}
+.mesure.alerte{background:var(--sceau2)}
+.mesure b{display:block;font-size:16px;line-height:1.1;color:var(--enc)}
+.mesure small{font-size:9.5px;color:#5d6a7d;text-transform:uppercase;letter-spacing:.3px}
+.jauge{display:flex;height:7px;border-radius:4px;overflow:hidden;background:var(--fil);margin:0 0 8px}
+.jauge i{display:block}.jauge .j1{background:var(--ocre)}.jauge .j2{background:var(--ard)}.jauge .j3{background:var(--vert)}
+.pieds{font-size:11.5px;color:var(--mut);margin:0}
+.alertes{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}
+.al{background:var(--ocre2);color:#7a5314;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600}
 .voile-carte{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:26px 20px;text-align:center;margin:10px 0}
 .voile-barre{height:4px;background:var(--fil);border-radius:3px;overflow:hidden;max-width:280px;margin:0 auto 14px}
 .voile-barre i{display:block;height:100%;width:40%;background:var(--enc);border-radius:3px;animation:glisse 1.1s ease-in-out infinite}
@@ -260,6 +276,14 @@ async function texteOuNull(depot, chemin){
 }
 
 /* ---------- lecture des depots ---------- */
+async function dernierCommit(depot, chemin){
+  try {
+    const d = await api("/repos/" + depot + "/commits?path=" + encodeURIComponent(chemin) + "&per_page=1");
+    if (!d.length) return null;
+    return {date: new Date(d[0].commit.committer.date), qui: d[0].commit.author.name,
+            titre: d[0].commit.message.split("\n")[0]};
+  } catch(e){ return null; }
+}
 async function arbre(depot){
   const d = await api("/repos/" + depot + "/git/trees/main?recursive=1");
   return d.tree || [];
@@ -342,12 +366,21 @@ async function collecte(){
         date: dateDe(Object.values(d.z)[0][0]) || ""
       });
     }
+    const vol = {};
+    for (const z of ZONES) vol[z] = {n: 0, o: 0};
+    for (const n of arbres[depot]){
+      const q = n.path.split("/");
+      if (n.type === "blob" && q.length === 3 && q[0] === agent && ZONES.includes(q[1]) && q[2] !== ".gitkeep"){
+        vol[q[1]].n++; vol[q[1]].o += n.size || 0;
+      }
+    }
+    const act = await dernierCommit(depot, agent + "/");
     const v = await texteOuNull(depot, agent + "/savoir/VERSION.md");
     const num = v && v.match(/VERSION\s*:\s*(\d+)/);
     const quoi = v && v.match(/^- v\d+.*$/m);
     AGENTS.push({agent, depot, version: num ? num[1] : null,
                  evolution: quoi ? quoi[0].replace(/^- /, "") : "",
-                 maj: v ? derniereDate(v) : null});
+                 maj: v ? derniereDate(v) : null, vol, activite: act});
   }
 
   /* veilles actives */
@@ -364,9 +397,17 @@ async function collecte(){
     }
     for (const v of VEILLES){
       if (!v.depot || !v.index) continue;
-      v.derniere = derniereDate(await texteOuNull(v.depot, v.index));
+      progres("Veille de " + v.nom + "...");
+      const c = await dernierCommit(v.depot, v.index);
+      v.derniere = c ? c.date : null;
+      v.qui = c ? c.qui : "";
       const ag = v.index.split("/")[0];
-      v.enAttente = LIGNES.filter(r => r.agent === ag && r.z["informations-publiques"]).length;
+      const siens = LIGNES.filter(r => r.agent === ag);
+      v.enAttente = siens.filter(r => r.z["informations-publiques"]).length;
+      v.captes = siens.filter(r => /veille/i.test(r.origine)).length;
+      const limite = new Date(Date.now() - 30 * 86400000);
+      v.recents = siens.filter(r => /veille/i.test(r.origine) && r.date && new Date(r.date) > limite).length;
+      v.dette = siens.filter(r => r.resume === "non lu").length;
     }
   }
 }
@@ -485,39 +526,69 @@ function filtrer(){
 }
 
 /* ---------- rendu des deux autres ecrans ---------- */
+function jauge(vol){
+  const tot = ZONES.reduce((a, z) => a + vol[z].n, 0) || 1;
+  return '<span class="jauge">' + ZONES.map((z, i) =>
+    '<i class="j' + (i + 1) + '" style="flex:' + vol[z].n + '" title="' + ZLBL[z] + " : " + vol[z].n + ' fichiers"></i>').join("")
+    + "</span>";
+}
+function pastille(txt, cl){ return '<span class="chip ' + cl + '">' + esc(txt) + "</span>"; }
+function bloc(n, lib, alerte){
+  return '<span class="mesure' + (alerte ? " alerte" : "") + '"><b>' + n + "</b><small>" + esc(lib) + "</small></span>";
+}
 function rendreAgents(){
-  const l = AGENTS.map(a => {
-    const age = a.maj ? jours(a.maj) : null;
-    const et = a.version == null ? '<span class="chip st-al">sans protocole memoire</span>'
-      : (age != null && age > 14 ? '<span class="chip st-a">' + age + " j sans evolution</span>"
-      : '<span class="chip st-ok">a jour</span>');
-    return "<tr><td class='c-nom'><span class='titre'>" + esc(a.agent) + "</span><span class='ssligne'>"
-      + esc(a.depot.split("/")[1]) + " &middot; " + (a.maj ? a.maj.toLocaleDateString("fr-FR") : "-") + "</span></td>"
-      + "<td class='col-min'>" + esc(a.depot.split("/")[1]) + "</td>"
-      + "<td><b>" + (a.version == null ? "-" : "v" + a.version) + "</b></td>"
-      + "<td class='col-min'>" + (a.maj ? a.maj.toLocaleDateString("fr-FR") : "-") + "</td>"
-      + "<td class='c-res'>" + esc(a.evolution || "-") + "</td><td>" + et + "</td></tr>";
+  if (!AGENTS.length){ $("agents").innerHTML = '<div class="cadre"><p class="vide">Aucun agent trouve.</p></div>'; return; }
+  $("agents").innerHTML = AGENTS.map(a => {
+    const eq = a.depot.split("/")[1];
+    const age = a.activite ? jours(a.activite.date) : null;
+    const vive = a.vol["savoir"], stock = a.vol["connaissances-stockees"], tri = a.vol["informations-publiques"];
+    const siens = LIGNES.filter(r => r.agent === a.agent);
+    const dette = siens.filter(r => r.resume === "non lu").length;
+    const veille = VEILLES.find(v => v.index.split("/")[0] === a.agent);
+    const alertes = [];
+    if (a.version == null) alertes.push("sans protocole memoire");
+    if (!veille) alertes.push("aucune veille active");
+    if (vive.o > 600000) alertes.push("memoire vive lourde (" + poids(vive.o) + ")");
+    if (dette) alertes.push(dette + " resume" + (dette > 1 ? "s" : "") + " a produire");
+    if (tri.n) alertes.push(tri.n + " document" + (tri.n > 1 ? "s" : "") + " en attente de decision");
+    return '<article class="fiche-agent">'
+      + '<header><h3>' + esc(a.agent) + '</h3><span class="eq">' + esc(eq) + "</span>"
+      + (a.version != null ? pastille("v" + a.version, "st-e") : pastille("sans version", "st-al")) + "</header>"
+      + '<p class="evo">' + esc(a.evolution || "Pas d evolution enregistree.") + "</p>"
+      + '<div class="mesures">'
+      + bloc(vive.n, "en memoire vive") + bloc(stock.n, "accessibles") + bloc(tri.n, "en triage", tri.n > 0)
+      + bloc(poids(vive.o), "poids vive", vive.o > 600000) + bloc(dette, "resumes dus", dette > 0) + "</div>"
+      + jauge(a.vol)
+      + '<p class="pieds">'
+      + (a.activite ? "Derniere activite au depot : " + a.activite.date.toLocaleDateString("fr-FR")
+          + " (" + age + " j) par " + esc(a.activite.qui) : "Aucune activite datee")
+      + (veille ? " &middot; veille active" : " &middot; <b>aucune veille</b>") + "</p>"
+      + (alertes.length ? '<p class="alertes">' + alertes.map(x => '<span class="al">' + esc(x) + "</span>").join("") + "</p>" : "")
+      + "</article>";
   }).join("");
-  $("agents").innerHTML = '<div class="cadre"><table><thead><tr><th>Agent</th><th class="col-min">Equipe</th><th>Version</th>'
-    + '<th class="col-min">Derniere gravure</th><th class="c-res">Derniere evolution</th><th>Etat</th></tr></thead><tbody>'
-    + (l || "<tr><td colspan='6' class='vide'>Aucun agent trouve.</td></tr>") + "</tbody></table></div>";
 }
 function rendreVeille(){
-  const l = VEILLES.map(v => {
+  if (!VEILLES.length){ $("veille").innerHTML = '<div class="cadre"><p class="vide">Aucune veille declaree active.</p></div>'; return; }
+  $("veille").innerHTML = VEILLES.map(v => {
     const age = v.derniere ? jours(v.derniere) : null;
-    const et = age == null ? '<span class="chip st-al">index illisible</span>'
-      : (age > 8 ? '<span class="chip st-al">en retard</span>' : '<span class="chip st-ok">OK</span>');
-    return "<tr><td class='c-nom'><span class='titre'>" + esc(v.nom) + "</span><span class='ssligne'>"
-      + esc(v.depot.split("/")[1] || "-") + " &middot; derniere entree "
-      + (v.derniere ? v.derniere.toLocaleDateString("fr-FR") : "-") + "</span></td>"
-      + "<td class='col-min'>" + esc(v.depot.split("/")[1] || "-") + "</td>"
-      + "<td class='col-min'>" + (v.derniere ? v.derniere.toLocaleDateString("fr-FR") : "-") + "</td>"
-      + "<td>" + (age == null ? "-" : age + " j") + "</td>"
-      + "<td>" + (v.enAttente == null ? "-" : v.enAttente) + "</td><td>" + et + "</td></tr>";
+    const etat = age == null ? ["index illisible", "st-al"]
+      : age > 8 ? ["en retard de " + (age - 7) + " j", "st-al"]
+      : ["a jour", "st-ok"];
+    const muette = v.recents === 0 && age != null && age <= 8;
+    const proch = v.derniere ? new Date(v.derniere.getTime() + 7 * 86400000) : null;
+    return '<article class="fiche-agent">'
+      + '<header><h3>' + esc(v.nom) + '</h3><span class="eq">' + esc(v.depot.split("/")[1] || "-") + "</span>"
+      + pastille(etat[0], etat[1]) + "</header>"
+      + '<p class="evo">Derniere ecriture de la veille : '
+      + (v.derniere ? "<b>" + v.derniere.toLocaleDateString("fr-FR") + "</b> par " + esc(v.qui) : "<b>jamais</b>")
+      + (proch ? " &middot; prochain passage attendu le " + proch.toLocaleDateString("fr-FR") : "") + "</p>"
+      + '<div class="mesures">'
+      + bloc(v.captes, "documents captes") + bloc(v.recents, "sur 30 jours", muette)
+      + bloc(v.enAttente, "en attente de toi", v.enAttente > 0) + bloc(v.dette, "resumes dus", v.dette > 0) + "</div>"
+      + '<p class="pieds">Cadence : ' + esc(v.cadence) + "</p>"
+      + (muette ? '<p class="alertes"><span class="al">la veille ecrit mais n a rien capte depuis 30 jours</span></p>' : "")
+      + "</article>";
   }).join("");
-  $("veille").innerHTML = '<div class="cadre"><table><thead><tr><th>Veille</th><th class="col-min">Equipe</th>'
-    + '<th class="col-min">Derniere entree</th><th>Age</th><th>En attente</th><th>Etat</th></tr></thead><tbody>'
-    + (l || "<tr><td colspan='6' class='vide'>Aucune veille declaree active.</td></tr>") + "</tbody></table></div>";
 }
 function rendreCompteurs(){
   const z1 = LIGNES.filter(r => r.z["informations-publiques"]).length;
