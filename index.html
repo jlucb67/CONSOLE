@@ -110,7 +110,9 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
   .compteurs{flex-wrap:nowrap;overflow-x:auto;gap:7px;padding-bottom:3px}
   .cpt{flex:0 0 auto;padding:6px 11px}
   .cpt b{font-size:16px}.cpt span{font-size:9.5px;letter-spacing:.3px}
-  .outils{padding:8px}.outils select{flex:1;min-width:132px}
+  .outils{padding:8px;flex-wrap:nowrap;overflow-x:auto}
+  .outils select{flex:0 0 auto;min-width:0;width:auto}
+  .outils input{flex:0 0 62%}
   h1{font-size:22px}
 }
 /* --- bandeau d'acces replie une fois la console ouverte --- */
@@ -118,6 +120,14 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
 .acces.replie #cle,.acces.replie #ouvrir,.acces.replie #oublier,.acces.replie label{display:none}
 .acces:not(.replie) #gerer{display:none}
 #gerer{font:inherit;font-size:12.5px;font-weight:600;background:none;border:0;color:var(--ard);cursor:pointer;text-decoration:underline;padding:0}
+.tunnel-legende{display:flex;align-items:stretch;gap:6px;background:var(--carte);border:1px solid var(--fil);
+border-radius:10px;padding:9px 10px;margin:0 0 14px;overflow-x:auto}
+.lz{flex:1 1 0;min-width:96px;display:flex;flex-direction:column;justify-content:center;border-radius:7px;
+padding:6px 8px;color:#fff;font-size:11.5px;line-height:1.25}
+.lz b{font-family:Consolas,"SF Mono",monospace;font-size:12px;letter-spacing:.5px}
+.lz small{font-family:Consolas,"SF Mono",monospace;font-size:8.5px;opacity:.85;margin-top:2px;overflow-wrap:anywhere}
+.lz1{background:var(--ocre)}.lz2{background:var(--ard)}.lz3{background:var(--vert)}
+.fleche{align-self:center;color:var(--mut);font-size:20px;line-height:1}
 .voile-carte{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:26px 20px;text-align:center;margin:10px 0}
 .voile-barre{height:4px;background:var(--fil);border-radius:3px;overflow:hidden;max-width:280px;margin:0 auto 14px}
 .voile-barre i{display:block;height:100%;width:40%;background:var(--enc);border-radius:3px;animation:glisse 1.1s ease-in-out infinite}
@@ -163,11 +173,19 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
 <section id="vue-tunnel" hidden>
   <div class="outils">
     <input id="q" placeholder="Rechercher un document, un resume, une origine">
+    <select id="fc"><option value="">Actualites et fonds</option><option value="actu">Actualites</option><option value="fond">Documents de fond</option></select>
+    <select id="fe"><option value="">Tous les formats</option></select>
     <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (memoire vive)</option></select>
     <select id="ft"><option value="">Tous les tags</option></select>
     <select id="fa"><option value="">Tous les agents</option></select>
   </div>
-  <p class="legende">Parcours : <b>Zone 1</b> (triage, <code>informations-publiques/</code>) - <b>Zone 2</b> (docs accessibles, <code>connaissances-stockees/</code>) - <b>Zone 3</b> (memoire vive, <code>savoir/</code>). La pastille pleine est la zone ou vit le document. Statut de l'info : Etabli / Annonce / Non verifie.</p>
+  <div class="tunnel-legende">
+    <span class="lz lz1"><b>Z1</b> triage<small>informations-publiques/</small></span>
+    <span class="fleche">&rsaquo;</span>
+    <span class="lz lz2"><b>Z2</b> accessible<small>connaissances-stockees/</small></span>
+    <span class="fleche">&rsaquo;</span>
+    <span class="lz lz3"><b>Z3</b> memoire vive<small>savoir/</small></span>
+  </div>
   <div id="tunnel"></div>
   <div class="barre" id="barre" hidden>
     <b id="cpt">0 document selectionne</b>
@@ -391,13 +409,16 @@ function tr(r, id){
   const zv = zoneVive(r);
   const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
   const fz = r.z[ZDOS[zv]] || ["", "", 0];
+  const autres = ZONES.filter(z => z !== ZDOS[zv] && r.z[z]).map(z => r.z[z][1]).filter(e => e && e !== fz[1]);
+  const fmt = fz[1] + (autres.length ? " (" + [...new Set(autres)].join(", ") + ")" : "");
   const past = '<span class="lag">' + esc(r.agent) + "</span>"
     + '<span class="zpast z-' + zv[1] + '">' + zv + '</span><span class="zmot">' + ZMOT[zv] + "</span>"
-    + '<span class="lfmt">' + esc(fz[1]) + '</span><span class="lpds">' + poids(fz[2]) + "</span>";
+    + '<span class="lfmt">' + esc(fmt) + '</span><span class="lpds">' + poids(fz[2]) + "</span>";
   const res = (r.resume && r.resume !== "non lu")
     ? esc(r.resume)
     : '<span class="mut">Pas encore lu - resume a produire.</span>';
-  return '<tr class="doc" data-id="' + id + '" data-zone="' + zv + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
+  const exts = [...new Set(ZONES.filter(z => r.z[z]).map(z => r.z[z][1]))].join(" ");
+  return '<tr class="doc" data-id="' + id + '" data-zone="' + zv + '" data-cat="' + r.cat + '" data-ext="' + esc(exts) + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
     + ' data-txt="' + esc((r.doc + " " + r.resume + " " + r.origine).toLowerCase()) + '">'
     + '<td class="c-zone">' + past + "</td>"
     + '<td class="c-doc">' + lesTags(r)
@@ -429,16 +450,21 @@ function rendreTunnel(){
   $("tunnel").innerHTML = h;
   const tags = [...new Set(LIGNES.flatMap(r => r.tags))].sort();
   $("ft").innerHTML = '<option value="">Tous les tags</option>' + tags.map(t => "<option>" + esc(t) + "</option>").join("");
+  const exts = [...new Set(LIGNES.flatMap(r => ZONES.filter(z => r.z[z]).map(z => r.z[z][1])))].sort();
+  $("fe").innerHTML = '<option value="">Tous les formats</option>'
+    + exts.map(e => '<option value="' + esc(e) + '">' + esc(e.toUpperCase()) + "</option>").join("");
   const ags = [...new Set(LIGNES.map(r => r.agent))].sort();
   $("fa").innerHTML = '<option value="">Tous les agents</option>' + ags.map(a => "<option>" + esc(a) + "</option>").join("");
   brancherActions();
   filtrer();
 }
 function filtrer(){
-  const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, ag = $("fa").value, zo = $("fz").value;
+  const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, ag = $("fa").value,
+        zo = $("fz").value, ca = $("fc").value, ex = $("fe").value;
   $$("#tunnel tr.doc").forEach(r => {
     const ok = (!t || r.dataset.txt.includes(t)) && (!tg || r.dataset.tags.split(" ").includes(tg))
-      && (!ag || r.dataset.agent === ag) && (!zo || r.dataset.zone === zo);
+      && (!ag || r.dataset.agent === ag) && (!zo || r.dataset.zone === zo)
+      && (!ca || r.dataset.cat === ca) && (!ex || r.dataset.ext.split(" ").includes(ex));
     r.style.display = ok ? "" : "none";
   });
   $$("#tunnel h2, #tunnel h3.grp").forEach(h => {
@@ -615,7 +641,7 @@ $("oublier").addEventListener("click", () => {
   $("cle").value = ""; CLE = ""; $("etatcle").textContent = "cle oubliee";
 });
 $$("#onglets .onglet").forEach(b => b.addEventListener("click", () => vue(b.dataset.vue)));
-["q", "ft", "fa", "fz"].forEach(i => $(i).addEventListener("input", filtrer));
+["q", "ft", "fa", "fz", "fc", "fe"].forEach(i => $(i).addEventListener("input", filtrer));
 $("vider").addEventListener("click", () => { $$(".sel").forEach(c => c.checked = false); majsel(); });
 $$(".barre [data-act]").forEach(b => b.addEventListener("click", () => envoyer(b.dataset.act, eligibles(choisis(), b.dataset.act))));
 try {
