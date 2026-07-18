@@ -32,7 +32,8 @@ td{padding:8px;border-bottom:1px solid #e8ecf1;vertical-align:top}
 tbody tr:nth-child(even){background:#f8fafc}tbody tr:hover{background:#f1f5fa}
 .c-ag{font-family:Consolas,"SF Mono",monospace;font-size:10.5px;color:var(--mut);max-width:76px;overflow-wrap:anywhere}
 .c-doc{max-width:190px}.nom{font-weight:600;font-size:12.5px;overflow-wrap:anywhere;display:block}.ssdate{font-size:11px;color:var(--mut)}
-.c-tg{max-width:105px}.tag{display:inline-block;background:#eef2f8;border:1px solid var(--fil);border-radius:20px;padding:1px 7px;font-size:10.5px;margin:1px 2px 1px 0}
+.c-tg{max-width:105px}.tag{display:inline-block;background:#e6ecf7;border:1px solid #c3d0e6;color:var(--ard);font-weight:600;border-radius:20px;padding:2px 9px;font-size:11.5px;margin:3px 4px 0 0}
+.lestags{display:block;margin-top:3px}
 .chip{display:inline-block;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;white-space:nowrap}
 .st-e{background:#e6ebf3;color:var(--enc)}.st-a{background:var(--ocre2);color:#7a5314}.st-n{background:#eceff3;color:var(--mut)}.st-x{color:var(--mut)}
 .st-ok{background:var(--vert2);color:var(--vert)}.st-al{background:var(--sceau2);color:var(--sceau)}
@@ -68,8 +69,14 @@ tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoye";font-size:11px;co
 .pied{margin-top:22px;font-size:12.5px;color:var(--mut)}
 .chargement{padding:26px;text-align:center;color:var(--mut);font-size:14px}
 /* --- pastille de zone, sous la case a cocher --- */
-.zpast{display:block;margin-top:5px;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;font-weight:700;
-letter-spacing:.5px;text-align:center;border-radius:4px;padding:2px 0;color:#fff}
+.c-zone{width:52px;padding-left:10px}
+.zpast{display:block;font-family:Consolas,"SF Mono",monospace;font-size:10.5px;font-weight:700;
+letter-spacing:.5px;text-align:center;border-radius:5px;padding:4px 0;color:#fff}
+.zmot{display:block;font-size:8.5px;color:var(--mut);text-align:center;margin-top:2px;line-height:1.1}
+.c-sel{width:40px;text-align:center}
+.titre{font-weight:600;font-size:13.5px;line-height:1.35;display:block;overflow-wrap:anywhere}
+.c-nom{min-width:120px}
+.c-fic{font-family:Consolas,"SF Mono",monospace;font-size:10px;color:var(--mut);max-width:150px;overflow-wrap:anywhere}
 .z-1{background:var(--ocre)}.z-2{background:var(--ard)}.z-3{background:var(--vert)}
 tr.doc[data-zone="Z1"] td:first-child{box-shadow:inset 4px 0 0 var(--ocre)}
 tr.doc[data-zone="Z2"] td:first-child{box-shadow:inset 4px 0 0 var(--ard)}
@@ -89,10 +96,10 @@ tr.fiche>td{background:#f6f9fc;border-bottom:2px solid var(--fil);padding:12px 1
 @media (max-width:900px){
   table{min-width:0}
   thead{display:none}
-  .c-tg,.c-or,.c-res,.c-pa,.c-ac,.c-ag{display:none}
-  .c-sel{width:42px;padding-left:10px}
+  .c-or,.c-res,.c-pa,.c-ac,.c-ag,.c-fic,.col-min{display:none}
   .c-doc{max-width:none;width:100%;cursor:pointer}
-  .nom{font-size:14px}
+  .c-tg{display:none}
+  .titre{font-size:14px}
   .ssdate{display:none}
   .ssligne{display:block}
   .chevron{display:inline}
@@ -139,7 +146,6 @@ tr.fiche>td{background:#f6f9fc;border-bottom:2px solid var(--fil);padding:12px 1
     <input id="q" placeholder="Rechercher un document, un resume, une origine">
     <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (memoire vive)</option></select>
     <select id="ft"><option value="">Tous les tags</option></select>
-    <select id="fs"><option value="">Tous les statuts</option></select>
     <select id="fa"><option value="">Tous les agents</option></select>
   </div>
   <p class="legende">Parcours : <b>Zone 1</b> (triage, <code>informations-publiques/</code>) - <b>Zone 2</b> (docs accessibles, <code>connaissances-stockees/</code>) - <b>Zone 3</b> (memoire vive, <code>savoir/</code>). La pastille pleine est la zone ou vit le document. Statut de l'info : Etabli / Annonce / Non verifie.</p>
@@ -316,68 +322,91 @@ async function collecte(){
 }
 
 /* ---------- rendu du tunnel ---------- */
+const ZMOT = {Z1: "triage", Z2: "accessible", Z3: "vive"};
+const ZDOS = {Z1: "informations-publiques", Z2: "connaissances-stockees", Z3: "savoir"};
 function chip(s){
   const cl = {"Etabli":"st-e","Établi":"st-e","Annonce":"st-a","Annoncé":"st-a","Non verifie":"st-n","Non vérifié":"st-n"}[s] || "st-x";
-  return '<span class="chip ' + cl + '">' + esc(s) + '</span>';
+  return '<span class="chip ' + cl + '">' + esc(s) + "</span>";
 }
 function parcours(r){
   let s = "";
   for (const z of ZONES){
     if (r.z[z]){
       const [, ext, n] = r.z[z];
-      s += '<span class="et plein" title="' + ZLBL[z] + ' - ' + ext + " " + poids(n) + '"><i></i><b>' + esc(ext) + '</b><small>' + poids(n) + '</small></span>';
+      s += '<span class="et plein" title="' + ZLBL[z] + " - " + ext + " " + poids(n) + '"><i></i><b>' + esc(ext) + '</b><small>' + poids(n) + "</small></span>";
     } else s += '<span class="et" title="' + ZLBL[z] + ' - absent"><i></i></span>';
   }
   return '<span class="parcours">' + s + "</span>";
 }
+function zoneVive(r){ return r.z["savoir"] ? "Z3" : r.z["connaissances-stockees"] ? "Z2" : "Z1"; }
 function zonecode(r){
   if (r.z["informations-publiques"]) return ["Z1", r.z["informations-publiques"][0]];
   if (r.z["connaissances-stockees"] && !r.z["savoir"]) return ["Z2", r.z["connaissances-stockees"][0]];
   return ["", ""];
 }
+/* Le titre affiche est editorial : ce que dit le document, pas le nom technique du fichier. */
+function titre(r){
+  if (r.resume && r.resume !== "non lu"){
+    let t = r.resume.trim();
+    const pt = t.search(/[.;]\s/);
+    if (pt > 40) t = t.slice(0, pt + 1);
+    return t.length > 150 ? t.slice(0, 148) + "..." : t;
+  }
+  return r.doc.replace(DATED, "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+}
+function nomFichier(r){
+  const z = zoneVive(r);
+  return (r.z[ZDOS[z]] || [r.doc])[0];
+}
 function actions(r){
   const [zc, fic] = zonecode(r);
-  if (zc === "Z1") return '<button class="btn plein" data-act="bibliotheque" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="Z1">Vers Zone 2</button>'
-    + '<button class="btn creux" data-act="supprimer" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="Z1">Supprimer</button>';
-  if (zc === "Z2") return '<button class="btn vert" data-act="vivant" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="Z2">Vers Zone 3</button>';
+  const d = ' data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + zc + '"';
+  if (zc === "Z1") return '<button class="btn plein" data-act="bibliotheque"' + d + ">Vers Zone 2</button>"
+    + '<button class="btn creux" data-act="supprimer"' + d + ">Supprimer</button>";
+  if (zc === "Z2") return '<button class="btn vert" data-act="vivant"' + d + ">Vers Zone 3</button>";
   return '<span class="mut">-</span>';
 }
-function zoneVive(r){
-  return r.z["savoir"] ? "Z3" : r.z["connaissances-stockees"] ? "Z2" : "Z1";
+function lesTags(r){
+  return r.tags.length ? '<span class="lestags">' + r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") + "</span>"
+                       : '<span class="lestags"><span class="mut">a taguer</span></span>';
 }
-const ZDOS = {Z1: "informations-publiques", Z2: "connaissances-stockees", Z3: "savoir"};
 function fiche(r, id){
   const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
-  const tags = r.tags.length ? r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") : '<span class="mut">a taguer</span>';
   const ac = actions(r);
-  return '<tr class="fiche" data-id="' + id + '" hidden><td colspan="9">'
+  return '<tr class="fiche" data-id="' + id + '" hidden><td colspan="8">'
     + '<p class="fiche-h"><b>' + esc(r.agent) + "</b> - " + ZLBL[ZDOS[zoneVive(r)]] + " - " + dj + "</p>"
     + '<p class="fiche-res">' + esc(r.resume) + "</p>"
-    + '<p class="fiche-h">' + tags + " &nbsp; " + chip(r.statut) + " &nbsp; <span class='mut'>Origine : " + esc(r.origine) + "</span></p>"
+    + '<p class="fiche-h">' + lesTags(r) + "</p>"
+    + '<p class="fiche-h">Statut de l\'info : ' + chip(r.statut) + ' &nbsp; Origine : ' + esc(r.origine) + "</p>"
     + '<p class="fiche-h">Parcours : ' + parcours(r) + "</p>"
+    + '<p class="fiche-h">Fichier : <span class="c-fic" style="display:inline">' + esc(nomFichier(r)) + "</span></p>"
     + (ac.indexOf("btn") > -1 ? '<div class="fiche-ac">' + ac + "</div>" : '<p class="fiche-h mut">Aucune action a cette etape.</p>')
     + "</td></tr>";
 }
 function tr(r, id){
   const [zc, fic] = zonecode(r);
   const zv = zoneVive(r);
-  const tags = r.tags.length ? r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") : '<span class="mut">a taguer</span>';
   const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
   const case_ = zc ? '<input type="checkbox" class="sel" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + zc + '">' : "";
-  const past = '<span class="zpast z-' + zv[1] + '">' + zv + "</span>";
-  const ssl = '<span class="ssligne">' + esc(r.agent) + " &middot; " + dj + " &middot; " + esc(r.tags[0] || "a taguer") + "</span>";
+  const past = '<span class="zpast z-' + zv[1] + '">' + zv + '</span><span class="zmot">' + ZMOT[zv] + "</span>";
+  const ssl = '<span class="ssligne">' + esc(r.agent) + " &middot; " + dj + "</span>";
   return '<tr class="doc" data-id="' + id + '" data-zone="' + zv + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
     + ' data-txt="' + esc((r.doc + " " + r.resume + " " + r.origine).toLowerCase()) + '">'
-    + '<td class="c-sel">' + case_ + past + '</td><td class="c-ag">' + esc(r.agent) + '</td>'
-    + '<td class="c-doc"><span class="nom">' + esc(r.doc.replace(DATED, "")) + '<span class="chevron">detail</span></span><span class="ssdate">' + dj + "</span>" + ssl + "</td>"
-    + '<td class="c-tg">' + tags + "</td><td>" + chip(r.statut) + "</td>"
-    + '<td class="c-or">' + esc(r.origine) + '</td><td class="c-res">' + esc(r.resume) + "</td>"
-    + '<td class="c-pa">' + parcours(r) + '</td><td class="c-ac">' + actions(r) + "</td></tr>"
+    + '<td class="c-zone">' + past + "</td>"
+    + '<td class="c-ag">' + esc(r.agent) + "</td>"
+    + '<td class="c-doc"><span class="titre">' + esc(titre(r)) + '<span class="chevron">detail</span></span>'
+    + '<span class="ssdate">' + dj + "</span>" + lesTags(r) + ssl + "</td>"
+    + '<td class="c-fic">' + esc(nomFichier(r)) + "</td>"
+    + '<td class="c-or">' + esc(r.origine) + "</td>"
+    + '<td class="c-pa">' + parcours(r) + "</td>"
+    + '<td class="c-ac">' + actions(r) + "</td>"
+    + '<td class="c-sel">' + case_ + "</td></tr>"
     + fiche(r, id);
 }
 let SEQ = 0;
 function tableau(rows){
-  const tetes = "<tr><th class='c-sel'></th><th>Agent</th><th>Document</th><th>Tags</th><th>Statut de l'info</th><th>Origine</th><th>Resume</th><th>Parcours Zones 1-2-3</th><th>Actions</th></tr>";
+  const tetes = "<tr><th class='c-zone'>Zone</th><th class='c-ag'>Agent</th><th>Document</th><th class='c-fic'>Fichier</th>"
+    + "<th class='c-or'>Origine</th><th class='c-pa'>Parcours Zones 1-2-3</th><th class='c-ac'>Actions</th><th class='c-sel'></th></tr>";
   return '<div class="cadre"><table><thead>' + tetes + "</thead><tbody>" + rows.map(r => tr(r, ++SEQ)).join("") + "</tbody></table></div>";
 }
 function rendreTunnel(){
@@ -394,23 +423,19 @@ function rendreTunnel(){
   $("tunnel").innerHTML = h;
   const tags = [...new Set(LIGNES.flatMap(r => r.tags))].sort();
   $("ft").innerHTML = '<option value="">Tous les tags</option>' + tags.map(t => "<option>" + esc(t) + "</option>").join("");
-  const sts = [...new Set(LIGNES.map(r => r.statut))].filter(s => s && s !== "-").sort();
-  $("fs").innerHTML = '<option value="">Tous les statuts</option>' + sts.map(s => "<option>" + esc(s) + "</option>").join("");
   const ags = [...new Set(LIGNES.map(r => r.agent))].sort();
   $("fa").innerHTML = '<option value="">Tous les agents</option>' + ags.map(a => "<option>" + esc(a) + "</option>").join("");
   brancherActions();
   filtrer();
 }
 function filtrer(){
-  const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, st = $("fs").value,
-        ag = $("fa").value, zo = $("fz").value;
+  const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, ag = $("fa").value, zo = $("fz").value;
   $$("#tunnel tr.doc").forEach(r => {
     const ok = (!t || r.dataset.txt.includes(t)) && (!tg || r.dataset.tags.split(" ").includes(tg))
-      && (!st || r.dataset.statut === st) && (!ag || r.dataset.agent === ag)
-      && (!zo || r.dataset.zone === zo);
+      && (!ag || r.dataset.agent === ag) && (!zo || r.dataset.zone === zo);
     r.style.display = ok ? "" : "none";
     const f = document.querySelector('#tunnel tr.fiche[data-id="' + r.dataset.id + '"]');
-    if (f && !ok){ f.hidden = true; }
+    if (f && !ok) f.hidden = true;
   });
   $$("#tunnel h2, #tunnel h3.grp").forEach(h => {
     let n = h.nextElementSibling;
@@ -425,17 +450,19 @@ function filtrer(){
 /* ---------- rendu des deux autres ecrans ---------- */
 function rendreAgents(){
   const l = AGENTS.map(a => {
-    const eq = a.depot.split("/")[1];
     const age = a.maj ? jours(a.maj) : null;
     const et = a.version == null ? '<span class="chip st-al">sans protocole memoire</span>'
       : (age != null && age > 14 ? '<span class="chip st-a">' + age + " j sans evolution</span>"
       : '<span class="chip st-ok">a jour</span>');
-    return "<tr><td class='c-ag'>" + esc(a.agent) + "</td><td>" + esc(eq) + "</td><td><b>"
-      + (a.version == null ? "-" : "v" + a.version) + "</b></td><td>"
-      + (a.maj ? a.maj.toLocaleDateString("fr-FR") : "-") + "</td><td class='c-res'>"
-      + esc(a.evolution || "-") + "</td><td>" + et + "</td></tr>";
+    return "<tr><td class='c-nom'><span class='titre'>" + esc(a.agent) + "</span><span class='ssligne'>"
+      + esc(a.depot.split("/")[1]) + " &middot; " + (a.maj ? a.maj.toLocaleDateString("fr-FR") : "-") + "</span></td>"
+      + "<td class='col-min'>" + esc(a.depot.split("/")[1]) + "</td>"
+      + "<td><b>" + (a.version == null ? "-" : "v" + a.version) + "</b></td>"
+      + "<td class='col-min'>" + (a.maj ? a.maj.toLocaleDateString("fr-FR") : "-") + "</td>"
+      + "<td class='c-res'>" + esc(a.evolution || "-") + "</td><td>" + et + "</td></tr>";
   }).join("");
-  $("agents").innerHTML = '<div class="cadre court"><table><thead><tr><th>Agent</th><th>Equipe</th><th>Version</th><th>Derniere gravure</th><th>Derniere evolution</th><th>Etat</th></tr></thead><tbody>'
+  $("agents").innerHTML = '<div class="cadre"><table><thead><tr><th>Agent</th><th class="col-min">Equipe</th><th>Version</th>'
+    + '<th class="col-min">Derniere gravure</th><th class="c-res">Derniere evolution</th><th>Etat</th></tr></thead><tbody>'
     + (l || "<tr><td colspan='6' class='vide'>Aucun agent trouve.</td></tr>") + "</tbody></table></div>";
 }
 function rendreVeille(){
@@ -443,11 +470,16 @@ function rendreVeille(){
     const age = v.derniere ? jours(v.derniere) : null;
     const et = age == null ? '<span class="chip st-al">index illisible</span>'
       : (age > 8 ? '<span class="chip st-al">en retard</span>' : '<span class="chip st-ok">OK</span>');
-    return "<tr><td class='c-ag'>" + esc(v.nom) + "</td><td>" + esc(v.depot.split("/")[1] || "-") + "</td><td>"
-      + (v.derniere ? v.derniere.toLocaleDateString("fr-FR") : "-") + "</td><td>" + (age == null ? "-" : age + " j")
-      + "</td><td>" + (v.enAttente == null ? "-" : v.enAttente) + "</td><td>" + et + "</td></tr>";
+    return "<tr><td class='c-nom'><span class='titre'>" + esc(v.nom) + "</span><span class='ssligne'>"
+      + esc(v.depot.split("/")[1] || "-") + " &middot; derniere entree "
+      + (v.derniere ? v.derniere.toLocaleDateString("fr-FR") : "-") + "</span></td>"
+      + "<td class='col-min'>" + esc(v.depot.split("/")[1] || "-") + "</td>"
+      + "<td class='col-min'>" + (v.derniere ? v.derniere.toLocaleDateString("fr-FR") : "-") + "</td>"
+      + "<td>" + (age == null ? "-" : age + " j") + "</td>"
+      + "<td>" + (v.enAttente == null ? "-" : v.enAttente) + "</td><td>" + et + "</td></tr>";
   }).join("");
-  $("veille").innerHTML = '<div class="cadre court"><table><thead><tr><th>Veille</th><th>Equipe</th><th>Derniere entree</th><th>Age</th><th>En attente (Zone 1)</th><th>Etat</th></tr></thead><tbody>'
+  $("veille").innerHTML = '<div class="cadre"><table><thead><tr><th>Veille</th><th class="col-min">Equipe</th>'
+    + '<th class="col-min">Derniere entree</th><th>Age</th><th>En attente</th><th>Etat</th></tr></thead><tbody>'
     + (l || "<tr><td colspan='6' class='vide'>Aucune veille declaree active.</td></tr>") + "</tbody></table></div>";
 }
 function rendreCompteurs(){
@@ -584,7 +616,7 @@ $("oublier").addEventListener("click", () => {
   $("cle").value = ""; CLE = ""; $("etatcle").textContent = "cle oubliee";
 });
 $$("#onglets .onglet").forEach(b => b.addEventListener("click", () => vue(b.dataset.vue)));
-["q", "ft", "fs", "fa", "fz"].forEach(i => $(i).addEventListener("input", filtrer));
+["q", "ft", "fa", "fz"].forEach(i => $(i).addEventListener("input", filtrer));
 $("vider").addEventListener("click", () => { $$(".sel").forEach(c => c.checked = false); majsel(); });
 $$(".barre [data-act]").forEach(b => b.addEventListener("click", () => envoyer(b.dataset.act, eligibles(choisis(), b.dataset.act))));
 try {
