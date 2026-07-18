@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Console d'administration - systeme d'agents specialises</title>
+<title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
 --ocre:#b07d2e;--ard:#3b5a86;--vert:#3e6b5a;--vert2:#e7efeb;--ocre2:#f6ecd9}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--pap);color:var(--enc);font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+body{margin:0;overflow-x:hidden;background:var(--pap);color:var(--enc);font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
 .page{max-width:1280px;margin:0 auto;padding:18px 14px 60px}
 h1{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:600;font-size:27px;margin:0 0 2px}
 .sous{color:var(--mut);font-size:13px;margin:0 0 14px}
@@ -33,7 +33,7 @@ thead th{font-family:Consolas,"SF Mono",monospace;font-size:10px;letter-spacing:
 td{padding:8px;border-bottom:1px solid #e8ecf1;vertical-align:top}
 tbody tr:nth-child(even){background:#f8fafc}tbody tr:hover{background:#f1f5fa}
 .c-ag{font-family:Consolas,"SF Mono",monospace;font-size:10.5px;color:var(--mut);max-width:76px;overflow-wrap:anywhere}
-.c-doc{width:52%;min-width:300px}.nom{font-weight:600;font-size:12.5px;overflow-wrap:anywhere;display:block}.ssdate{font-size:11px;color:var(--mut)}
+.c-doc{width:52%;min-width:280px}.nom{font-weight:600;font-size:12.5px;overflow-wrap:anywhere;display:block}.ssdate{font-size:11px;color:var(--mut)}
 .c-tg{max-width:105px}.tag{display:inline-block;background:#e6ecf7;border:1px solid #c3d0e6;color:var(--ard);font-weight:600;border-radius:20px;padding:2px 9px;font-size:11.5px;margin:3px 4px 0 0}
 .lestags{display:block;margin-top:3px}
 .chip{display:inline-block;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;white-space:nowrap}
@@ -66,7 +66,7 @@ position:sticky;bottom:8px;z-index:5;box-shadow:0 4px 18px rgba(22,35,58,.25)}
 .etat.err{background:var(--sceau2);border-color:var(--sceau)}
 .etat textarea{width:100%;margin:8px 0 6px;font:12.5px/1.4 Consolas,"SF Mono",monospace;color:var(--enc);border:1px solid var(--fil);border-radius:6px;padding:8px;background:#f8fafc}
 .btnc{font:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:6px;padding:6px 12px;background:var(--sceau);color:#fff;cursor:pointer}
-tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoye";font-size:11px;color:var(--vert)}
+tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoyé";font-size:11px;color:var(--vert)}
 .mut{color:var(--mut)}.vide{padding:26px;text-align:center;color:var(--mut)}
 .pied{margin-top:22px;font-size:12.5px;color:var(--mut)}
 .chargement{padding:26px;text-align:center;color:var(--mut);font-size:14px}
@@ -105,7 +105,9 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
   thead{display:none}
   .c-or,.c-res,.c-pa,.c-ag,.c-fic,.col-min{display:none}
   .c-ac{width:64px;padding:8px 6px}
-  .c-doc{max-width:none;width:100%;cursor:pointer}
+  .c-doc{max-width:none;min-width:0;width:auto;cursor:pointer}
+  .c-zone{width:64px;padding-left:8px}
+  .page{padding:18px 10px 60px}
   .c-tg{display:none}
   .titre{font-size:14px}
   .ssdate{display:none}
@@ -177,21 +179,21 @@ background:var(--carte);border:2px solid var(--ard)}
 </style></head>
 <body><div class="page">
 <h1>Console d'administration</h1>
-<p class="sous" id="sous">Systeme d'agents specialises - etat reel des depots, lu a l'ouverture. Cette page ne contient aucune donnee : tout est lu en direct avec ta cle.</p>
+<p class="sous" id="sous">Système d'agents spécialisés - état réel des dépôts, lu à l'ouverture. Cette page ne contient aucune donnée : tout est lu en direct avec ta clé.</p>
 
 <div class="acces">
-  <label for="cle" style="font-size:13px;font-weight:600">Cle d'acces</label>
-  <input id="cle" type="password" placeholder="colle ici ta cle GitHub (elle reste dans ce navigateur)" autocomplete="off">
+  <label for="cle" style="font-size:13px;font-weight:600">Clé d'accès</label>
+  <input id="cle" type="password" placeholder="colle ici ta clé GitHub (elle reste dans ce navigateur)" autocomplete="off">
   <button class="btnc" id="ouvrir">Ouvrir la console</button>
-  <button class="onglet" id="oublier" style="border-radius:6px;border-bottom:1px solid var(--fil)">Oublier la cle</button>
+  <button class="onglet" id="oublier" style="border-radius:6px;border-bottom:1px solid var(--fil)">Oublier la clé</button>
   <span class="mut" id="etatcle" style="font-size:12.5px"></span>
-  <button id="gerer">Gerer la cle</button>
+  <button id="gerer">Gérer la clé</button>
 </div>
 
 <div id="voile" hidden>
   <div class="voile-carte">
     <div class="voile-barre"><i></i></div>
-    <p class="voile-txt" id="voile-txt">Lecture de l'etat reel des depots...</p>
+    <p class="voile-txt" id="voile-txt">Lecture de l'état réel des dépôts...</p>
   </div>
 </div>
 
@@ -203,15 +205,14 @@ background:var(--carte);border:2px solid var(--ard)}
   <button class="onglet" role="tab" data-vue="veille" aria-selected="false"><span class="long">Supervision de la veille</span><span class="court">Veille</span></button>
 </div>
 
-<div id="etat" class="etat" hidden></div>
-
 <section id="vue-tunnel" hidden>
+  <div id="etat" class="etat" hidden></div>
   <div class="compteurs" id="compteurs"></div>
   <div class="outils">
-    <input id="q" placeholder="Rechercher un document, un resume, une origine">
-    <select id="fc"><option value="">Actualites et fonds</option><option value="actu">Actualites</option><option value="fond">Documents de fond</option></select>
+    <input id="q" placeholder="Rechercher un document, un résumé, une origine">
+    <select id="fc"><option value="">Actualités et fond</option><option value="actu">Actualités</option><option value="fond">Documents de fond</option></select>
     <select id="fe"><option value="">Tous les formats</option></select>
-    <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (memoire vive)</option></select>
+    <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (mémoire vive)</option></select>
     <select id="ft"><option value="">Tous les tags</option></select>
     <select id="fa"><option value="">Tous les agents</option></select>
   </div>
@@ -226,31 +227,31 @@ background:var(--carte);border:2px solid var(--ard)}
   <div class="barre" id="barre" hidden>
     <b id="cpt">0 document selectionne</b>
     <button data-act="bibliotheque" data-lib="Classer en Zone 2" class="rouge">Classer en Zone 2</button>
-    <button data-act="vivant" data-lib="Vers memoire vive">Vers memoire vive</button>
+    <button data-act="vivant" data-lib="Vers mémoire vive">Vers mémoire vive</button>
     <button data-act="deversoir" data-lib="Retour en Zone 1" class="creux">Retour en Zone 1</button>
     <button data-act="supprimer" data-lib="Supprimer" class="creux">Supprimer</button>
-    <button id="vider" class="creux">Vider la selection</button>
+    <button id="vider" class="creux">Vider la sélection</button>
   </div>
 </section>
 
 <section id="vue-agents" hidden>
-  <p class="legende">L'agent comme installation : sa conformite (protocole memoire, veille, metadonnees, avatar), sa memoire vive et sa vitalite. L'inventaire de ses documents n'est pas repete ici : il vit dans le tunnel.</p>
+  <p class="legende">L'agent comme installation : sa conformité (protocole mémoire, veille, métadonnées, avatar), sa mémoire vive et sa vitalité. L'inventaire de ses documents n'est pas répété ici : il vit dans le tunnel.</p>
   <div id="agents"></div>
 </section>
 
 <section id="vue-veille" hidden>
-  <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles metier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalise est signale comme tel.</p>
+  <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles métier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalisé est signalé comme tel.</p>
   <div id="veille"></div>
 </section>
 
 </div>
-<p class="pied">Le depot est la verite ; cette console n'est qu'une vue. Depot public : il ne contient que le code de cette page - aucun document, aucun resume, aucune cle.</p>
+<p class="pied">Le dépôt est la vérité ; cette console n'est qu'une vue. Dépôt public : il ne contient que le code de cette page - aucun document, aucun résumé, aucune clé.</p>
 </div>
 
 <script>
 const DEPOTS = ["jlucb67/SOCLE", "jlucb67/GENERAL", "jlucb67/LFI"];
 const ZONES = ["informations-publiques", "connaissances-stockees", "savoir"];
-const ZLBL = {"informations-publiques":"Zone 1 (triage)", "connaissances-stockees":"Zone 2 (docs accessibles)", "savoir":"Zone 3 (memoire vive)"};
+const ZLBL = {"informations-publiques":"Zone 1 (triage)", "connaissances-stockees":"Zone 2 (docs accessibles)", "savoir":"Zone 3 (mémoire vive)"};
 const DATED = /^\d{4}-\d{2}-\d{2}[-_ ]*/;
 /* pack-modele porte les memes dossiers qu'un agent : c'est le gabarit de naissance, pas un agent */
 const EXCLUS = ["pack-modele"];
@@ -264,6 +265,16 @@ let VEILLES = [];
 function progres(t){ const e = $("voile-txt"); if (e) e.textContent = t; }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function poids(n){ return n >= 1048576 ? (n/1048576).toFixed(1).replace(".", ",")+" Mo" : n >= 1024 ? Math.round(n/1024)+" Ko" : n+" o"; }
+function prochainLundi(){
+  const d = new Date(); d.setHours(10, 0, 0, 0);
+  const delta = (8 - d.getDay()) % 7;
+  if (delta === 0 && Date.now() > d.getTime()) d.setDate(d.getDate() + 7);
+  else d.setDate(d.getDate() + delta);
+  return d;
+}
+function cadenceCourte(t){
+  return (t || "").replace(/^cadence\s*:\s*/i, "").split(/\s+[-;]\s+/)[0].trim();
+}
 function jours(d){ return Math.floor((Date.now() - d.getTime()) / 86400000); }
 
 async function api(chemin, options){
@@ -341,7 +352,7 @@ function derniereDate(txt){
 async function collecte(){
   LIGNES = []; AGENTS = []; VEILLES = [];
   const arbres = {};
-  for (const dep of DEPOTS){ progres("Lecture du depot " + dep.split("/")[1] + "..."); arbres[dep] = await arbre(dep); }
+  for (const dep of DEPOTS){ progres("Lecture du dépôt " + dep.split("/")[1] + "..."); arbres[dep] = await arbre(dep); }
 
   /* agents = dossiers de premier niveau portant au moins une zone */
   const listeAgents = [];
@@ -414,7 +425,7 @@ async function collecte(){
   }
 
   /* veilles actives */
-  progres("Etat des veilles...");
+  progres("État des veilles...");
   {
     const cs = await commits("jlucb67/SOCLE", "ADMIN/savoir/VEILLE.md", 6);
     VEILLES.push({nom: "Veille plateforme (Admin)", depot: "jlucb67/SOCLE", index: "ADMIN/savoir/VEILLE.md",
@@ -492,7 +503,7 @@ function actions(r){
   let b = '<span class="mut">-</span>';
   if (zc === "Z1") b = '<button class="btn plein mini" title="Classer en Zone 2 (docs accessibles)" data-act="bibliotheque"' + d + ">vers Z2</button>"
     + '<button class="btn creux mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
-  else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter en Zone 3 (memoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
+  else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter en Zone 3 (mémoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
   return '<span class="zoneac">' + (c || "<span></span>") + '<span class="lesboutons">' + b + "</span></span>";
 }
 function lesTags(r){
@@ -536,7 +547,7 @@ function rendreTunnel(){
   h += "<h2>Actualites - " + actus.length + " document" + (actus.length > 1 ? "s" : "") + "</h2>";
   h += actus.length ? tableau(actus) : '<div class="cadre"><p class="vide">Aucune actualite.</p></div>';
   const grp = {};
-  for (const r of fonds) (grp[r.tags[0] || "#a-taguer"] = grp[r.tags[0] || "#a-taguer"] || []).push(r);
+  for (const r of fonds) (grp[r.tags[0] || "#à-taguer"] = grp[r.tags[0] || "#à-taguer"] || []).push(r);
   h += "<h2>Documents de fond - " + fonds.length + " document" + (fonds.length > 1 ? "s" : "") + "</h2>";
   for (const t of Object.keys(grp).sort()) h += '<h3 class="grp">' + esc(t) + "</h3>" + tableau(grp[t]);
   if (!fonds.length) h += '<div class="cadre"><p class="vide">Aucun document de fond.</p></div>';
@@ -591,9 +602,9 @@ function rendreAgents(){
   const nonConformes = AGENTS.filter(a => !a.conf.memoire).length;
   const sansVeille = AGENTS.filter(a => !veilleDe(a)).length;
   let h = '<div class="synthese">' + mesure(AGENTS.length, "agents")
-    + mesure(nonConformes, "sans protocole memoire", nonConformes > 0)
+    + mesure(nonConformes, "sans protocole mémoire", nonConformes > 0)
     + mesure(sansVeille, "sans veille", sansVeille > 0)
-    + mesure(AGENTS.filter(a => a.vol["savoir"].o > 400000).length, "memoire vive lourde",
+    + mesure(AGENTS.filter(a => a.vol["savoir"].o > 400000).length, "mémoire vive lourde",
              AGENTS.some(a => a.vol["savoir"].o > 400000)) + "</div>";
 
   h += AGENTS.map(a => {
@@ -610,21 +621,21 @@ function rendreAgents(){
       + (a.version != null ? '<span class="chip st-e">v' + a.version + "</span>" : '<span class="chip st-al">sans version</span>')
       + "</header>"
       + '<div class="criteres">'
-        + coche(a.conf.memoire, "protocole memoire")
-        + coche(!!v, "veille branchee")
-        + (admin ? coche(true, "tunnel sans objet", true) : coche(a.conf.meta, "metadonnees"))
-        + (admin ? coche(true, "avatar attribue") : coche(false, "avatar a attribuer"))
+        + coche(a.conf.memoire, "protocole mémoire")
+        + coche(!!v, "veille branchée")
+        + (admin ? coche(true, "tunnel sans objet", true) : coche(a.conf.meta, "métadonnées"))
+        + (admin ? coche(true, "avatar attribué") : coche(false, "avatar à attribuer"))
       + "</div>"
       + '<div class="mesures">'
-        + mesure(a.version != null ? "v" + a.version : "-", age != null ? "memoire vive, " + age + " j" : "memoire vive")
+        + mesure(a.version != null ? "v" + a.version : "-", age != null ? "mémoire vive, " + age + " j" : "mémoire vive")
         + mesure(poids(vive.o), "poids en vive", vive.o > 400000)
         + mesure(a.actifs30, "gravures sur 30 j", a.actifs30 === 0)
         + (admin ? "" : mesure(attente, "en attente de toi", attente > 0))
-        + (admin ? "" : mesure(dette, "resumes dus", dette > 0))
+        + (admin ? "" : mesure(dette, "résumés dus", dette > 0))
       + "</div>"
       + (admin ? "" : jauge(a.vol))
-      + '<p class="evo"><b>Derniere evolution</b> - ' + esc(courte(a.evolution, 150)) + "</p>"
-      + '<p class="pieds">Derniere gravure au depot : '
+      + '<p class="evo"><b>Dernière évolution</b> - ' + esc(courte(a.evolution, 150)) + "</p>"
+      + '<p class="pieds">Dernière gravure au dépôt : '
       + (a.activite ? a.activite.date.toLocaleDateString("fr-FR") + " par " + esc(a.activite.qui)
           + ' &middot; <span class="mut">' + esc(courte(a.activite.titre, 70)) + "</span>" : "aucune") + "</p>"
       + "</article>";
@@ -644,14 +655,14 @@ function rendreVeille(){
   let h = '<div class="synthese">' + mesure(VEILLES.length, "veilles suivies")
     + mesure(retard, "en retard", retard > 0)
     + mesure(douteuses, "dispositif incertain", douteuses > 0)
-    + mesure(VEILLES.reduce((n, v) => n + (v.attente || 0), 0), "prises a decider",
+    + mesure(VEILLES.reduce((n, v) => n + (v.attente || 0), 0), "prises à décider",
              VEILLES.some(v => v.attente > 0)) + "</div>";
 
   h += VEILLES.map(v => {
     const age = v.derniere ? jours(v.derniere) : null;
-    const etat = age == null ? ["jamais executee", "st-al"]
-      : age > 8 ? ["en retard de " + (age - 7) + " j", "st-al"] : ["a jour", "st-ok"];
-    const proch = v.derniere ? new Date(v.derniere.getTime() + 7 * 86400000) : null;
+    const etat = age == null ? ["jamais exécutée", "st-al"]
+      : age > 8 ? ["en retard de " + (age - 7) + " j", "st-al"] : ["à jour", "st-ok"];
+    const proch = prochainLundi();
     const total = (v.promus || 0) + (v.attente || 0);
     const taux = total ? Math.round(100 * v.promus / total) : null;
     const journal = (v.passages || []).slice(0, 5).map(p =>
@@ -660,16 +671,16 @@ function rendreVeille(){
     return '<article class="fiche-agent">'
       + '<header><h3>' + esc(v.nom) + '</h3><span class="eq">' + esc(v.depot.split("/")[1]) + "</span>"
       + '<span class="chip ' + etat[1] + '">' + etat[0] + "</span></header>"
-      + '<p class="evo"><b>Dispositif</b> - ' + esc(v.cadence.replace(/^cadence\s*:\s*/i, ""))
-      + (proch ? " &middot; prochain passage attendu le " + proch.toLocaleDateString("fr-FR") : "") + "</p>"
-      + (v.tacheDouteuse ? '<p class="alertes"><span class="al">la tache planifiee est a re-creer : ce dispositif ne tourne peut-etre plus seul</span></p>' : "")
+      + '<p class="evo"><b>Dispositif</b> - ' + esc(cadenceCourte(v.cadence))
+      + " &middot; prochain passage attendu le " + proch.toLocaleDateString("fr-FR", {weekday: "long", day: "numeric", month: "long"}) + "</p>"
+      + (v.tacheDouteuse ? '<p class="alertes"><span class="al">la tâche planifiée est à re-créer : ce dispositif ne tourne peut-être plus seul</span></p>' : "")
       + (v.plateforme ? "" : '<div class="mesures">'
         + mesure(v.captes, "prises au total") + mesure(v.recents, "sur 30 jours", v.recents === 0)
-        + mesure(v.attente, "a decider", v.attente > 0)
+        + mesure(v.attente, "à décider", v.attente > 0)
         + mesure(taux == null ? "-" : taux + " %", "prises retenues") + "</div>")
-      + '<div class="journal"><h4>Passages reconstitues</h4><ol>' + (journal || "<li class='mut'>aucun passage trace</li>") + "</ol></div>"
+      + '<div class="journal"><h4>Passages reconstitués</h4><ol>' + (journal || "<li class='mut'>aucun passage tracé</li>") + "</ol></div>"
       + '<p class="pieds mut">Heure et auteur viennent de l\'historique du depot. Le mode de declenchement (automatique ou manuel), '
-      + "la duree et les echecs ne sont pas journalises : un passage qui echoue sans rien ecrire reste invisible ici.</p>"
+      + "la durée et les échecs ne sont pas journalisés : un passage qui échoue sans rien écrire reste invisible ici.</p>"
       + "</article>";
   }).join("");
   $("veille").innerHTML = h;
@@ -678,7 +689,7 @@ function rendreCompteurs(){
   const z1 = LIGNES.filter(r => r.z["informations-publiques"]).length;
   const nonLus = LIGNES.filter(r => r.resume === "non lu").length;
   const retard = VEILLES.filter(v => !v.derniere || jours(v.derniere) > 8).length;
-  const c = [["Documents", LIGNES.length], ["En Zone 1 (a decider)", z1], ["Resumes manquants", nonLus],
+  const c = [["Documents", LIGNES.length], ["En Zone 1 (à décider)", z1], ["Résumés manquants", nonLus],
              ["Agents", AGENTS.length], ["Veilles en retard", retard]];
   $("compteurs").innerHTML = c.map(x => '<div class="cpt"><b>' + x[1] + "</b><span>" + x[0] + "</span></div>").join("");
   $("compteurs").hidden = false;
@@ -686,7 +697,7 @@ function rendreCompteurs(){
 
 /* ---------- demandes (envoi direct ou commande a coller) ---------- */
 function libelle(act){
-  return act === "bibliotheque" ? "vers Zone 2 (docs accessibles)" : act === "vivant" ? "vers Zone 3 (memoire vive)"
+  return act === "bibliotheque" ? "vers Zone 2 (docs accessibles)" : act === "vivant" ? "vers Zone 3 (mémoire vive)"
     : act === "deversoir" ? "retour en Zone 1 (triage)" : "supprimer de la Zone 1";
 }
 function choisis(){ return $$(".sel:checked").map(c => ({a: c.dataset.a, f: c.dataset.f, z: c.dataset.z, d: c.dataset.d})); }
@@ -694,7 +705,7 @@ function eligibles(it, act){ const zc = (act === "vivant" || act === "deversoir"
 function majsel(){
   const s = choisis();
   $("barre").hidden = s.length === 0;
-  $("cpt").textContent = s.length + (s.length > 1 ? " documents selectionnes" : " document selectionne");
+  $("cpt").textContent = s.length + (s.length > 1 ? " documents sélectionnés" : " document sélectionné");
   $$(".barre [data-act]").forEach(x => {
     const n = eligibles(s, x.dataset.act).length;
     x.textContent = x.dataset.lib + (n ? " (" + n + ")" : ""); x.disabled = n === 0; x.style.opacity = n ? 1 : .4;
@@ -721,17 +732,17 @@ function commande(act, it){
 function proposer(act, it){
   const txt = commande(act, it), d = $("etat");
   d.hidden = false; d.className = "etat";
-  d.innerHTML = "<b id='titcmd'>Commande prete</b> - colle-la dans la conversation avec l'Agent Admin :"
+  d.innerHTML = "<b id='titcmd'>Commande prête</b> - colle-la dans la conversation avec l'Agent Admin :"
     + "<textarea id='cmd' rows='" + Math.min(12, it.length + 3) + "' readonly></textarea><button id='copier' class='btnc'>Copier la commande</button>";
   $("cmd").value = txt;
   if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => {
-    $("titcmd").textContent = "Commande copiee"; $("copier").textContent = "Copier a nouveau";
+    $("titcmd").textContent = "Commande copiée"; $("copier").textContent = "Copier à nouveau";
   }).catch(() => {});
   $("copier").addEventListener("click", async e => {
-    try { await navigator.clipboard.writeText(txt); e.target.textContent = "Copie"; }
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = "Copié"; }
     catch(err){ $("cmd").focus(); $("cmd").select();
-      try { document.execCommand("copy"); e.target.textContent = "Copie"; }
-      catch(_){ e.target.textContent = "Selectionne le texte et copie"; } }
+      try { document.execCommand("copy"); e.target.textContent = "Copié"; }
+      catch(_){ e.target.textContent = "Sélectionne le texte et copie"; } }
   });
 }
 
@@ -750,16 +761,17 @@ async function suivre(demandes){
       } catch(e){ /* on retentera au tour suivant */ }
     }
     if (traitees === demandes.length){
-      etatHtml('<b>Demande traitee par le robot.</b> Le tableau affiche date de son ouverture : il ne montre pas encore le deplacement. '
-        + '<button id="rafraichir" class="btnc" style="margin-top:8px">Mettre a jour la liste</button>');
+      etatHtml("<b>C'est fait : le robot a déplacé tes documents au dépôt.</b> La liste ci-dessous a été lue avant, "
+        + "elle les montre encore à leur ancienne place. "
+        + '<button id="rafraichir" class="btnc" style="margin-top:8px">Actualiser la liste</button>');
       $("rafraichir").addEventListener("click", rafraichir);
       return;
     }
     const sec = Math.round((Date.now() - debut) / 1000);
-    if (sec >= 25) etatHtml("Demande envoyee, sans reponse depuis " + sec + " secondes. Le robot met normalement moins d'une minute.");
+    if (sec >= 25) etatHtml("Demande envoyée, sans réponse depuis " + sec + " secondes. Le robot met normalement moins d'une minute.");
   }
-  etatHtml('<b>Toujours sans reponse apres 90 secondes.</b> C\'est le signe d\'un blocage : dis-le a l\'Agent Admin, '
-    + "qui saura diagnostiquer (procedure P22) et rejouer la demande.", 1);
+  etatHtml('<b>Toujours sans réponse après 90 secondes.</b> C\'est le signe d\'un blocage : dis-le a l\'Agent Admin, '
+    + "qui saura diagnostiquer (procédure P22) et rejouer la demande.", 1);
 }
 function etatHtml(html, err){
   const d = $("etat"); d.hidden = false; d.className = "etat" + (err ? " err" : ""); d.innerHTML = html;
@@ -768,22 +780,22 @@ function etatHtml(html, err){
 async function rafraichir(){
   const memo = {q: $("q").value, ft: $("ft").value, fa: $("fa").value, fz: $("fz").value, fc: $("fc").value, fe: $("fe").value};
   const y = window.scrollY;
-  etatHtml("Mise a jour de la liste...");
+  etatHtml("Mise à jour de la liste...");
   try {
     await collecte();
     rendreCompteurs(); rendreTunnel(); rendreAgents(); rendreVeille();
     for (const k in memo){ if ($(k)) $(k).value = memo[k]; }
     filtrer();
     window.scrollTo(0, y);
-    $("sous").textContent = "Etat reel des depots, lu le " + new Date().toLocaleString("fr-FR") + ".";
-    etatHtml("Liste a jour.");
+    $("sous").textContent = "État réel des dépôts, lu le " + new Date().toLocaleString("fr-FR") + ".";
+    etatHtml("Liste à jour.");
     setTimeout(() => { $("etat").hidden = true; }, 4000);
-  } catch(e){ etatHtml("Mise a jour impossible : " + e.message, 1); }
+  } catch(e){ etatHtml("Mise à jour impossible : " + e.message, 1); }
 }
 async function envoyer(act, it){
   if (!it.length){
     const z = (act === "vivant" || act === "deversoir") ? "Zone 2 (docs accessibles)" : "Zone 1 (triage)";
-    etat("Cette action ne concerne que la " + z + ". Ta selection est ailleurs.", 1); return;
+    etat("Cette action ne concerne que la " + z + ". Ta sélection est ailleurs.", 1); return;
   }
   const parDepot = {};
   it.forEach(i => (parDepot[i.d] = parDepot[i.d] || []).push(i));
@@ -801,7 +813,7 @@ async function envoyer(act, it){
     if (c){ c.checked = false; c.closest("tr").classList.add("envoye"); }
   });
   majsel();
-  etat("Demande envoyee (" + it.length + " document" + (it.length > 1 ? "s" : "") + ") - suivi en cours...",
+  etat("Demande envoyée (" + it.length + " document" + (it.length > 1 ? "s" : "") + ") - suivi en cours...",
        0, faits[0].url, "Voir sur GitHub");
   suivre(faits);
 }
@@ -820,9 +832,9 @@ function vue(nom){
 }
 async function ouvrir(){
   CLE = $("cle").value.trim();
-  if (!CLE){ etat("Colle ta cle GitHub pour ouvrir la console : sans elle, cette page ne peut rien lire.", 1); return; }
+  if (!CLE){ etat("Colle ta clé GitHub pour ouvrir la console : sans elle, cette page ne peut rien lire.", 1); return; }
   try { localStorage.setItem("cle_console", CLE); } catch(e){}
-  $("etatcle").textContent = "cle enregistree dans ce navigateur";
+  $("etatcle").textContent = "clé enregistrée dans ce navigateur";
   $("etat").hidden = true;
   $("corps").hidden = true; $("onglets").hidden = true; $("voile").hidden = false;
   try {
@@ -831,14 +843,14 @@ async function ouvrir(){
     $("voile").hidden = true;
     $("onglets").hidden = false; vue("tunnel");
     $("corps").hidden = false;
-    $("sous").textContent = "Etat reel des depots, lu le " + new Date().toLocaleString("fr-FR") + ".";
+    $("sous").textContent = "État réel des dépôts, lu le " + new Date().toLocaleString("fr-FR") + ".";
     document.querySelector(".acces").classList.add("replie");
-    $("etatcle").textContent = "Connecte - cle memorisee dans ce navigateur";
+    $("etatcle").textContent = "Connecté - clé mémorisée dans ce navigateur";
   } catch(e){
     $("voile").hidden = true; $("tunnel").innerHTML = "";
-    if (e.code === 401) etat("La cle est refusee par GitHub (401) : elle est invalide ou revoquee.", 1);
-    else if (e.code === 403 || e.code === 404) etat("La cle ne donne pas acces aux depots (" + e.code + ") : verifie sa permission Contents en lecture sur SOCLE, GENERAL et LFI.", 1);
-    else etat("Lecture impossible : " + e.message + ". Si cette page est ouverte dans l'application Claude, ses connexions sortantes sont bloquees : ouvre-la dans un navigateur.", 1);
+    if (e.code === 401) etat("La clé est refusée par GitHub (401) : elle est invalide ou révoquée.", 1);
+    else if (e.code === 403 || e.code === 404) etat("La clé ne donne pas accès aux dépôts (" + e.code + ") : vérifie sa permission Contents en lecture sur SOCLE, GENERAL et LFI.", 1);
+    else etat("Lecture impossible : " + e.message + ". Si cette page est ouverte dans l'application Claude, ses connexions sortantes sont bloquées : ouvre-la dans un navigateur.", 1);
   }
 }
 $("ouvrir").addEventListener("click", ouvrir);
@@ -847,7 +859,7 @@ $("gerer").addEventListener("click", () => document.querySelector(".acces").clas
 $("oublier").addEventListener("click", () => {
   try { localStorage.removeItem("cle_console"); } catch(e){}
   document.querySelector(".acces").classList.remove("replie");
-  $("cle").value = ""; CLE = ""; $("etatcle").textContent = "cle oubliee";
+  $("cle").value = ""; CLE = ""; $("etatcle").textContent = "clé oubliée";
 });
 $$("#onglets .onglet").forEach(b => b.addEventListener("click", () => vue(b.dataset.vue)));
 ["q", "ft", "fa", "fz", "fc", "fe"].forEach(i => $(i).addEventListener("input", filtrer));
@@ -857,7 +869,7 @@ try {
   const m = localStorage.getItem("cle_console");
   if (m){
     $("cle").value = m;
-    $("etatcle").textContent = "Connecte - cle memorisee dans ce navigateur";
+    $("etatcle").textContent = "Connecté - clé mémorisée dans ce navigateur";
     document.querySelector(".acces").classList.add("replie");
     ouvrir();
   }
