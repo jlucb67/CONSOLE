@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Console d'administration - systeme d'agents specialises</title>
+<style>
+:root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
+--ocre:#b07d2e;--ard:#3b5a86;--vert:#3e6b5a;--vert2:#e7efeb;--ocre2:#f6ecd9}
+*{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--pap);color:var(--enc);font:15px/1.45 "Segoe UI",system-ui,-apple-system,sans-serif}
+.page{max-width:1280px;margin:0 auto;padding:18px 14px 60px}
+h1{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:600;font-size:27px;margin:0 0 2px}
+.sous{color:var(--mut);font-size:13px;margin:0 0 14px}
+.compteurs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.cpt{background:var(--carte);border:1px solid var(--fil);border-radius:8px;padding:8px 14px}
+.cpt b{font-size:20px;display:block;line-height:1.1}.cpt span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+.acces{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--carte);border:1px solid var(--fil);border-left:4px solid var(--ard);border-radius:10px;padding:10px;margin:0 0 14px}
+.acces input,.outils input,.outils select{font:inherit;color:var(--enc);border:1px solid var(--fil);border-radius:6px;padding:7px 9px;background:#fbfcfe}
+.acces input{flex:1;min-width:180px}
+.outils{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:10px;margin:0 0 14px}
+.outils input{flex:1;min-width:170px}
+.onglets{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;border-bottom:2px solid var(--enc)}
+.onglet{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--fil);border-bottom:0;background:var(--carte);color:var(--mut);
+border-radius:8px 8px 0 0;padding:8px 14px;cursor:pointer}
+.onglet[aria-selected="true"]{background:var(--enc);color:#fff;border-color:var(--enc)}
+.legende{font-size:12.5px;color:var(--mut);margin:0 0 14px}
+h2{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:19px;margin:24px 0 8px;border-bottom:2px solid var(--enc);padding-bottom:5px}
+h3.grp{font-family:Consolas,"SF Mono",monospace;font-size:12px;letter-spacing:1.4px;text-transform:uppercase;color:var(--ard);margin:18px 0 6px}
+.cadre{background:var(--carte);border:1px solid var(--fil);border-radius:10px;overflow:auto}
+table{border-collapse:collapse;width:100%;min-width:960px}
+.court table{min-width:0}
+thead th{font-family:Consolas,"SF Mono",monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);text-align:left;padding:9px 10px;border-bottom:1px solid var(--fil);position:sticky;top:0;background:var(--carte)}
+td{padding:8px;border-bottom:1px solid #e8ecf1;vertical-align:top}
+tbody tr:nth-child(even){background:#f8fafc}tbody tr:hover{background:#f1f5fa}
+.c-ag{font-family:Consolas,"SF Mono",monospace;font-size:10.5px;color:var(--mut);max-width:76px;overflow-wrap:anywhere}
+.c-doc{max-width:190px}.nom{font-weight:600;font-size:12.5px;overflow-wrap:anywhere;display:block}.ssdate{font-size:11px;color:var(--mut)}
+.c-tg{max-width:105px}.tag{display:inline-block;background:#eef2f8;border:1px solid var(--fil);border-radius:20px;padding:1px 7px;font-size:10.5px;margin:1px 2px 1px 0}
+.chip{display:inline-block;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;white-space:nowrap}
+.st-e{background:#e6ebf3;color:var(--enc)}.st-a{background:var(--ocre2);color:#7a5314}.st-n{background:#eceff3;color:var(--mut)}.st-x{color:var(--mut)}
+.st-ok{background:var(--vert2);color:var(--vert)}.st-al{background:var(--sceau2);color:var(--sceau)}
+.c-or{font-size:11px;color:var(--mut);max-width:92px}
+.c-res{font-size:13.5px;min-width:340px;width:44%}
+.c-pa{white-space:nowrap}
+.parcours{display:inline-flex;align-items:flex-start}
+.et{display:inline-flex;flex-direction:column;align-items:center;width:46px;position:relative}
+.et i{width:12px;height:12px;border-radius:50%;border:2px solid var(--fil);background:var(--carte);display:block;z-index:1}
+.et:not(:first-child) i::before{content:"";position:absolute;top:6px;right:23px;width:46px;height:2px;background:var(--fil)}
+.et:nth-child(1).plein i{background:var(--ocre);border-color:var(--ocre)}
+.et:nth-child(2).plein i{background:var(--ard);border-color:var(--ard)}
+.et:nth-child(3).plein i{background:var(--vert);border-color:var(--vert)}
+.et b{font-weight:600;font-size:9.5px;color:var(--enc);margin-top:3px;line-height:1.15}.et small{font-size:9px;color:var(--mut);line-height:1.15}
+.c-ac{width:118px}
+.btn{display:block;text-align:center;border-radius:6px;padding:4px 8px;font-size:11.5px;font-weight:600;text-decoration:none;margin:2px 0;cursor:pointer;font-family:inherit;border:0;width:100%}
+.btn.plein{background:var(--sceau);color:#fff}
+.btn.creux{border:1px solid var(--sceau);color:var(--sceau);background:var(--sceau2)}
+.btn.vert{border:1px solid var(--vert);color:var(--vert);background:var(--vert2)}
+.c-sel{width:28px}.sel{width:16px;height:16px;accent-color:var(--sceau)}
+.barre{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--enc);color:#fff;border-radius:10px;padding:10px 12px;margin:14px 0 0;
+position:sticky;bottom:8px;z-index:5;box-shadow:0 4px 18px rgba(22,35,58,.25)}
+.barre b{margin-right:auto;font-weight:600;font-size:13px}
+.barre button{font:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:6px;padding:6px 12px;cursor:pointer;background:#fff;color:var(--enc)}
+.barre button.rouge{background:var(--sceau);color:#fff}.barre button.creux{background:transparent;color:#cfd8e6;border:1px solid #4a5b78}
+.barre button:disabled{cursor:not-allowed}
+.etat{margin:0 0 8px;padding:10px 12px;border-radius:8px;background:#fff;border:1px solid var(--ard);border-left:4px solid var(--ard);font-size:13px}
+.etat.err{background:var(--sceau2);border-color:var(--sceau)}
+.etat textarea{width:100%;margin:8px 0 6px;font:12.5px/1.4 Consolas,"SF Mono",monospace;color:var(--enc);border:1px solid var(--fil);border-radius:6px;padding:8px;background:#f8fafc}
+.btnc{font:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:6px;padding:6px 12px;background:var(--sceau);color:#fff;cursor:pointer}
+tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoye";font-size:11px;color:var(--vert)}
+.mut{color:var(--mut)}.vide{padding:26px;text-align:center;color:var(--mut)}
+.pied{margin-top:22px;font-size:12.5px;color:var(--mut)}
+.chargement{padding:26px;text-align:center;color:var(--mut);font-size:14px}
+[hidden]{display:none !important}
+@media (max-width:640px){h1{font-size:22px}.c-res{min-width:240px}}
+</style></head>
+<body><div class="page">
+<h1>Console d'administration</h1>
+<p class="sous" id="sous">Systeme d'agents specialises - etat reel des depots, lu a l'ouverture. Cette page ne contient aucune donnee : tout est lu en direct avec ta cle.</p>
+
+<div class="acces">
+  <label for="cle" style="font-size:13px;font-weight:600">Cle d'acces</label>
+  <input id="cle" type="password" placeholder="colle ici ta cle GitHub (elle reste dans ce navigateur)" autocomplete="off">
+  <button class="btnc" id="ouvrir">Ouvrir la console</button>
+  <button class="onglet" id="oublier" style="border-radius:6px;border-bottom:1px solid var(--fil)">Oublier la cle</button>
+  <span class="mut" id="etatcle" style="font-size:12.5px"></span>
+</div>
+
+<div class="compteurs" id="compteurs" hidden></div>
+
+<div class="onglets" role="tablist" id="onglets" hidden>
+  <button class="onglet" role="tab" data-vue="tunnel" aria-selected="true">Tunnel d'acquisition des connaissances</button>
+  <button class="onglet" role="tab" data-vue="agents" aria-selected="false">Gestion des agents</button>
+  <button class="onglet" role="tab" data-vue="veille" aria-selected="false">Supervision de la veille</button>
+</div>
+
+<div id="etat" class="etat" hidden></div>
+
+<section id="vue-tunnel" hidden>
+  <div class="outils">
+    <input id="q" placeholder="Rechercher un document, un resume, une origine">
+    <select id="ft"><option value="">Tous les tags</option></select>
+    <select id="fs"><option value="">Tous les statuts</option></select>
+    <select id="fa"><option value="">Tous les agents</option></select>
+  </div>
+  <p class="legende">Parcours : <b>Zone 1</b> (triage, <code>informations-publiques/</code>) - <b>Zone 2</b> (docs accessibles, <code>connaissances-stockees/</code>) - <b>Zone 3</b> (memoire vive, <code>savoir/</code>). La pastille pleine est la zone ou vit le document. Statut de l'info : Etabli / Annonce / Non verifie.</p>
+  <div id="tunnel"></div>
+  <div class="barre" id="barre" hidden>
+    <b id="cpt">0 document selectionne</b>
+    <button data-act="bibliotheque" data-lib="Classer en Zone 2" class="rouge">Classer en Zone 2</button>
+    <button data-act="vivant" data-lib="Vers memoire vive">Vers memoire vive</button>
+    <button data-act="deversoir" data-lib="Retour en Zone 1" class="creux">Retour en Zone 1</button>
+    <button data-act="supprimer" data-lib="Supprimer" class="creux">Supprimer</button>
+    <button id="vider" class="creux">Vider la selection</button>
+  </div>
+</section>
+
+<section id="vue-agents" hidden>
+  <p class="legende">Fraicheur de la memoire vive de chaque agent : le numero de <code>savoir/VERSION.md</code> au depot et sa derniere evolution. Un agent sans fichier de version n'a pas encore de protocole memoire.</p>
+  <div id="agents"></div>
+</section>
+
+<section id="vue-veille" hidden>
+  <p class="legende">Une ligne par veille declaree active dans <code>ADMIN/instructions/VEILLES_ACTIVES.md</code>. Age = jours ecoules depuis la derniere entree de l'index de veille. Au-dela de 8 jours, la veille n'a pas rendu compte : ecart a traiter.</p>
+  <div id="veille"></div>
+</section>
+
+<p class="pied">Le depot est la verite ; cette console n'est qu'une vue. Depot public : il ne contient que le code de cette page - aucun document, aucun resume, aucune cle.</p>
+</div>
+
+<script>
+const DEPOTS = ["jlucb67/SOCLE", "jlucb67/GENERAL", "jlucb67/LFI"];
+const ZONES = ["informations-publiques", "connaissances-stockees", "savoir"];
+const ZLBL = {"informations-publiques":"Zone 1 (triage)", "connaissances-stockees":"Zone 2 (docs accessibles)", "savoir":"Zone 3 (memoire vive)"};
+const DATED = /^\d{4}-\d{2}-\d{2}[-_ ]*/;
+/* pack-modele porte les memes dossiers qu'un agent : c'est le gabarit de naissance, pas un agent */
+const EXCLUS = ["pack-modele"];
+const $ = s => document.getElementById(s);
+const $$ = s => [...document.querySelectorAll(s)];
+let CLE = "";
+let LIGNES = [];
+let AGENTS = [];
+let VEILLES = [];
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function poids(n){ return n >= 1048576 ? (n/1048576).toFixed(1)+" Mo" : n >= 1024 ? Math.round(n/1024)+" Ko" : n+" o"; }
+function jours(d){ return Math.floor((Date.now() - d.getTime()) / 86400000); }
+
+async function api(chemin, options){
+  const o = options || {};
+  o.headers = Object.assign({"Accept":"application/vnd.github+json"}, o.headers || {});
+  if (CLE) o.headers["Authorization"] = "Bearer " + CLE;
+  const r = await fetch("https://api.github.com" + chemin, o);
+  if (!r.ok){ const e = new Error("GitHub a repondu " + r.status); e.code = r.status; throw e; }
+  return r.json();
+}
+function decode(b64){
+  const bin = atob(b64.replace(/\n/g, ""));
+  const oct = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) oct[i] = bin.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(oct);
+}
+async function texte(depot, chemin){
+  const d = await api("/repos/" + depot + "/contents/" + chemin);
+  return decode(d.content || "");
+}
+async function texteOuNull(depot, chemin){
+  try { return await texte(depot, chemin); } catch(e){ return null; }
+}
+
+/* ---------- lecture des depots ---------- */
+async function arbre(depot){
+  const d = await api("/repos/" + depot + "/git/trees/main?recursive=1");
+  return d.tree || [];
+}
+function metaParse(txt){
+  const m = {};
+  if (!txt) return m;
+  const lignes = txt.split("\n").filter(l => l.trim() && !l.startsWith("#"));
+  for (const l of lignes){
+    const c = l.split("\t");
+    if (c.length < 2) continue;
+    if (/^document\b/i.test(c[0])) continue;
+    m[c[1].trim()] = {
+      doc: (c[0]||"").trim(), tags: (c[2]||"").trim().split(/\s+/).filter(Boolean),
+      statut: (c[3]||"").trim(), origine: (c[4]||"").trim(),
+      resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase()
+    };
+  }
+  return m;
+}
+function dateDe(nom){
+  const m = nom.match(/(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[1]+"-"+m[2]+"-"+m[3] : "";
+}
+function derniereDate(txt){
+  if (!txt) return null;
+  let best = null;
+  const re = /(\d{2})\/(\d{2})\/(\d{4})/g;
+  let m;
+  while ((m = re.exec(txt))){
+    const d = new Date(+m[3], +m[2]-1, +m[1]);
+    if (!isNaN(d) && (!best || d > best)) best = d;
+  }
+  return best;
+}
+
+async function collecte(){
+  LIGNES = []; AGENTS = []; VEILLES = [];
+  const arbres = {};
+  for (const dep of DEPOTS) arbres[dep] = await arbre(dep);
+
+  /* agents = dossiers de premier niveau portant au moins une zone */
+  const listeAgents = [];
+  for (const dep of DEPOTS){
+    const noms = new Set();
+    for (const n of arbres[dep]){
+      const p = n.path.split("/");
+      if (p.length >= 2 && ZONES.includes(p[1]) && !EXCLUS.includes(p[0])) noms.add(p[0]);
+    }
+    for (const a of [...noms].sort()) listeAgents.push({depot: dep, agent: a});
+  }
+
+  /* documents des trois zones, croises avec META */
+  for (const {depot, agent} of listeAgents){
+    const meta = metaParse(await texteOuNull(depot, agent + "/META_DOCUMENTS.tsv"));
+    const docs = {};
+    for (const n of arbres[depot]){
+      if (n.type !== "blob") continue;
+      const p = n.path.split("/");
+      if (p.length !== 3 || p[0] !== agent || !ZONES.includes(p[1])) continue;
+      const zone = p[1], fic = p[2];
+      if (/^(VEILLE|README|CATALOGUE|VERSION)\.md$/i.test(fic)) continue;
+      const cle = fic.replace(DATED, "").replace(/\.[^.]+$/, "");
+      if (zone === "savoir" && !meta[fic] && !dateDe(fic)) continue;
+      const d = docs[cle] || (docs[cle] = {agent, depot, doc: fic, z: {}, meta: null});
+      d.z[zone] = [fic, (fic.split(".").pop() || "sans ext.").toLowerCase(), n.size || 0];
+      if (meta[fic]) { d.meta = meta[fic]; d.doc = meta[fic].doc || fic; }
+    }
+    for (const cle in docs){
+      const d = docs[cle], m = d.meta || {};
+      LIGNES.push({
+        agent, depot, doc: d.doc, z: d.z,
+        tags: m.tags && m.tags.length ? m.tags : [],
+        statut: m.statut || "-", origine: m.origine || "-",
+        resume: m.resume || "non lu",
+        cat: (m.cat === "actualite" || /veille/i.test(m.origine || "")) ? "actu" : "fond",
+        date: dateDe(Object.values(d.z)[0][0]) || ""
+      });
+    }
+    const v = await texteOuNull(depot, agent + "/savoir/VERSION.md");
+    const num = v && v.match(/VERSION\s*:\s*(\d+)/);
+    const quoi = v && v.match(/^- v\d+.*$/m);
+    AGENTS.push({agent, depot, version: num ? num[1] : null,
+                 evolution: quoi ? quoi[0].replace(/^- /, "") : "",
+                 maj: v ? derniereDate(v) : null});
+  }
+
+  /* veilles actives */
+  const va = await texteOuNull("jlucb67/SOCLE", "ADMIN/instructions/VEILLES_ACTIVES.md");
+  if (va){
+    for (const l of va.split("\n")){
+      if (!l.startsWith("- ")) continue;
+      const c = l.slice(2).split("|").map(s => s.trim());
+      if (c.length < 3) continue;
+      const dep = (c[1].match(/([\w-]+\/[\w-]+)/) || [])[1] || "";
+      const idx = (c[2].replace(/^index\s*:\s*/i, "") || "").trim();
+      VEILLES.push({nom: c[0], depot: dep, index: idx, cadence: c[3] || "-", derniere: null, enAttente: null});
+    }
+    for (const v of VEILLES){
+      if (!v.depot || !v.index) continue;
+      v.derniere = derniereDate(await texteOuNull(v.depot, v.index));
+      const ag = v.index.split("/")[0];
+      v.enAttente = LIGNES.filter(r => r.agent === ag && r.z["informations-publiques"]).length;
+    }
+  }
+}
+
+/* ---------- rendu du tunnel ---------- */
+function chip(s){
+  const cl = {"Etabli":"st-e","Établi":"st-e","Annonce":"st-a","Annoncé":"st-a","Non verifie":"st-n","Non vérifié":"st-n"}[s] || "st-x";
+  return '<span class="chip ' + cl + '">' + esc(s) + '</span>';
+}
+function parcours(r){
+  let s = "";
+  for (const z of ZONES){
+    if (r.z[z]){
+      const [, ext, n] = r.z[z];
+      s += '<span class="et plein" title="' + ZLBL[z] + ' - ' + ext + " " + poids(n) + '"><i></i><b>' + esc(ext) + '</b><small>' + poids(n) + '</small></span>';
+    } else s += '<span class="et" title="' + ZLBL[z] + ' - absent"><i></i></span>';
+  }
+  return '<span class="parcours">' + s + "</span>";
+}
+function zonecode(r){
+  if (r.z["informations-publiques"]) return ["Z1", r.z["informations-publiques"][0]];
+  if (r.z["connaissances-stockees"] && !r.z["savoir"]) return ["Z2", r.z["connaissances-stockees"][0]];
+  return ["", ""];
+}
+function actions(r){
+  const [zc, fic] = zonecode(r);
+  if (zc === "Z1") return '<button class="btn plein" data-act="bibliotheque" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="Z1">Vers Zone 2</button>'
+    + '<button class="btn creux" data-act="supprimer" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="Z1">Supprimer</button>';
+  if (zc === "Z2") return '<button class="btn vert" data-act="vivant" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="Z2">Vers Zone 3</button>';
+  return '<span class="mut">-</span>';
+}
+function tr(r){
+  const [zc, fic] = zonecode(r);
+  const tags = r.tags.length ? r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") : '<span class="mut">a taguer</span>';
+  const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
+  const case_ = zc ? '<input type="checkbox" class="sel" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + zc + '">' : "";
+  return '<tr data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
+    + ' data-txt="' + esc((r.doc + " " + r.resume + " " + r.origine).toLowerCase()) + '">'
+    + '<td class="c-sel">' + case_ + '</td><td class="c-ag">' + esc(r.agent) + '</td>'
+    + '<td class="c-doc"><span class="nom">' + esc(r.doc.replace(DATED, "")) + '</span><span class="ssdate">' + dj + "</span></td>"
+    + '<td class="c-tg">' + tags + "</td><td>" + chip(r.statut) + "</td>"
+    + '<td class="c-or">' + esc(r.origine) + '</td><td class="c-res">' + esc(r.resume) + "</td>"
+    + '<td class="c-pa">' + parcours(r) + '</td><td class="c-ac">' + actions(r) + "</td></tr>";
+}
+function tableau(rows){
+  const tetes = "<tr><th class='c-sel'></th><th>Agent</th><th>Document</th><th>Tags</th><th>Statut de l'info</th><th>Origine</th><th>Resume</th><th>Parcours Zones 1-2-3</th><th>Actions</th></tr>";
+  return '<div class="cadre"><table><thead>' + tetes + "</thead><tbody>" + rows.map(tr).join("") + "</tbody></table></div>";
+}
+function rendreTunnel(){
+  const actus = LIGNES.filter(r => r.cat === "actu").sort((a, b) => (b.date + b.doc).localeCompare(a.date + a.doc));
+  const fonds = LIGNES.filter(r => r.cat !== "actu");
+  let h = "";
+  h += "<h2>Actualites - " + actus.length + " document" + (actus.length > 1 ? "s" : "") + "</h2>";
+  h += actus.length ? tableau(actus) : '<div class="cadre"><p class="vide">Aucune actualite.</p></div>';
+  const grp = {};
+  for (const r of fonds) (grp[r.tags[0] || "#a-taguer"] = grp[r.tags[0] || "#a-taguer"] || []).push(r);
+  h += "<h2>Documents de fond - " + fonds.length + " document" + (fonds.length > 1 ? "s" : "") + "</h2>";
+  for (const t of Object.keys(grp).sort()) h += '<h3 class="grp">' + esc(t) + "</h3>" + tableau(grp[t]);
+  if (!fonds.length) h += '<div class="cadre"><p class="vide">Aucun document de fond.</p></div>';
+  $("tunnel").innerHTML = h;
+  const tags = [...new Set(LIGNES.flatMap(r => r.tags))].sort();
+  $("ft").innerHTML = '<option value="">Tous les tags</option>' + tags.map(t => "<option>" + esc(t) + "</option>").join("");
+  const sts = [...new Set(LIGNES.map(r => r.statut))].filter(s => s && s !== "-").sort();
+  $("fs").innerHTML = '<option value="">Tous les statuts</option>' + sts.map(s => "<option>" + esc(s) + "</option>").join("");
+  const ags = [...new Set(LIGNES.map(r => r.agent))].sort();
+  $("fa").innerHTML = '<option value="">Tous les agents</option>' + ags.map(a => "<option>" + esc(a) + "</option>").join("");
+  brancherActions();
+  filtrer();
+}
+function filtrer(){
+  const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, st = $("fs").value, ag = $("fa").value;
+  $$("#tunnel tbody tr").forEach(r => {
+    const ok = (!t || r.dataset.txt.includes(t)) && (!tg || r.dataset.tags.split(" ").includes(tg))
+      && (!st || r.dataset.statut === st) && (!ag || r.dataset.agent === ag);
+    r.style.display = ok ? "" : "none";
+  });
+  $$("#tunnel h2, #tunnel h3.grp").forEach(h => {
+    let n = h.nextElementSibling;
+    while (n && !n.classList.contains("cadre")) n = n.nextElementSibling;
+    if (n){
+      const vis = [...n.querySelectorAll("tbody tr")].some(r => r.style.display !== "none");
+      h.style.display = vis ? "" : "none"; n.style.display = vis ? "" : "none";
+    }
+  });
+}
+
+/* ---------- rendu des deux autres ecrans ---------- */
+function rendreAgents(){
+  const l = AGENTS.map(a => {
+    const eq = a.depot.split("/")[1];
+    const age = a.maj ? jours(a.maj) : null;
+    const et = a.version == null ? '<span class="chip st-al">sans protocole memoire</span>'
+      : (age != null && age > 14 ? '<span class="chip st-a">' + age + " j sans evolution</span>"
+      : '<span class="chip st-ok">a jour</span>');
+    return "<tr><td class='c-ag'>" + esc(a.agent) + "</td><td>" + esc(eq) + "</td><td><b>"
+      + (a.version == null ? "-" : "v" + a.version) + "</b></td><td>"
+      + (a.maj ? a.maj.toLocaleDateString("fr-FR") : "-") + "</td><td class='c-res'>"
+      + esc(a.evolution || "-") + "</td><td>" + et + "</td></tr>";
+  }).join("");
+  $("agents").innerHTML = '<div class="cadre court"><table><thead><tr><th>Agent</th><th>Equipe</th><th>Version</th><th>Derniere gravure</th><th>Derniere evolution</th><th>Etat</th></tr></thead><tbody>'
+    + (l || "<tr><td colspan='6' class='vide'>Aucun agent trouve.</td></tr>") + "</tbody></table></div>";
+}
+function rendreVeille(){
+  const l = VEILLES.map(v => {
+    const age = v.derniere ? jours(v.derniere) : null;
+    const et = age == null ? '<span class="chip st-al">index illisible</span>'
+      : (age > 8 ? '<span class="chip st-al">en retard</span>' : '<span class="chip st-ok">OK</span>');
+    return "<tr><td class='c-ag'>" + esc(v.nom) + "</td><td>" + esc(v.depot.split("/")[1] || "-") + "</td><td>"
+      + (v.derniere ? v.derniere.toLocaleDateString("fr-FR") : "-") + "</td><td>" + (age == null ? "-" : age + " j")
+      + "</td><td>" + (v.enAttente == null ? "-" : v.enAttente) + "</td><td>" + et + "</td></tr>";
+  }).join("");
+  $("veille").innerHTML = '<div class="cadre court"><table><thead><tr><th>Veille</th><th>Equipe</th><th>Derniere entree</th><th>Age</th><th>En attente (Zone 1)</th><th>Etat</th></tr></thead><tbody>'
+    + (l || "<tr><td colspan='6' class='vide'>Aucune veille declaree active.</td></tr>") + "</tbody></table></div>";
+}
+function rendreCompteurs(){
+  const z1 = LIGNES.filter(r => r.z["informations-publiques"]).length;
+  const nonLus = LIGNES.filter(r => r.resume === "non lu").length;
+  const retard = VEILLES.filter(v => !v.derniere || jours(v.derniere) > 8).length;
+  const c = [["Documents", LIGNES.length], ["En Zone 1 (a decider)", z1], ["Resumes manquants", nonLus],
+             ["Agents", AGENTS.length], ["Veilles en retard", retard]];
+  $("compteurs").innerHTML = c.map(x => '<div class="cpt"><b>' + x[1] + "</b><span>" + x[0] + "</span></div>").join("");
+  $("compteurs").hidden = false;
+}
+
+/* ---------- demandes (envoi direct ou commande a coller) ---------- */
+function libelle(act){
+  return act === "bibliotheque" ? "vers Zone 2 (docs accessibles)" : act === "vivant" ? "vers Zone 3 (memoire vive)"
+    : act === "deversoir" ? "retour en Zone 1 (triage)" : "supprimer de la Zone 1";
+}
+function choisis(){ return $$(".sel:checked").map(c => ({a: c.dataset.a, f: c.dataset.f, z: c.dataset.z, d: c.dataset.d})); }
+function eligibles(it, act){ const zc = (act === "vivant" || act === "deversoir") ? "Z2" : "Z1"; return it.filter(i => i.z === zc); }
+function majsel(){
+  const s = choisis();
+  $("barre").hidden = s.length === 0;
+  $("cpt").textContent = s.length + (s.length > 1 ? " documents selectionnes" : " document selectionne");
+  $$(".barre [data-act]").forEach(x => {
+    const n = eligibles(s, x.dataset.act).length;
+    x.textContent = x.dataset.lib + (n ? " (" + n + ")" : ""); x.disabled = n === 0; x.style.opacity = n ? 1 : .4;
+  });
+}
+function etat(msg, err, url, lib){
+  const d = $("etat"); d.hidden = false; d.className = "etat" + (err ? " err" : "");
+  d.innerHTML = msg + (url ? ' <a href="' + url + '" target="_blank" rel="noopener">' + (lib || "Ouvrir sur GitHub") + "</a>" : "");
+}
+function demande(act, it){
+  return it.length === 1
+    ? {title: "PROMOUVOIR|" + it[0].a + "|" + it[0].f + "|" + act, body: "Demande emise depuis la console d'administration."}
+    : {title: "PROMOUVOIR-LOT|" + act + "|" + it.length + " documents",
+       body: "Demande emise depuis la console d'administration.\n\n" + it.map(i => "- " + i.a + "|" + i.f).join("\n")};
+}
+function commande(act, it){
+  const parDepot = {};
+  it.forEach(i => (parDepot[i.d] = parDepot[i.d] || []).push(i));
+  return Object.keys(parDepot).map(dep =>
+    "Admin, execute ces decisions de la console (depot " + dep + ") :\n"
+    + parDepot[dep].map(i => "- " + i.a + " | " + i.f + " | " + libelle(act)).join("\n")
+    + "\nExecute par le connecteur, puis rends compte.").join("\n\n");
+}
+function proposer(act, it){
+  const txt = commande(act, it), d = $("etat");
+  d.hidden = false; d.className = "etat";
+  d.innerHTML = "<b id='titcmd'>Commande prete</b> - colle-la dans la conversation avec l'Agent Admin :"
+    + "<textarea id='cmd' rows='" + Math.min(12, it.length + 3) + "' readonly></textarea><button id='copier' class='btnc'>Copier la commande</button>";
+  $("cmd").value = txt;
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => {
+    $("titcmd").textContent = "Commande copiee"; $("copier").textContent = "Copier a nouveau";
+  }).catch(() => {});
+  $("copier").addEventListener("click", async e => {
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = "Copie"; }
+    catch(err){ $("cmd").focus(); $("cmd").select();
+      try { document.execCommand("copy"); e.target.textContent = "Copie"; }
+      catch(_){ e.target.textContent = "Selectionne le texte et copie"; } }
+  });
+}
+async function envoyer(act, it){
+  if (!it.length){
+    const z = (act === "vivant" || act === "deversoir") ? "Zone 2 (docs accessibles)" : "Zone 1 (triage)";
+    etat("Cette action ne concerne que la " + z + ". Ta selection est ailleurs.", 1); return;
+  }
+  const parDepot = {};
+  it.forEach(i => (parDepot[i.d] = parDepot[i.d] || []).push(i));
+  etat("Envoi de la demande...");
+  const faits = [];
+  try {
+    for (const dep of Object.keys(parDepot)){
+      const d = await api("/repos/" + dep + "/issues", {method: "POST",
+        headers: {"Content-Type": "application/json"}, body: JSON.stringify(demande(act, parDepot[dep]))});
+      faits.push(d);
+    }
+  } catch(e){ proposer(act, it); return; }
+  it.forEach(i => {
+    const c = $$(".sel").find(x => x.dataset.a === i.a && x.dataset.f === i.f);
+    if (c){ c.checked = false; c.closest("tr").classList.add("envoye"); }
+  });
+  majsel();
+  etat("Demande envoyee (" + it.length + " document" + (it.length > 1 ? "s" : "") + ") - le robot la traite en moins d'une minute.",
+       0, faits[0].html_url, "Suivre");
+}
+function brancherActions(){
+  $$("#tunnel [data-act]").forEach(b => b.addEventListener("click", ev => {
+    ev.preventDefault();
+    envoyer(b.dataset.act, [{a: b.dataset.a, f: b.dataset.f, z: b.dataset.z, d: b.dataset.d}]);
+  }));
+  $$("#tunnel .sel").forEach(c => c.addEventListener("change", majsel));
+}
+
+/* ---------- ouverture ---------- */
+function vue(nom){
+  $$("#onglets .onglet").forEach(b => b.setAttribute("aria-selected", b.dataset.vue === nom ? "true" : "false"));
+  ["tunnel", "agents", "veille"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
+}
+async function ouvrir(){
+  CLE = $("cle").value.trim();
+  if (!CLE){ etat("Colle ta cle GitHub pour ouvrir la console : sans elle, cette page ne peut rien lire.", 1); return; }
+  try { localStorage.setItem("cle_console", CLE); } catch(e){}
+  $("etatcle").textContent = "cle enregistree dans ce navigateur";
+  $("etat").hidden = true;
+  $("tunnel").innerHTML = '<p class="chargement">Lecture de l\'etat reel des depots...</p>';
+  $("onglets").hidden = false; vue("tunnel");
+  try {
+    await collecte();
+    rendreCompteurs(); rendreTunnel(); rendreAgents(); rendreVeille();
+    $("sous").textContent = "Etat reel des depots, lu le " + new Date().toLocaleString("fr-FR") + ".";
+  } catch(e){
+    $("tunnel").innerHTML = "";
+    if (e.code === 401) etat("La cle est refusee par GitHub (401) : elle est invalide ou revoquee.", 1);
+    else if (e.code === 403 || e.code === 404) etat("La cle ne donne pas acces aux depots (" + e.code + ") : verifie sa permission Contents en lecture sur SOCLE, GENERAL et LFI.", 1);
+    else etat("Lecture impossible : " + e.message + ". Si cette page est ouverte dans l'application Claude, ses connexions sortantes sont bloquees : ouvre-la dans un navigateur.", 1);
+  }
+}
+$("ouvrir").addEventListener("click", ouvrir);
+$("cle").addEventListener("keydown", e => { if (e.key === "Enter") ouvrir(); });
+$("oublier").addEventListener("click", () => {
+  try { localStorage.removeItem("cle_console"); } catch(e){}
+  $("cle").value = ""; CLE = ""; $("etatcle").textContent = "cle oubliee";
+});
+$$("#onglets .onglet").forEach(b => b.addEventListener("click", () => vue(b.dataset.vue)));
+["q", "ft", "fs", "fa"].forEach(i => $(i).addEventListener("input", filtrer));
+$("vider").addEventListener("click", () => { $$(".sel").forEach(c => c.checked = false); majsel(); });
+$$(".barre [data-act]").forEach(b => b.addEventListener("click", () => envoyer(b.dataset.act, eligibles(choisis(), b.dataset.act))));
+try {
+  const m = localStorage.getItem("cle_console");
+  if (m){ $("cle").value = m; $("etatcle").textContent = "cle retrouvee dans ce navigateur"; ouvrir(); }
+} catch(e){}
+</script>
+</body></html>
