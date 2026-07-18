@@ -33,15 +33,15 @@ thead th{font-family:Consolas,"SF Mono",monospace;font-size:10px;letter-spacing:
 td{padding:8px;border-bottom:1px solid #e8ecf1;vertical-align:top}
 tbody tr:nth-child(even){background:#f8fafc}tbody tr:hover{background:#f1f5fa}
 .c-ag{font-family:Consolas,"SF Mono",monospace;font-size:10.5px;color:var(--mut);max-width:76px;overflow-wrap:anywhere}
-.c-doc{max-width:190px}.nom{font-weight:600;font-size:12.5px;overflow-wrap:anywhere;display:block}.ssdate{font-size:11px;color:var(--mut)}
+.c-doc{width:52%;min-width:300px}.nom{font-weight:600;font-size:12.5px;overflow-wrap:anywhere;display:block}.ssdate{font-size:11px;color:var(--mut)}
 .c-tg{max-width:105px}.tag{display:inline-block;background:#e6ecf7;border:1px solid #c3d0e6;color:var(--ard);font-weight:600;border-radius:20px;padding:2px 9px;font-size:11.5px;margin:3px 4px 0 0}
 .lestags{display:block;margin-top:3px}
 .chip{display:inline-block;border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;white-space:nowrap}
 .st-e{background:#e6ebf3;color:var(--enc)}.st-a{background:var(--ocre2);color:#7a5314}.st-n{background:#eceff3;color:var(--mut)}.st-x{color:var(--mut)}
 .st-ok{background:var(--vert2);color:var(--vert)}.st-al{background:var(--sceau2);color:var(--sceau)}
-.c-or{font-size:11px;color:var(--mut);max-width:92px}
+.c-or{font-size:11px;color:var(--mut);width:96px}
 .c-res{font-size:13.5px;min-width:340px;width:44%}
-.c-pa{white-space:nowrap}
+.c-pa{white-space:nowrap;width:170px}
 .parcours{display:inline-flex;align-items:flex-start}
 .et{display:inline-flex;flex-direction:column;align-items:center;width:46px;position:relative}
 .et i{width:12px;height:12px;border-radius:50%;border:2px solid var(--fil);background:var(--carte);display:block;z-index:1}
@@ -50,7 +50,7 @@ tbody tr:nth-child(even){background:#f8fafc}tbody tr:hover{background:#f1f5fa}
 .et:nth-child(2).plein i{background:var(--ard);border-color:var(--ard)}
 .et:nth-child(3).plein i{background:var(--vert);border-color:var(--vert)}
 .et b{font-weight:600;font-size:9.5px;color:var(--enc);margin-top:3px;line-height:1.15}.et small{font-size:9px;color:var(--mut);line-height:1.15}
-.c-ac{width:118px}
+.c-ac{width:104px}
 .btn{display:block;text-align:center;border-radius:6px;padding:4px 8px;font-size:11.5px;font-weight:600;text-decoration:none;margin:2px 0;cursor:pointer;font-family:inherit;border:0;width:100%}
 .btn.plein{background:var(--sceau);color:#fff}
 .btn.creux{border:1px solid var(--sceau);color:var(--sceau);background:var(--sceau2)}
@@ -83,14 +83,14 @@ letter-spacing:.5px;text-align:center;border-radius:5px;padding:4px 0;color:#fff
 .c-sel{width:40px;text-align:center}
 .titre{font-weight:600;font-size:13.5px;line-height:1.35;display:block;overflow-wrap:anywhere}
 .leresume{display:block;font-size:13.5px;line-height:1.45;margin-top:4px;color:#22314c}
-.lefichier{display:block;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;color:#93a0b2;margin-top:5px;overflow-wrap:anywhere}
+.lefichier{display:block;max-width:100%;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;color:#93a0b2;margin-top:5px;overflow-wrap:anywhere}
 .c-ac{height:1px}
 .zoneac{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;min-height:64px}
 .zoneac .btn{margin:0}
 .lesboutons{display:flex;flex-direction:column;gap:5px;width:100%;align-items:center;margin:auto 0}
 .btn.mini{font-size:10.5px;font-weight:700;padding:5px 6px;border-radius:5px;width:52px;margin:0;line-height:1.1}
 .c-nom{min-width:120px}
-.c-fic{font-family:Consolas,"SF Mono",monospace;font-size:10px;color:var(--mut);max-width:150px;overflow-wrap:anywhere}
+.c-fic{display:none}
 .z-1{background:var(--ocre)}.z-2{background:var(--ard)}.z-3{background:var(--vert)}
 tr.doc[data-zone="Z1"] td:first-child{box-shadow:inset 4px 0 0 var(--ocre)}
 tr.doc[data-zone="Z2"] td:first-child{box-shadow:inset 4px 0 0 var(--ard)}
@@ -107,7 +107,6 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
   .c-ac{width:64px;padding:8px 6px}
   .c-doc{max-width:none;width:100%;cursor:pointer}
   .c-tg{display:none}
-  .lefichier{display:none}
   .titre{font-size:14px}
   .ssdate{display:none}
   .ssligne{display:block}
@@ -151,6 +150,20 @@ background:#eef2f8;border-radius:4px;padding:2px 6px;margin-right:auto}
 .pieds{font-size:11.5px;color:var(--mut);margin:0}
 .alertes{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0 0}
 .al{background:var(--ocre2);color:#7a5314;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:600}
+.synthese{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 14px}
+.synthese .mesure{flex:1 1 110px}
+.criteres{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 10px}
+.crit{font-size:11px;font-weight:600;border-radius:5px;padding:3px 8px}
+.crit.oui{background:var(--vert2);color:var(--vert)}
+.crit.non{background:var(--sceau2);color:var(--sceau)}
+.crit.sans{background:#eef2f8;color:var(--mut)}
+.journal{margin:10px 0 8px}
+.journal h4{font-family:Consolas,"SF Mono",monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;
+color:var(--mut);margin:0 0 5px}
+.journal ol{margin:0;padding:0;list-style:none;border-left:2px solid var(--fil)}
+.journal li{position:relative;padding:0 0 8px 12px;font-size:11.5px;line-height:1.35}
+.journal li::before{content:"";position:absolute;left:-5px;top:5px;width:8px;height:8px;border-radius:50%;
+background:var(--carte);border:2px solid var(--ard)}
 .voile-carte{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:26px 20px;text-align:center;margin:10px 0}
 .voile-barre{height:4px;background:var(--fil);border-radius:3px;overflow:hidden;max-width:280px;margin:0 auto 14px}
 .voile-barre i{display:block;height:100%;width:40%;background:var(--enc);border-radius:3px;animation:glisse 1.1s ease-in-out infinite}
@@ -183,7 +196,6 @@ background:#eef2f8;border-radius:4px;padding:2px 6px;margin-right:auto}
 </div>
 
 <div id="corps" hidden>
-<div class="compteurs" id="compteurs"></div>
 
 <div class="onglets" role="tablist" id="onglets" hidden>
   <button class="onglet" role="tab" data-vue="tunnel" aria-selected="true"><span class="long">Tunnel d'acquisition des connaissances</span><span class="court">Tunnel</span></button>
@@ -194,6 +206,7 @@ background:#eef2f8;border-radius:4px;padding:2px 6px;margin-right:auto}
 <div id="etat" class="etat" hidden></div>
 
 <section id="vue-tunnel" hidden>
+  <div class="compteurs" id="compteurs"></div>
   <div class="outils">
     <input id="q" placeholder="Rechercher un document, un resume, une origine">
     <select id="fc"><option value="">Actualites et fonds</option><option value="actu">Actualites</option><option value="fond">Documents de fond</option></select>
@@ -221,12 +234,12 @@ background:#eef2f8;border-radius:4px;padding:2px 6px;margin-right:auto}
 </section>
 
 <section id="vue-agents" hidden>
-  <p class="legende">Fraicheur de la memoire vive de chaque agent : le numero de <code>savoir/VERSION.md</code> au depot et sa derniere evolution. Un agent sans fichier de version n'a pas encore de protocole memoire.</p>
+  <p class="legende">L'agent comme installation : sa conformite (protocole memoire, veille, metadonnees, avatar), sa memoire vive et sa vitalite. L'inventaire de ses documents n'est pas repete ici : il vit dans le tunnel.</p>
   <div id="agents"></div>
 </section>
 
 <section id="vue-veille" hidden>
-  <p class="legende">Une ligne par veille declaree active dans <code>ADMIN/instructions/VEILLES_ACTIVES.md</code>. Age = jours ecoules depuis la derniere entree de l'index de veille. Au-dela de 8 jours, la veille n'a pas rendu compte : ecart a traiter.</p>
+  <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles metier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalise est signale comme tel.</p>
   <div id="veille"></div>
 </section>
 
@@ -283,6 +296,11 @@ async function dernierCommit(depot, chemin){
     return {date: new Date(d[0].commit.committer.date), qui: d[0].commit.author.name,
             titre: d[0].commit.message.split("\n")[0]};
   } catch(e){ return null; }
+}
+async function commits(depot, chemin, n){
+  try {
+    return await api("/repos/" + depot + "/commits?path=" + encodeURIComponent(chemin) + "&per_page=" + (n || 5));
+  } catch(e){ return []; }
 }
 async function arbre(depot){
   const d = await api("/repos/" + depot + "/git/trees/main?recursive=1");
@@ -375,16 +393,38 @@ async function collecte(){
       }
     }
     const act = await dernierCommit(depot, agent + "/");
+    const chemins = new Set(arbres[depot].filter(n => n.path.startsWith(agent + "/")).map(n => n.path));
+    const conf = {
+      memoire: chemins.has(agent + "/savoir/VERSION.md") && chemins.has(agent + "/savoir/CATALOGUE.md")
+               && chemins.has(agent + "/instructions/PROTOCOLE_MEMOIRE.md"),
+      meta: chemins.has(agent + "/META_DOCUMENTS.tsv"),
+      sources: chemins.has(agent + "/instructions/SOURCES_VEILLE.md"),
+      promptVeille: chemins.has(agent + "/instructions/PROMPT_VEILLE.md"),
+      tableau: chemins.has(agent + "/TABLEAU_DE_BORD.md")
+    };
+    const rec = await commits(depot, agent + "/", 30);
+    const limite30 = Date.now() - 30 * 86400000;
+    const actifs30 = rec.filter(c => new Date(c.commit.committer.date).getTime() > limite30).length;
     const v = await texteOuNull(depot, agent + "/savoir/VERSION.md");
     const num = v && v.match(/VERSION\s*:\s*(\d+)/);
     const quoi = v && v.match(/^- v\d+.*$/m);
     AGENTS.push({agent, depot, version: num ? num[1] : null,
                  evolution: quoi ? quoi[0].replace(/^- /, "") : "",
-                 maj: v ? derniereDate(v) : null, vol, activite: act});
+                 maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30});
   }
 
   /* veilles actives */
   progres("Etat des veilles...");
+  {
+    const cs = await commits("jlucb67/SOCLE", "ADMIN/savoir/VEILLE.md", 6);
+    VEILLES.push({nom: "Veille plateforme (Admin)", depot: "jlucb67/SOCLE", index: "ADMIN/savoir/VEILLE.md",
+      cadence: "hebdomadaire (lundi 11:00)", plateforme: true,
+      passages: cs.map(c => ({date: new Date(c.commit.committer.date), qui: c.commit.author.name,
+                              titre: c.commit.message.split("\n")[0]})),
+      derniere: cs.length ? new Date(cs[0].commit.committer.date) : null,
+      qui: cs.length ? cs[0].commit.author.name : "",
+      captes: 0, recents: 0, enAttente: 0, dette: 0, promus: 0, attente: 0});
+  }
   const va = await texteOuNull("jlucb67/SOCLE", "ADMIN/instructions/VEILLES_ACTIVES.md");
   if (va){
     for (const l of va.split("\n")){
@@ -398,9 +438,12 @@ async function collecte(){
     for (const v of VEILLES){
       if (!v.depot || !v.index) continue;
       progres("Veille de " + v.nom + "...");
-      const c = await dernierCommit(v.depot, v.index);
-      v.derniere = c ? c.date : null;
-      v.qui = c ? c.qui : "";
+      const cs = await commits(v.depot, v.index, 6);
+      v.passages = cs.map(c => ({date: new Date(c.commit.committer.date), qui: c.commit.author.name,
+                                 titre: c.commit.message.split("\n")[0]}));
+      v.derniere = v.passages.length ? v.passages[0].date : null;
+      v.qui = v.passages.length ? v.passages[0].qui : "";
+      v.tacheDouteuse = /a re-creer|a recreer|tache a creer/i.test(v.cadence);
       const ag = v.index.split("/")[0];
       const siens = LIGNES.filter(r => r.agent === ag);
       v.enAttente = siens.filter(r => r.z["informations-publiques"]).length;
@@ -408,6 +451,9 @@ async function collecte(){
       const limite = new Date(Date.now() - 30 * 86400000);
       v.recents = siens.filter(r => /veille/i.test(r.origine) && r.date && new Date(r.date) > limite).length;
       v.dette = siens.filter(r => r.resume === "non lu").length;
+      const dv = siens.filter(r => /veille/i.test(r.origine));
+      v.promus = dv.filter(r => !r.z["informations-publiques"]).length;
+      v.attente = dv.filter(r => r.z["informations-publiques"]).length;
     }
   }
 }
@@ -473,14 +519,13 @@ function tr(r, id){
     + '<span class="leresume">' + res + "</span>"
     + '<span class="lefichier">' + esc(nomFichier(r)) + "</span>"
     + '<span class="ssligne">' + dj + " &middot; " + esc(r.origine) + "</span></td>"
-    + '<td class="c-fic">' + esc(nomFichier(r)) + "</td>"
     + '<td class="c-or">' + esc(r.origine) + "</td>"
     + '<td class="c-pa">' + parcours(r) + "</td>"
     + '<td class="c-ac">' + actions(r) + "</td></tr>";
 }
 let SEQ = 0;
 function tableau(rows){
-  const tetes = "<tr><th class='c-zone'>Zone</th><th>Document</th><th class='c-fic'>Fichier</th>"
+  const tetes = "<tr><th class='c-zone'>Zone</th><th>Document</th>"
     + "<th class='c-or'>Origine</th><th class='c-pa'>Parcours Zones 1-2-3</th><th class='c-ac'>Actions</th></tr>";
   return '<div class="cadre"><table><thead>' + tetes + "</thead><tbody>" + rows.map(r => tr(r, ++SEQ)).join("") + "</tbody></table></div>";
 }
@@ -527,68 +572,107 @@ function filtrer(){
 
 /* ---------- rendu des deux autres ecrans ---------- */
 function jauge(vol){
-  const tot = ZONES.reduce((a, z) => a + vol[z].n, 0) || 1;
   return '<span class="jauge">' + ZONES.map((z, i) =>
     '<i class="j' + (i + 1) + '" style="flex:' + vol[z].n + '" title="' + ZLBL[z] + " : " + vol[z].n + ' fichiers"></i>').join("")
     + "</span>";
 }
-function pastille(txt, cl){ return '<span class="chip ' + cl + '">' + esc(txt) + "</span>"; }
-function bloc(n, lib, alerte){
+function coche(ok, lib, absent){
+  return '<span class="crit ' + (ok ? "oui" : (absent ? "sans" : "non")) + '">' + (ok ? "\u2713" : "\u2715") + " " + esc(lib) + "</span>";
+}
+function mesure(n, lib, alerte){
   return '<span class="mesure' + (alerte ? " alerte" : "") + '"><b>' + n + "</b><small>" + esc(lib) + "</small></span>";
 }
+function courte(t, n){ t = (t || "").trim(); return t.length > n ? t.slice(0, n - 1) + "..." : t; }
+
+/* ECRAN AGENTS - l'agent comme INSTALLATION : identite, conformite, memoire vive, vitalite.
+   L'inventaire de ses documents vit dans le tunnel : il n'est pas repete ici. */
 function rendreAgents(){
   if (!AGENTS.length){ $("agents").innerHTML = '<div class="cadre"><p class="vide">Aucun agent trouve.</p></div>'; return; }
-  $("agents").innerHTML = AGENTS.map(a => {
+  const nonConformes = AGENTS.filter(a => !a.conf.memoire).length;
+  const sansVeille = AGENTS.filter(a => !veilleDe(a)).length;
+  let h = '<div class="synthese">' + mesure(AGENTS.length, "agents")
+    + mesure(nonConformes, "sans protocole memoire", nonConformes > 0)
+    + mesure(sansVeille, "sans veille", sansVeille > 0)
+    + mesure(AGENTS.filter(a => a.vol["savoir"].o > 400000).length, "memoire vive lourde",
+             AGENTS.some(a => a.vol["savoir"].o > 400000)) + "</div>";
+
+  h += AGENTS.map(a => {
     const eq = a.depot.split("/")[1];
-    const age = a.activite ? jours(a.activite.date) : null;
-    const vive = a.vol["savoir"], stock = a.vol["connaissances-stockees"], tri = a.vol["informations-publiques"];
+    const admin = a.agent === "ADMIN";
+    const vive = a.vol["savoir"];
+    const age = a.maj ? jours(a.maj) : null;
+    const v = veilleDe(a);
     const siens = LIGNES.filter(r => r.agent === a.agent);
     const dette = siens.filter(r => r.resume === "non lu").length;
-    const veille = VEILLES.find(v => v.index.split("/")[0] === a.agent);
-    const alertes = [];
-    if (a.version == null) alertes.push("sans protocole memoire");
-    if (!veille) alertes.push("aucune veille active");
-    if (vive.o > 600000) alertes.push("memoire vive lourde (" + poids(vive.o) + ")");
-    if (dette) alertes.push(dette + " resume" + (dette > 1 ? "s" : "") + " a produire");
-    if (tri.n) alertes.push(tri.n + " document" + (tri.n > 1 ? "s" : "") + " en attente de decision");
+    const attente = siens.filter(r => r.z["informations-publiques"]).length;
     return '<article class="fiche-agent">'
       + '<header><h3>' + esc(a.agent) + '</h3><span class="eq">' + esc(eq) + "</span>"
-      + (a.version != null ? pastille("v" + a.version, "st-e") : pastille("sans version", "st-al")) + "</header>"
-      + '<p class="evo">' + esc(a.evolution || "Pas d evolution enregistree.") + "</p>"
+      + (a.version != null ? '<span class="chip st-e">v' + a.version + "</span>" : '<span class="chip st-al">sans version</span>')
+      + "</header>"
+      + '<div class="criteres">'
+        + coche(a.conf.memoire, "protocole memoire")
+        + coche(!!v, "veille branchee")
+        + (admin ? coche(true, "tunnel sans objet", true) : coche(a.conf.meta, "metadonnees"))
+        + (admin ? coche(true, "avatar attribue") : coche(false, "avatar a attribuer"))
+      + "</div>"
       + '<div class="mesures">'
-      + bloc(vive.n, "en memoire vive") + bloc(stock.n, "accessibles") + bloc(tri.n, "en triage", tri.n > 0)
-      + bloc(poids(vive.o), "poids vive", vive.o > 600000) + bloc(dette, "resumes dus", dette > 0) + "</div>"
-      + jauge(a.vol)
-      + '<p class="pieds">'
-      + (a.activite ? "Derniere activite au depot : " + a.activite.date.toLocaleDateString("fr-FR")
-          + " (" + age + " j) par " + esc(a.activite.qui) : "Aucune activite datee")
-      + (veille ? " &middot; veille active" : " &middot; <b>aucune veille</b>") + "</p>"
-      + (alertes.length ? '<p class="alertes">' + alertes.map(x => '<span class="al">' + esc(x) + "</span>").join("") + "</p>" : "")
+        + mesure(a.version != null ? "v" + a.version : "-", age != null ? "memoire vive, " + age + " j" : "memoire vive")
+        + mesure(poids(vive.o), "poids en vive", vive.o > 400000)
+        + mesure(a.actifs30, "gravures sur 30 j", a.actifs30 === 0)
+        + (admin ? "" : mesure(attente, "en attente de toi", attente > 0))
+        + (admin ? "" : mesure(dette, "resumes dus", dette > 0))
+      + "</div>"
+      + (admin ? "" : jauge(a.vol))
+      + '<p class="evo"><b>Derniere evolution</b> - ' + esc(courte(a.evolution, 150)) + "</p>"
+      + '<p class="pieds">Derniere gravure au depot : '
+      + (a.activite ? a.activite.date.toLocaleDateString("fr-FR") + " par " + esc(a.activite.qui)
+          + ' &middot; <span class="mut">' + esc(courte(a.activite.titre, 70)) + "</span>" : "aucune") + "</p>"
       + "</article>";
   }).join("");
+  $("agents").innerHTML = h;
 }
+function veilleDe(a){
+  return VEILLES.find(v => v.plateforme ? a.agent === "ADMIN" : v.index.split("/")[0] === a.agent);
+}
+
+/* ECRAN VEILLE - le PROCESSUS : le dispositif, ses passages, le rendement de ses prises.
+   Ce qui n'est pas journalise est dit comme tel, jamais devine. */
 function rendreVeille(){
   if (!VEILLES.length){ $("veille").innerHTML = '<div class="cadre"><p class="vide">Aucune veille declaree active.</p></div>'; return; }
-  $("veille").innerHTML = VEILLES.map(v => {
+  const retard = VEILLES.filter(v => !v.derniere || jours(v.derniere) > 8).length;
+  const douteuses = VEILLES.filter(v => v.tacheDouteuse).length;
+  let h = '<div class="synthese">' + mesure(VEILLES.length, "veilles suivies")
+    + mesure(retard, "en retard", retard > 0)
+    + mesure(douteuses, "dispositif incertain", douteuses > 0)
+    + mesure(VEILLES.reduce((n, v) => n + (v.attente || 0), 0), "prises a decider",
+             VEILLES.some(v => v.attente > 0)) + "</div>";
+
+  h += VEILLES.map(v => {
     const age = v.derniere ? jours(v.derniere) : null;
-    const etat = age == null ? ["index illisible", "st-al"]
-      : age > 8 ? ["en retard de " + (age - 7) + " j", "st-al"]
-      : ["a jour", "st-ok"];
-    const muette = v.recents === 0 && age != null && age <= 8;
+    const etat = age == null ? ["jamais executee", "st-al"]
+      : age > 8 ? ["en retard de " + (age - 7) + " j", "st-al"] : ["a jour", "st-ok"];
     const proch = v.derniere ? new Date(v.derniere.getTime() + 7 * 86400000) : null;
+    const total = (v.promus || 0) + (v.attente || 0);
+    const taux = total ? Math.round(100 * v.promus / total) : null;
+    const journal = (v.passages || []).slice(0, 5).map(p =>
+      '<li><b>' + p.date.toLocaleDateString("fr-FR") + " " + p.date.toLocaleTimeString("fr-FR", {hour: "2-digit", minute: "2-digit"})
+      + "</b> <span class='mut'>" + esc(p.qui) + "</span><br><span class='mut'>" + esc(courte(p.titre, 90)) + "</span></li>").join("");
     return '<article class="fiche-agent">'
-      + '<header><h3>' + esc(v.nom) + '</h3><span class="eq">' + esc(v.depot.split("/")[1] || "-") + "</span>"
-      + pastille(etat[0], etat[1]) + "</header>"
-      + '<p class="evo">Derniere ecriture de la veille : '
-      + (v.derniere ? "<b>" + v.derniere.toLocaleDateString("fr-FR") + "</b> par " + esc(v.qui) : "<b>jamais</b>")
+      + '<header><h3>' + esc(v.nom) + '</h3><span class="eq">' + esc(v.depot.split("/")[1]) + "</span>"
+      + '<span class="chip ' + etat[1] + '">' + etat[0] + "</span></header>"
+      + '<p class="evo"><b>Dispositif</b> - ' + esc(v.cadence.replace(/^cadence\s*:\s*/i, ""))
       + (proch ? " &middot; prochain passage attendu le " + proch.toLocaleDateString("fr-FR") : "") + "</p>"
-      + '<div class="mesures">'
-      + bloc(v.captes, "documents captes") + bloc(v.recents, "sur 30 jours", muette)
-      + bloc(v.enAttente, "en attente de toi", v.enAttente > 0) + bloc(v.dette, "resumes dus", v.dette > 0) + "</div>"
-      + '<p class="pieds">Cadence : ' + esc(v.cadence) + "</p>"
-      + (muette ? '<p class="alertes"><span class="al">la veille ecrit mais n a rien capte depuis 30 jours</span></p>' : "")
+      + (v.tacheDouteuse ? '<p class="alertes"><span class="al">la tache planifiee est a re-creer : ce dispositif ne tourne peut-etre plus seul</span></p>' : "")
+      + (v.plateforme ? "" : '<div class="mesures">'
+        + mesure(v.captes, "prises au total") + mesure(v.recents, "sur 30 jours", v.recents === 0)
+        + mesure(v.attente, "a decider", v.attente > 0)
+        + mesure(taux == null ? "-" : taux + " %", "prises retenues") + "</div>")
+      + '<div class="journal"><h4>Passages reconstitues</h4><ol>' + (journal || "<li class='mut'>aucun passage trace</li>") + "</ol></div>"
+      + '<p class="pieds mut">Heure et auteur viennent de l\'historique du depot. Le mode de declenchement (automatique ou manuel), '
+      + "la duree et les echecs ne sont pas journalises : un passage qui echoue sans rien ecrire reste invisible ici.</p>"
       + "</article>";
   }).join("");
+  $("veille").innerHTML = h;
 }
 function rendreCompteurs(){
   const z1 = LIGNES.filter(r => r.z["informations-publiques"]).length;
