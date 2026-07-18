@@ -75,6 +75,11 @@ letter-spacing:.5px;text-align:center;border-radius:5px;padding:4px 0;color:#fff
 .zmot{display:block;font-size:8.5px;color:var(--mut);text-align:center;margin-top:2px;line-height:1.1}
 .c-sel{width:40px;text-align:center}
 .titre{font-weight:600;font-size:13.5px;line-height:1.35;display:block;overflow-wrap:anywhere}
+.lagent{display:block;font-weight:700;font-size:13px;color:var(--enc);letter-spacing:.2px}
+.leresume{display:block;font-size:13.5px;line-height:1.45;margin-top:4px;color:#22314c}
+.lefichier{display:block;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;color:#93a0b2;margin-top:5px;overflow-wrap:anywhere}
+.zoneac{display:flex;flex-direction:column;align-items:center;gap:5px}
+.btn.mini{font-size:10.5px;font-weight:700;padding:5px 6px;border-radius:5px;width:52px;margin:0;line-height:1.1}
 .c-nom{min-width:120px}
 .c-fic{font-family:Consolas,"SF Mono",monospace;font-size:10px;color:var(--mut);max-width:150px;overflow-wrap:anywhere}
 .z-1{background:var(--ocre)}.z-2{background:var(--ard)}.z-3{background:var(--vert)}
@@ -84,25 +89,19 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
 /* --- sous-titre de la ligne : agent, date, tag principal (visible en vue mobile) --- */
 .ssligne{display:none;font-size:11px;color:var(--mut);margin-top:2px}
 /* --- fiche depliee sous la ligne --- */
-tr.fiche>td{background:#f6f9fc;border-bottom:2px solid var(--fil);padding:12px 14px}
-.fiche-h{font-size:12.5px;color:var(--mut);margin:0 0 6px}
-.fiche-h b{color:var(--enc)}
-.fiche-res{font-size:14px;margin:0 0 10px}
-.fiche-ac{display:flex;gap:8px;flex-wrap:wrap}
-.fiche-ac .btn{width:auto;min-width:150px;padding:9px 12px;font-size:13px}
-.chevron{display:none;float:right;color:var(--mut);font-size:11px;margin-left:6px}
 
 /* --- vue mobile : la liste ne garde que le reperage, la fiche porte le jugement --- */
 @media (max-width:900px){
   table{min-width:0}
   thead{display:none}
-  .c-or,.c-res,.c-pa,.c-ac,.c-ag,.c-fic,.col-min{display:none}
+  .c-or,.c-res,.c-pa,.c-ag,.c-fic,.col-min{display:none}
+  .c-ac{width:64px;padding:8px 6px}
   .c-doc{max-width:none;width:100%;cursor:pointer}
   .c-tg{display:none}
+  .lefichier{display:none}
   .titre{font-size:14px}
   .ssdate{display:none}
   .ssligne{display:block}
-  .chevron{display:inline}
   td{padding:11px 8px}
   .compteurs{flex-wrap:nowrap;overflow-x:auto;gap:7px;padding-bottom:3px}
   .cpt{flex:0 0 auto;padding:6px 11px}
@@ -344,16 +343,6 @@ function zonecode(r){
   if (r.z["connaissances-stockees"] && !r.z["savoir"]) return ["Z2", r.z["connaissances-stockees"][0]];
   return ["", ""];
 }
-/* Le titre affiche est editorial : ce que dit le document, pas le nom technique du fichier. */
-function titre(r){
-  if (r.resume && r.resume !== "non lu"){
-    let t = r.resume.trim();
-    const pt = t.search(/[.;]\s/);
-    if (pt > 40) t = t.slice(0, pt + 1);
-    return t.length > 150 ? t.slice(0, 148) + "..." : t;
-  }
-  return r.doc.replace(DATED, "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
-}
 function nomFichier(r){
   const z = zoneVive(r);
   return (r.z[ZDOS[z]] || [r.doc])[0];
@@ -361,52 +350,40 @@ function nomFichier(r){
 function actions(r){
   const [zc, fic] = zonecode(r);
   const d = ' data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + zc + '"';
-  if (zc === "Z1") return '<button class="btn plein" data-act="bibliotheque"' + d + ">Vers Zone 2</button>"
-    + '<button class="btn creux" data-act="supprimer"' + d + ">Supprimer</button>";
-  if (zc === "Z2") return '<button class="btn vert" data-act="vivant"' + d + ">Vers Zone 3</button>";
-  return '<span class="mut">-</span>';
+  const c = zc ? '<input type="checkbox" class="sel"' + d + ">" : "";
+  let b = '<span class="mut">-</span>';
+  if (zc === "Z1") b = '<button class="btn plein mini" title="Classer en Zone 2 (docs accessibles)" data-act="bibliotheque"' + d + ">vers Z2</button>"
+    + '<button class="btn creux mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
+  else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter en Zone 3 (memoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
+  return '<span class="zoneac">' + c + b + "</span>";
 }
 function lesTags(r){
   return r.tags.length ? '<span class="lestags">' + r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") + "</span>"
                        : '<span class="lestags"><span class="mut">a taguer</span></span>';
 }
-function fiche(r, id){
-  const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
-  const ac = actions(r);
-  return '<tr class="fiche" data-id="' + id + '" hidden><td colspan="8">'
-    + '<p class="fiche-h"><b>' + esc(r.agent) + "</b> - " + ZLBL[ZDOS[zoneVive(r)]] + " - " + dj + "</p>"
-    + '<p class="fiche-res">' + esc(r.resume) + "</p>"
-    + '<p class="fiche-h">' + lesTags(r) + "</p>"
-    + '<p class="fiche-h">Statut de l\'info : ' + chip(r.statut) + ' &nbsp; Origine : ' + esc(r.origine) + "</p>"
-    + '<p class="fiche-h">Parcours : ' + parcours(r) + "</p>"
-    + '<p class="fiche-h">Fichier : <span class="c-fic" style="display:inline">' + esc(nomFichier(r)) + "</span></p>"
-    + (ac.indexOf("btn") > -1 ? '<div class="fiche-ac">' + ac + "</div>" : '<p class="fiche-h mut">Aucune action a cette etape.</p>')
-    + "</td></tr>";
-}
 function tr(r, id){
-  const [zc, fic] = zonecode(r);
   const zv = zoneVive(r);
   const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
-  const case_ = zc ? '<input type="checkbox" class="sel" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + zc + '">' : "";
   const past = '<span class="zpast z-' + zv[1] + '">' + zv + '</span><span class="zmot">' + ZMOT[zv] + "</span>";
-  const ssl = '<span class="ssligne">' + esc(r.agent) + " &middot; " + dj + "</span>";
+  const res = (r.resume && r.resume !== "non lu")
+    ? esc(r.resume)
+    : '<span class="mut">Pas encore lu - resume a produire.</span>';
   return '<tr class="doc" data-id="' + id + '" data-zone="' + zv + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
     + ' data-txt="' + esc((r.doc + " " + r.resume + " " + r.origine).toLowerCase()) + '">'
     + '<td class="c-zone">' + past + "</td>"
-    + '<td class="c-ag">' + esc(r.agent) + "</td>"
-    + '<td class="c-doc"><span class="titre">' + esc(titre(r)) + '<span class="chevron">detail</span></span>'
-    + '<span class="ssdate">' + dj + "</span>" + lesTags(r) + ssl + "</td>"
+    + '<td class="c-doc"><span class="lagent">Agent ' + esc(r.agent) + "</span>" + lesTags(r)
+    + '<span class="leresume">' + res + "</span>"
+    + '<span class="lefichier">' + esc(nomFichier(r)) + "</span>"
+    + '<span class="ssligne">' + dj + " &middot; " + esc(r.origine) + "</span></td>"
     + '<td class="c-fic">' + esc(nomFichier(r)) + "</td>"
     + '<td class="c-or">' + esc(r.origine) + "</td>"
     + '<td class="c-pa">' + parcours(r) + "</td>"
-    + '<td class="c-ac">' + actions(r) + "</td>"
-    + '<td class="c-sel">' + case_ + "</td></tr>"
-    + fiche(r, id);
+    + '<td class="c-ac">' + actions(r) + "</td></tr>";
 }
 let SEQ = 0;
 function tableau(rows){
-  const tetes = "<tr><th class='c-zone'>Zone</th><th class='c-ag'>Agent</th><th>Document</th><th class='c-fic'>Fichier</th>"
-    + "<th class='c-or'>Origine</th><th class='c-pa'>Parcours Zones 1-2-3</th><th class='c-ac'>Actions</th><th class='c-sel'></th></tr>";
+  const tetes = "<tr><th class='c-zone'>Zone</th><th>Document</th><th class='c-fic'>Fichier</th>"
+    + "<th class='c-or'>Origine</th><th class='c-pa'>Parcours Zones 1-2-3</th><th class='c-ac'>Actions</th></tr>";
   return '<div class="cadre"><table><thead>' + tetes + "</thead><tbody>" + rows.map(r => tr(r, ++SEQ)).join("") + "</tbody></table></div>";
 }
 function rendreTunnel(){
@@ -434,8 +411,6 @@ function filtrer(){
     const ok = (!t || r.dataset.txt.includes(t)) && (!tg || r.dataset.tags.split(" ").includes(tg))
       && (!ag || r.dataset.agent === ag) && (!zo || r.dataset.zone === zo);
     r.style.display = ok ? "" : "none";
-    const f = document.querySelector('#tunnel tr.fiche[data-id="' + r.dataset.id + '"]');
-    if (f && !ok) f.hidden = true;
   });
   $$("#tunnel h2, #tunnel h3.grp").forEach(h => {
     let n = h.nextElementSibling;
@@ -566,14 +541,7 @@ async function envoyer(act, it){
   etat("Demande envoyee (" + it.length + " document" + (it.length > 1 ? "s" : "") + ") - le robot la traite en moins d'une minute.",
        0, faits[0].html_url, "Suivre");
 }
-function estEtroit(){ return window.matchMedia("(max-width:900px)").matches; }
 function brancherActions(){
-  $$("#tunnel tr.doc .c-doc").forEach(c => c.addEventListener("click", () => {
-    if (!estEtroit()) return;
-    const id = c.closest("tr").dataset.id;
-    const f = document.querySelector('#tunnel tr.fiche[data-id="' + id + '"]');
-    if (f) f.hidden = !f.hidden;
-  }));
   $$("#tunnel [data-act]").forEach(b => b.addEventListener("click", ev => {
     ev.preventDefault();
     envoyer(b.dataset.act, [{a: b.dataset.a, f: b.dataset.f, z: b.dataset.z, d: b.dataset.d}]);
