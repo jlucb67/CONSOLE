@@ -67,6 +67,47 @@ tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoye";font-size:11px;co
 .mut{color:var(--mut)}.vide{padding:26px;text-align:center;color:var(--mut)}
 .pied{margin-top:22px;font-size:12.5px;color:var(--mut)}
 .chargement{padding:26px;text-align:center;color:var(--mut);font-size:14px}
+/* --- pastille de zone, sous la case a cocher --- */
+.zpast{display:block;margin-top:5px;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;font-weight:700;
+letter-spacing:.5px;text-align:center;border-radius:4px;padding:2px 0;color:#fff}
+.z-1{background:var(--ocre)}.z-2{background:var(--ard)}.z-3{background:var(--vert)}
+tr.doc[data-zone="Z1"] td:first-child{box-shadow:inset 4px 0 0 var(--ocre)}
+tr.doc[data-zone="Z2"] td:first-child{box-shadow:inset 4px 0 0 var(--ard)}
+tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
+/* --- sous-titre de la ligne : agent, date, tag principal (visible en vue mobile) --- */
+.ssligne{display:none;font-size:11px;color:var(--mut);margin-top:2px}
+/* --- fiche depliee sous la ligne --- */
+tr.fiche>td{background:#f6f9fc;border-bottom:2px solid var(--fil);padding:12px 14px}
+.fiche-h{font-size:12.5px;color:var(--mut);margin:0 0 6px}
+.fiche-h b{color:var(--enc)}
+.fiche-res{font-size:14px;margin:0 0 10px}
+.fiche-ac{display:flex;gap:8px;flex-wrap:wrap}
+.fiche-ac .btn{width:auto;min-width:150px;padding:9px 12px;font-size:13px}
+.chevron{display:none;float:right;color:var(--mut);font-size:11px;margin-left:6px}
+
+/* --- vue mobile : la liste ne garde que le reperage, la fiche porte le jugement --- */
+@media (max-width:900px){
+  table{min-width:0}
+  thead{display:none}
+  .c-tg,.c-or,.c-res,.c-pa,.c-ac,.c-ag{display:none}
+  .c-sel{width:42px;padding-left:10px}
+  .c-doc{max-width:none;width:100%;cursor:pointer}
+  .nom{font-size:14px}
+  .ssdate{display:none}
+  .ssligne{display:block}
+  .chevron{display:inline}
+  td{padding:11px 8px}
+  .compteurs{flex-wrap:nowrap;overflow-x:auto;gap:7px;padding-bottom:3px}
+  .cpt{flex:0 0 auto;padding:6px 11px}
+  .cpt b{font-size:16px}.cpt span{font-size:9.5px;letter-spacing:.3px}
+  .outils{padding:8px}.outils select{flex:1;min-width:132px}
+  h1{font-size:22px}
+}
+/* --- bandeau d'acces replie une fois la console ouverte --- */
+.acces.replie{padding:7px 10px;font-size:12.5px;color:var(--mut)}
+.acces.replie #cle,.acces.replie #ouvrir,.acces.replie #oublier,.acces.replie label{display:none}
+.acces:not(.replie) #gerer{display:none}
+#gerer{font:inherit;font-size:12.5px;font-weight:600;background:none;border:0;color:var(--ard);cursor:pointer;text-decoration:underline;padding:0}
 [hidden]{display:none !important}
 @media (max-width:640px){h1{font-size:22px}.c-res{min-width:240px}}
 </style></head>
@@ -80,6 +121,7 @@ tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoye";font-size:11px;co
   <button class="btnc" id="ouvrir">Ouvrir la console</button>
   <button class="onglet" id="oublier" style="border-radius:6px;border-bottom:1px solid var(--fil)">Oublier la cle</button>
   <span class="mut" id="etatcle" style="font-size:12.5px"></span>
+  <button id="gerer">Gerer la cle</button>
 </div>
 
 <div class="compteurs" id="compteurs" hidden></div>
@@ -95,6 +137,7 @@ tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoye";font-size:11px;co
 <section id="vue-tunnel" hidden>
   <div class="outils">
     <input id="q" placeholder="Rechercher un document, un resume, une origine">
+    <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (memoire vive)</option></select>
     <select id="ft"><option value="">Tous les tags</option></select>
     <select id="fs"><option value="">Tous les statuts</option></select>
     <select id="fa"><option value="">Tous les agents</option></select>
@@ -299,22 +342,43 @@ function actions(r){
   if (zc === "Z2") return '<button class="btn vert" data-act="vivant" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="Z2">Vers Zone 3</button>';
   return '<span class="mut">-</span>';
 }
-function tr(r){
+function zoneVive(r){
+  return r.z["savoir"] ? "Z3" : r.z["connaissances-stockees"] ? "Z2" : "Z1";
+}
+const ZDOS = {Z1: "informations-publiques", Z2: "connaissances-stockees", Z3: "savoir"};
+function fiche(r, id){
+  const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
+  const tags = r.tags.length ? r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") : '<span class="mut">a taguer</span>';
+  const ac = actions(r);
+  return '<tr class="fiche" data-id="' + id + '" hidden><td colspan="9">'
+    + '<p class="fiche-h"><b>' + esc(r.agent) + "</b> - " + ZLBL[ZDOS[zoneVive(r)]] + " - " + dj + "</p>"
+    + '<p class="fiche-res">' + esc(r.resume) + "</p>"
+    + '<p class="fiche-h">' + tags + " &nbsp; " + chip(r.statut) + " &nbsp; <span class='mut'>Origine : " + esc(r.origine) + "</span></p>"
+    + '<p class="fiche-h">Parcours : ' + parcours(r) + "</p>"
+    + (ac.indexOf("btn") > -1 ? '<div class="fiche-ac">' + ac + "</div>" : '<p class="fiche-h mut">Aucune action a cette etape.</p>')
+    + "</td></tr>";
+}
+function tr(r, id){
   const [zc, fic] = zonecode(r);
+  const zv = zoneVive(r);
   const tags = r.tags.length ? r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") : '<span class="mut">a taguer</span>';
   const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
   const case_ = zc ? '<input type="checkbox" class="sel" data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + zc + '">' : "";
-  return '<tr data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
+  const past = '<span class="zpast z-' + zv[1] + '">' + zv + "</span>";
+  const ssl = '<span class="ssligne">' + esc(r.agent) + " &middot; " + dj + " &middot; " + esc(r.tags[0] || "a taguer") + "</span>";
+  return '<tr class="doc" data-id="' + id + '" data-zone="' + zv + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
     + ' data-txt="' + esc((r.doc + " " + r.resume + " " + r.origine).toLowerCase()) + '">'
-    + '<td class="c-sel">' + case_ + '</td><td class="c-ag">' + esc(r.agent) + '</td>'
-    + '<td class="c-doc"><span class="nom">' + esc(r.doc.replace(DATED, "")) + '</span><span class="ssdate">' + dj + "</span></td>"
+    + '<td class="c-sel">' + case_ + past + '</td><td class="c-ag">' + esc(r.agent) + '</td>'
+    + '<td class="c-doc"><span class="nom">' + esc(r.doc.replace(DATED, "")) + '<span class="chevron">detail</span></span><span class="ssdate">' + dj + "</span>" + ssl + "</td>"
     + '<td class="c-tg">' + tags + "</td><td>" + chip(r.statut) + "</td>"
     + '<td class="c-or">' + esc(r.origine) + '</td><td class="c-res">' + esc(r.resume) + "</td>"
-    + '<td class="c-pa">' + parcours(r) + '</td><td class="c-ac">' + actions(r) + "</td></tr>";
+    + '<td class="c-pa">' + parcours(r) + '</td><td class="c-ac">' + actions(r) + "</td></tr>"
+    + fiche(r, id);
 }
+let SEQ = 0;
 function tableau(rows){
   const tetes = "<tr><th class='c-sel'></th><th>Agent</th><th>Document</th><th>Tags</th><th>Statut de l'info</th><th>Origine</th><th>Resume</th><th>Parcours Zones 1-2-3</th><th>Actions</th></tr>";
-  return '<div class="cadre"><table><thead>' + tetes + "</thead><tbody>" + rows.map(tr).join("") + "</tbody></table></div>";
+  return '<div class="cadre"><table><thead>' + tetes + "</thead><tbody>" + rows.map(r => tr(r, ++SEQ)).join("") + "</tbody></table></div>";
 }
 function rendreTunnel(){
   const actus = LIGNES.filter(r => r.cat === "actu").sort((a, b) => (b.date + b.doc).localeCompare(a.date + a.doc));
@@ -338,17 +402,21 @@ function rendreTunnel(){
   filtrer();
 }
 function filtrer(){
-  const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, st = $("fs").value, ag = $("fa").value;
-  $$("#tunnel tbody tr").forEach(r => {
+  const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, st = $("fs").value,
+        ag = $("fa").value, zo = $("fz").value;
+  $$("#tunnel tr.doc").forEach(r => {
     const ok = (!t || r.dataset.txt.includes(t)) && (!tg || r.dataset.tags.split(" ").includes(tg))
-      && (!st || r.dataset.statut === st) && (!ag || r.dataset.agent === ag);
+      && (!st || r.dataset.statut === st) && (!ag || r.dataset.agent === ag)
+      && (!zo || r.dataset.zone === zo);
     r.style.display = ok ? "" : "none";
+    const f = document.querySelector('#tunnel tr.fiche[data-id="' + r.dataset.id + '"]');
+    if (f && !ok){ f.hidden = true; }
   });
   $$("#tunnel h2, #tunnel h3.grp").forEach(h => {
     let n = h.nextElementSibling;
     while (n && !n.classList.contains("cadre")) n = n.nextElementSibling;
     if (n){
-      const vis = [...n.querySelectorAll("tbody tr")].some(r => r.style.display !== "none");
+      const vis = [...n.querySelectorAll("tr.doc")].some(r => r.style.display !== "none");
       h.style.display = vis ? "" : "none"; n.style.display = vis ? "" : "none";
     }
   });
@@ -466,7 +534,14 @@ async function envoyer(act, it){
   etat("Demande envoyee (" + it.length + " document" + (it.length > 1 ? "s" : "") + ") - le robot la traite en moins d'une minute.",
        0, faits[0].html_url, "Suivre");
 }
+function estEtroit(){ return window.matchMedia("(max-width:900px)").matches; }
 function brancherActions(){
+  $$("#tunnel tr.doc .c-doc").forEach(c => c.addEventListener("click", () => {
+    if (!estEtroit()) return;
+    const id = c.closest("tr").dataset.id;
+    const f = document.querySelector('#tunnel tr.fiche[data-id="' + id + '"]');
+    if (f) f.hidden = !f.hidden;
+  }));
   $$("#tunnel [data-act]").forEach(b => b.addEventListener("click", ev => {
     ev.preventDefault();
     envoyer(b.dataset.act, [{a: b.dataset.a, f: b.dataset.f, z: b.dataset.z, d: b.dataset.d}]);
@@ -491,6 +566,8 @@ async function ouvrir(){
     await collecte();
     rendreCompteurs(); rendreTunnel(); rendreAgents(); rendreVeille();
     $("sous").textContent = "Etat reel des depots, lu le " + new Date().toLocaleString("fr-FR") + ".";
+    document.querySelector(".acces").classList.add("replie");
+    $("etatcle").textContent = "Connecte - cle memorisee dans ce navigateur";
   } catch(e){
     $("tunnel").innerHTML = "";
     if (e.code === 401) etat("La cle est refusee par GitHub (401) : elle est invalide ou revoquee.", 1);
@@ -500,12 +577,14 @@ async function ouvrir(){
 }
 $("ouvrir").addEventListener("click", ouvrir);
 $("cle").addEventListener("keydown", e => { if (e.key === "Enter") ouvrir(); });
+$("gerer").addEventListener("click", () => document.querySelector(".acces").classList.remove("replie"));
 $("oublier").addEventListener("click", () => {
   try { localStorage.removeItem("cle_console"); } catch(e){}
+  document.querySelector(".acces").classList.remove("replie");
   $("cle").value = ""; CLE = ""; $("etatcle").textContent = "cle oubliee";
 });
 $$("#onglets .onglet").forEach(b => b.addEventListener("click", () => vue(b.dataset.vue)));
-["q", "ft", "fs", "fa"].forEach(i => $(i).addEventListener("input", filtrer));
+["q", "ft", "fs", "fa", "fz"].forEach(i => $(i).addEventListener("input", filtrer));
 $("vider").addEventListener("click", () => { $$(".sel").forEach(c => c.checked = false); majsel(); });
 $$(".barre [data-act]").forEach(b => b.addEventListener("click", () => envoyer(b.dataset.act, eligibles(choisis(), b.dataset.act))));
 try {
