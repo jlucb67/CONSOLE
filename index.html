@@ -10,14 +10,16 @@ body{margin:0;background:var(--pap);color:var(--enc);font:15px/1.45 "Segoe UI",s
 h1{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-weight:600;font-size:27px;margin:0 0 2px}
 .sous{color:var(--mut);font-size:13px;margin:0 0 14px}
 .compteurs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px}
-.cpt{background:var(--carte);border:1px solid var(--fil);border-radius:8px;padding:8px 14px}
-.cpt b{font-size:20px;display:block;line-height:1.1}.cpt span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+.cpt{background:#e7ecf4;border:0;border-radius:6px;padding:5px 11px;display:flex;align-items:baseline;gap:6px}
+.cpt b{font-size:15px;line-height:1.1;color:var(--enc)}
+.cpt span{font-size:10px;color:#5d6a7d;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
 .acces{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--carte);border:1px solid var(--fil);border-left:4px solid var(--ard);border-radius:10px;padding:10px;margin:0 0 14px}
-.acces input,.outils input,.outils select{font:inherit;color:var(--enc);border:1px solid var(--fil);border-radius:6px;padding:7px 9px;background:#fbfcfe}
+.acces input,.outils input,.outils select{font-family:inherit;font-size:13px;color:var(--enc);border:1px solid var(--fil);border-radius:6px;padding:7px 9px;background:#fbfcfe}
 .acces input{flex:1;min-width:180px}
 .outils{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:10px;margin:0 0 14px}
 .outils input{flex:1;min-width:170px}
-.onglets{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px;border-bottom:2px solid var(--enc)}
+.onglets{display:flex;gap:6px;flex-wrap:nowrap;margin:0 0 12px;border-bottom:2px solid var(--enc)}
+.onglet .court{display:none}
 .onglet{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--fil);border-bottom:0;background:var(--carte);color:var(--mut);
 border-radius:8px 8px 0 0;padding:8px 14px;cursor:pointer}
 .onglet[aria-selected="true"]{background:var(--enc);color:#fff;border-color:var(--enc)}
@@ -84,7 +86,6 @@ letter-spacing:.5px;text-align:center;border-radius:5px;padding:4px 0;color:#fff
 .lefichier{display:block;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;color:#93a0b2;margin-top:5px;overflow-wrap:anywhere}
 .c-ac{height:1px}
 .zoneac{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;min-height:64px}
-.lesboutons{margin:auto 0}
 .zoneac .btn{margin:0}
 .lesboutons{display:flex;flex-direction:column;gap:5px;width:100%;align-items:center;margin:auto 0}
 .btn.mini{font-size:10.5px;font-weight:700;padding:5px 6px;border-radius:5px;width:52px;margin:0;line-height:1.1}
@@ -112,8 +113,10 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
   .ssligne{display:block}
   td{padding:11px 8px}
   .compteurs{flex-wrap:nowrap;overflow-x:auto;gap:7px;padding-bottom:3px}
-  .cpt{flex:0 0 auto;padding:6px 11px}
-  .cpt b{font-size:16px}.cpt span{font-size:9.5px;letter-spacing:.3px}
+  .cpt{flex:0 0 auto}
+  .cpt b{font-size:14px}.cpt span{font-size:9.5px;letter-spacing:.3px}
+  .onglet{flex:1 1 0;padding:8px 6px;font-size:12.5px;text-align:center;white-space:nowrap}
+  .onglet .long{display:none}.onglet .court{display:inline}
   .outils{padding:8px;flex-wrap:nowrap;overflow-x:auto}
   .outils select{flex:0 0 auto;min-width:0;width:auto}
   .outils input{flex:0 0 62%}
@@ -124,14 +127,14 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
 .acces.replie #cle,.acces.replie #ouvrir,.acces.replie #oublier,.acces.replie label{display:none}
 .acces:not(.replie) #gerer{display:none}
 #gerer{font:inherit;font-size:12.5px;font-weight:600;background:none;border:0;color:var(--ard);cursor:pointer;text-decoration:underline;padding:0}
-.tunnel-legende{display:flex;align-items:stretch;gap:6px;background:var(--carte);border:1px solid var(--fil);
-border-radius:10px;padding:9px 10px;margin:0 0 14px;overflow-x:auto}
-.lz{flex:1 1 0;min-width:96px;display:flex;flex-direction:column;justify-content:center;border-radius:7px;
-padding:6px 8px;color:#fff;font-size:11.5px;line-height:1.25}
-.lz b{font-family:Consolas,"SF Mono",monospace;font-size:12px;letter-spacing:.5px}
-.lz small{font-family:Consolas,"SF Mono",monospace;font-size:8.5px;opacity:.85;margin-top:2px;overflow-wrap:anywhere}
+.tunnel-legende{display:flex;align-items:center;gap:4px;background:var(--carte);border:1px solid var(--fil);
+border-radius:8px;padding:5px 6px;margin:0 0 12px;overflow-x:auto}
+.lz{flex:1 1 0;min-width:0;display:flex;align-items:baseline;gap:5px;border-radius:5px;
+padding:4px 8px;color:#fff;font-size:11px;line-height:1.2;white-space:nowrap;overflow:hidden}
+.lz b{font-family:Consolas,"SF Mono",monospace;font-size:11.5px;letter-spacing:.5px}
+.lz small{font-family:Consolas,"SF Mono",monospace;font-size:8.5px;opacity:.8}
 .lz1{background:var(--ocre)}.lz2{background:var(--ard)}.lz3{background:var(--vert)}
-.fleche{align-self:center;color:var(--mut);font-size:20px;line-height:1}
+.fleche{align-self:center;color:var(--mut);font-size:15px;line-height:1}
 .voile-carte{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:26px 20px;text-align:center;margin:10px 0}
 .voile-barre{height:4px;background:var(--fil);border-radius:3px;overflow:hidden;max-width:280px;margin:0 auto 14px}
 .voile-barre i{display:block;height:100%;width:40%;background:var(--enc);border-radius:3px;animation:glisse 1.1s ease-in-out infinite}
@@ -167,9 +170,9 @@ padding:6px 8px;color:#fff;font-size:11.5px;line-height:1.25}
 <div class="compteurs" id="compteurs"></div>
 
 <div class="onglets" role="tablist" id="onglets" hidden>
-  <button class="onglet" role="tab" data-vue="tunnel" aria-selected="true">Tunnel d'acquisition des connaissances</button>
-  <button class="onglet" role="tab" data-vue="agents" aria-selected="false">Gestion des agents</button>
-  <button class="onglet" role="tab" data-vue="veille" aria-selected="false">Supervision de la veille</button>
+  <button class="onglet" role="tab" data-vue="tunnel" aria-selected="true"><span class="long">Tunnel d'acquisition des connaissances</span><span class="court">Tunnel</span></button>
+  <button class="onglet" role="tab" data-vue="agents" aria-selected="false"><span class="long">Gestion des agents</span><span class="court">Agents</span></button>
+  <button class="onglet" role="tab" data-vue="veille" aria-selected="false"><span class="long">Supervision de la veille</span><span class="court">Veille</span></button>
 </div>
 
 <div id="etat" class="etat" hidden></div>
@@ -576,6 +579,52 @@ function proposer(act, it){
       catch(_){ e.target.textContent = "Selectionne le texte et copie"; } }
   });
 }
+
+/* Suivre une demande jusqu'a la reponse du robot : le tableau affiche est date de l'ouverture,
+   il devient faux des que le robot a bouge les fichiers - d'ou la mise a jour proposee a la fin. */
+async function suivre(demandes){
+  const debut = Date.now();
+  const limite = 90000;
+  while (Date.now() - debut < limite){
+    await new Promise(r => setTimeout(r, 5000));
+    let traitees = 0;
+    for (const d of demandes){
+      try {
+        const q = await api("/repos/" + d.depot + "/issues/" + d.numero);
+        if (q.state === "closed" || q.comments > 0) traitees++;
+      } catch(e){ /* on retentera au tour suivant */ }
+    }
+    if (traitees === demandes.length){
+      etatHtml('<b>Demande traitee par le robot.</b> Le tableau affiche date de son ouverture : il ne montre pas encore le deplacement. '
+        + '<button id="rafraichir" class="btnc" style="margin-top:8px">Mettre a jour la liste</button>');
+      $("rafraichir").addEventListener("click", rafraichir);
+      return;
+    }
+    const sec = Math.round((Date.now() - debut) / 1000);
+    if (sec >= 25) etatHtml("Demande envoyee, sans reponse depuis " + sec + " secondes. Le robot met normalement moins d'une minute.");
+  }
+  etatHtml('<b>Toujours sans reponse apres 90 secondes.</b> C\'est le signe d\'un blocage : dis-le a l\'Agent Admin, '
+    + "qui saura diagnostiquer (procedure P22) et rejouer la demande.", 1);
+}
+function etatHtml(html, err){
+  const d = $("etat"); d.hidden = false; d.className = "etat" + (err ? " err" : ""); d.innerHTML = html;
+}
+/* Relire les depots sans recharger la page : les filtres et la position de lecture sont conserves. */
+async function rafraichir(){
+  const memo = {q: $("q").value, ft: $("ft").value, fa: $("fa").value, fz: $("fz").value, fc: $("fc").value, fe: $("fe").value};
+  const y = window.scrollY;
+  etatHtml("Mise a jour de la liste...");
+  try {
+    await collecte();
+    rendreCompteurs(); rendreTunnel(); rendreAgents(); rendreVeille();
+    for (const k in memo){ if ($(k)) $(k).value = memo[k]; }
+    filtrer();
+    window.scrollTo(0, y);
+    $("sous").textContent = "Etat reel des depots, lu le " + new Date().toLocaleString("fr-FR") + ".";
+    etatHtml("Liste a jour.");
+    setTimeout(() => { $("etat").hidden = true; }, 4000);
+  } catch(e){ etatHtml("Mise a jour impossible : " + e.message, 1); }
+}
 async function envoyer(act, it){
   if (!it.length){
     const z = (act === "vivant" || act === "deversoir") ? "Zone 2 (docs accessibles)" : "Zone 1 (triage)";
@@ -589,7 +638,7 @@ async function envoyer(act, it){
     for (const dep of Object.keys(parDepot)){
       const d = await api("/repos/" + dep + "/issues", {method: "POST",
         headers: {"Content-Type": "application/json"}, body: JSON.stringify(demande(act, parDepot[dep]))});
-      faits.push(d);
+      faits.push({depot: dep, numero: d.number, url: d.html_url});
     }
   } catch(e){ proposer(act, it); return; }
   it.forEach(i => {
@@ -597,8 +646,9 @@ async function envoyer(act, it){
     if (c){ c.checked = false; c.closest("tr").classList.add("envoye"); }
   });
   majsel();
-  etat("Demande envoyee (" + it.length + " document" + (it.length > 1 ? "s" : "") + ") - le robot la traite en moins d'une minute.",
-       0, faits[0].html_url, "Suivre");
+  etat("Demande envoyee (" + it.length + " document" + (it.length > 1 ? "s" : "") + ") - suivi en cours...",
+       0, faits[0].url, "Voir sur GitHub");
+  suivre(faits);
 }
 function brancherActions(){
   $$("#tunnel [data-act]").forEach(b => b.addEventListener("click", ev => {
@@ -650,7 +700,12 @@ $("vider").addEventListener("click", () => { $$(".sel").forEach(c => c.checked =
 $$(".barre [data-act]").forEach(b => b.addEventListener("click", () => envoyer(b.dataset.act, eligibles(choisis(), b.dataset.act))));
 try {
   const m = localStorage.getItem("cle_console");
-  if (m){ $("cle").value = m; $("etatcle").textContent = "cle retrouvee dans ce navigateur"; ouvrir(); }
+  if (m){
+    $("cle").value = m;
+    $("etatcle").textContent = "Connecte - cle memorisee dans ce navigateur";
+    document.querySelector(".acces").classList.add("replie");
+    ouvrir();
+  }
 } catch(e){}
 </script>
 </body></html>
