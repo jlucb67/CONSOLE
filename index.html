@@ -82,7 +82,10 @@ letter-spacing:.5px;text-align:center;border-radius:5px;padding:4px 0;color:#fff
 .titre{font-weight:600;font-size:13.5px;line-height:1.35;display:block;overflow-wrap:anywhere}
 .leresume{display:block;font-size:13.5px;line-height:1.45;margin-top:4px;color:#22314c}
 .lefichier{display:block;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;color:#93a0b2;margin-top:5px;overflow-wrap:anywhere}
-.zoneac{display:flex;flex-direction:column;align-items:center;gap:5px}
+.c-ac{height:1px}
+.zoneac{display:flex;flex-direction:column;align-items:center;justify-content:space-between;height:100%;min-height:64px;gap:12px}
+.zoneac .btn{margin:0}
+.lesboutons{display:flex;flex-direction:column;gap:5px;width:100%;align-items:center}
 .btn.mini{font-size:10.5px;font-weight:700;padding:5px 6px;border-radius:5px;width:52px;margin:0;line-height:1.1}
 .c-nom{min-width:120px}
 .c-fic{font-family:Consolas,"SF Mono",monospace;font-size:10px;color:var(--mut);max-width:150px;overflow-wrap:anywhere}
@@ -399,7 +402,7 @@ function actions(r){
   if (zc === "Z1") b = '<button class="btn plein mini" title="Classer en Zone 2 (docs accessibles)" data-act="bibliotheque"' + d + ">vers Z2</button>"
     + '<button class="btn creux mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
   else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter en Zone 3 (memoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
-  return '<span class="zoneac">' + c + b + "</span>";
+  return '<span class="zoneac">' + (c || "<span></span>") + '<span class="lesboutons">' + b + "</span></span>";
 }
 function lesTags(r){
   return r.tags.length ? '<span class="lestags">' + r.tags.map(t => '<span class="tag">' + esc(t) + "</span>").join("") + "</span>"
