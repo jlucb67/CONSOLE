@@ -69,13 +69,17 @@ tr.envoye{opacity:.5}tr.envoye .c-doc::after{content:" envoye";font-size:11px;co
 .pied{margin-top:22px;font-size:12.5px;color:var(--mut)}
 .chargement{padding:26px;text-align:center;color:var(--mut);font-size:14px}
 /* --- pastille de zone, sous la case a cocher --- */
-.c-zone{width:52px;padding-left:10px}
+.c-zone{width:74px;padding-left:10px}
+.lag{display:block;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;font-weight:700;color:var(--enc);
+line-height:1.15;text-align:center;overflow-wrap:anywhere;margin-bottom:4px}
+.lfmt{display:block;text-align:center;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;font-weight:700;
+color:var(--mut);margin-top:5px;text-transform:uppercase}
+.lpds{display:block;text-align:center;font-size:9.5px;color:var(--mut);line-height:1.2}
 .zpast{display:block;font-family:Consolas,"SF Mono",monospace;font-size:10.5px;font-weight:700;
 letter-spacing:.5px;text-align:center;border-radius:5px;padding:4px 0;color:#fff}
 .zmot{display:block;font-size:8.5px;color:var(--mut);text-align:center;margin-top:2px;line-height:1.1}
 .c-sel{width:40px;text-align:center}
 .titre{font-weight:600;font-size:13.5px;line-height:1.35;display:block;overflow-wrap:anywhere}
-.lagent{display:block;font-weight:700;font-size:13px;color:var(--enc);letter-spacing:.2px}
 .leresume{display:block;font-size:13.5px;line-height:1.45;margin-top:4px;color:#22314c}
 .lefichier{display:block;font-family:Consolas,"SF Mono",monospace;font-size:9.5px;color:#93a0b2;margin-top:5px;overflow-wrap:anywhere}
 .zoneac{display:flex;flex-direction:column;align-items:center;gap:5px}
@@ -187,7 +191,7 @@ let AGENTS = [];
 let VEILLES = [];
 
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
-function poids(n){ return n >= 1048576 ? (n/1048576).toFixed(1)+" Mo" : n >= 1024 ? Math.round(n/1024)+" Ko" : n+" o"; }
+function poids(n){ return n >= 1048576 ? (n/1048576).toFixed(1).replace(".", ",")+" Mo" : n >= 1024 ? Math.round(n/1024)+" Ko" : n+" o"; }
 function jours(d){ return Math.floor((Date.now() - d.getTime()) / 86400000); }
 
 async function api(chemin, options){
@@ -364,14 +368,17 @@ function lesTags(r){
 function tr(r, id){
   const zv = zoneVive(r);
   const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
-  const past = '<span class="zpast z-' + zv[1] + '">' + zv + '</span><span class="zmot">' + ZMOT[zv] + "</span>";
+  const fz = r.z[ZDOS[zv]] || ["", "", 0];
+  const past = '<span class="lag">' + esc(r.agent) + "</span>"
+    + '<span class="zpast z-' + zv[1] + '">' + zv + '</span><span class="zmot">' + ZMOT[zv] + "</span>"
+    + '<span class="lfmt">' + esc(fz[1]) + '</span><span class="lpds">' + poids(fz[2]) + "</span>";
   const res = (r.resume && r.resume !== "non lu")
     ? esc(r.resume)
     : '<span class="mut">Pas encore lu - resume a produire.</span>';
   return '<tr class="doc" data-id="' + id + '" data-zone="' + zv + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
     + ' data-txt="' + esc((r.doc + " " + r.resume + " " + r.origine).toLowerCase()) + '">'
     + '<td class="c-zone">' + past + "</td>"
-    + '<td class="c-doc"><span class="lagent">Agent ' + esc(r.agent) + "</span>" + lesTags(r)
+    + '<td class="c-doc">' + lesTags(r)
     + '<span class="leresume">' + res + "</span>"
     + '<span class="lefichier">' + esc(nomFichier(r)) + "</span>"
     + '<span class="ssligne">' + dj + " &middot; " + esc(r.origine) + "</span></td>"
