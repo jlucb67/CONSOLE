@@ -488,8 +488,38 @@ async function collecteTunnel(){
 }
 
 /* Les agents : conformite, fraicheur, stock de savoirs cumulatifs, contradictions. */
+/* Dates de synchronisation declarees par JL : ADMIN/savoir/SYNCHRO.json (depot SOCLE).
+   Le geste « Sync now » ne laisse AUCUNE trace au depot - c'est JL qui le declare ici,
+   et la console ne compte alors que les modifications POSTERIEURES a cette date. */
+let SYNCHROS = {};
+async function lireSynchros(){
+  const t = await texteOuNull("jlucb67/SOCLE", "ADMIN/savoir/SYNCHRO.json");
+  try { SYNCHROS = t ? JSON.parse(t) : {}; } catch(e){ SYNCHROS = {}; }
+}
+async function marquerSynchro(depot, agent){
+  const cle = depot + "/" + agent;
+  $("voile").hidden = false;
+  try {
+    let sha = null, obj = {};
+    try {
+      const d = await api("/repos/jlucb67/SOCLE/contents/ADMIN/savoir/SYNCHRO.json");
+      sha = d.sha; obj = JSON.parse(decode(d.content));
+    } catch(e){ /* le fichier n'existe pas encore */ }
+    obj[cle] = new Date().toISOString();
+    const corps = {message: "Synchronisation declaree par JL : " + cle,
+      content: btoa(unescape(encodeURIComponent(JSON.stringify(obj, null, 1)))) };
+    if (sha) corps.sha = sha;
+    await api("/repos/jlucb67/SOCLE/contents/ADMIN/savoir/SYNCHRO.json",
+      {method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify(corps)});
+    ETAT.agents.fait = false;
+    await collecteAgents(); rendreAgents(); await majBandeaux();
+  } catch(e){ etat("Impossible d'enregistrer : " + e.message, 1); }
+  finally { $("voile").hidden = true; }
+}
+
 async function collecteAgents(){
   if (!ETAT.tunnel.fait) await collecteTunnel();
+  await lireSynchros();
   AGENTS = [];
   const arbres = ARBRES;
   const listeAgents = [];
@@ -548,9 +578,11 @@ async function collecteAgents(){
         }
       } catch (e) { /* commit illisible : on ne devine pas */ }
     }
-    AGENTS.push({agent, depot, version: num ? num[1] : null,
+    const dateSync = SYNCHROS[depot + "/" + agent] ? new Date(SYNCHROS[depot + "/" + agent]) : null;
+    const retenues = dateSync ? contras.filter(c => c.quand > dateSync) : contras;
+    AGENTS.push({dateSync, contras: retenues, agent, depot, version: num ? num[1] : null,
                  evolution: quoi ? quoi[0].replace(/^- /, "") : "",
-                 maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30, stock, contras});
+                 maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30, stock});
   }
 
   ETAT.agents.fait = true; ETAT.agents.quand = new Date(); ETAT.agents.shas = await shasDepots();
@@ -792,11 +824,21 @@ function pileStock(a, maxTotal){
 }
 
 /* Les contradictions : la copie du champ Contexte porte un texte que le depot a modifie. */
+function boutonSynchro(a){
+  return '<button class="btnc mini" data-sync="' + esc(a.agent) + '" data-dep="' + esc(a.depot) + '">'
+    + 'Je viens de synchroniser</button>';
+}
+function depuisQuand(a){
+  return a.dateSync ? '<span class="mut"> Dernière synchronisation déclarée : '
+    + a.dateSync.toLocaleString("fr-FR", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}) + ".</span>" : "";
+}
 function blocContradictions(a){
   if (!a.contras.length)
-    return '<div class="contra ok"><h4>Aucune contradiction détectée sur 30 jours</h4>'
-      + 'Les écritures récentes sont des ajouts : la copie de son champ Contexte ne dit rien de contraire. '
-      + 'Aucune synchronisation à la main n\'est nécessaire.</div>';
+    return '<div class="contra ok"><h4>Aucune contradiction</h4>'
+      + (a.dateSync ? 'Aucun fichier copié n\'a été modifié depuis ta synchronisation.'
+                    : 'Les écritures des 30 derniers jours sont des ajouts : la copie de son champ Contexte ne dit rien de contraire.')
+      + ' Aucun geste nécessaire.' + depuisQuand(a)
+      + '<div style="margin-top:6px">' + boutonSynchro(a) + "</div></div>";
   const parFichier = new Map();
   for (const c of a.contras){
     if (!parFichier.has(c.fichier)) parFichier.set(c.fichier, c);
@@ -806,7 +848,9 @@ function blocContradictions(a){
     + 'Sa copie porte encore l\'ancien texte. Appuie sur « Sync now » dans la connexion GitHub de son Projet.'
     + '<ul>' + [...parFichier.values()].map(c => '<li><b>' + esc(c.fichier) + '</b> - ' + esc(c.quoi)
         + ' le ' + c.quand.toLocaleDateString("fr-FR") + ' <span class="mut">(' + esc(courte(c.titre, 60)) + ')</span></li>').join("")
-    + '</ul></div>';
+    + '</ul>' + depuisQuand(a)
+    + '<div style="margin-top:6px">' + boutonSynchro(a)
+    + ' <span class="mut">après avoir appuyé sur « Sync now » dans son Projet.</span></div></div>';
 }
 
 function rendreAgents(){
@@ -863,6 +907,8 @@ function rendreAgents(){
       + "</article>";
   }).join("");
   $("agents").innerHTML = h;
+  $$("#agents [data-sync]").forEach(b => b.addEventListener("click",
+    () => marquerSynchro(b.dataset.dep, b.dataset.sync)));
 }
 function veilleDe(a){
   return VEILLES.find(v => v.plateforme ? a.agent === "ADMIN" : v.index.split("/")[0] === a.agent);
