@@ -802,16 +802,16 @@ function pileStock(a, maxTotal){
     + '</table></details></div>';
 }
 
-/* Les contradictions : la copie du champ Contexte porte un texte que le depot a modifie. */
+/* Les contradictions : l'agent declare la version que porte sa copie (ETAT_COPIE.json,
+   ecrit par sa tache quotidienne) ; la console la compare a celle du depot. */
 function blocContradictions(a){
   const quand = a.copie && a.copie.date
     ? new Date(a.copie.date).toLocaleString("fr-FR", {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}) : null;
   if (a.aJour === null)
     return '<div class="contra att"><h4>État de sa copie inconnu</h4>'
       + "L'agent n'a pas encore déclaré la version que porte son champ Contexte. "
-      + "Seul lui peut le voir : sa tâche quotidienne doit écrire <code>" + esc(a.agent) + "/ETAT_COPIE.json</code>. "
-      + "Tant qu'elle ne tourne pas, les contradictions ne sont pas détectables."
-      + (a.contras.length ? " (" + a.contras.length + " fichier(s) copié(s) modifié(s) sur 30 jours.)" : "") + "</div>";
+      + "Seul lui peut le voir : sa tâche quotidienne doit écrire <code>" + esc(a.agent) + "/ETAT_COPIE.json</code>."
+      + (a.contras.length ? " " + a.contras.length + " fichier(s) copié(s) modifié(s) sur 30 jours." : "") + "</div>";
   if (a.aJour)
     return '<div class="contra ok"><h4>Copie à jour - aucune contradiction</h4>'
       + "Sa copie porte la version " + a.vCopie + ", le dépôt aussi. Aucun geste."
@@ -822,56 +822,8 @@ function blocContradictions(a){
     + "Appuie sur « Sync now » dans la connexion GitHub de son Projet."
     + (parFichier.size ? "<ul>" + [...parFichier.values()].map(c => "<li><b>" + esc(c.fichier) + "</b> - " + esc(c.quoi)
         + " le " + c.quand.toLocaleDateString("fr-FR") + "</li>").join("") + "</ul>"
-        : " <span class=\"mut\">(aucune modification relevée sur 30 jours : le retard peut n'être que des ajouts.)</span>")
+        : ' <span class="mut">Aucune modification relevée sur 30 jours : le retard ne porte peut-être que des ajouts.</span>')
     + (quand ? '<div class="mut" style="margin-top:4px">Déclaré le ' + quand + ".</div>" : "") + "</div>";
-}
-
-/* ECRAN AGENTS - l'agent comme INSTALLATION : identite, conformite, memoire vive, vitalite.
-   L'inventaire de ses documents vit dans le tunnel : il n'est pas repete ici. */
-
-/* La pile du stock : chaque agent a la MEME echelle, pour que les ecarts se voient. */
-function pileStock(a, maxTotal){
-  const s = a.stock, remplissage = maxTotal ? (100 * s.total / maxTotal) : 0;
-  const segs = s.reg.filter(r => r.o > 0);
-  return '<div class="pile-bloc">'
-    + '<div class="pile-tete"><b>' + poids(s.total) + '</b>'
-    + '<span class="unites">~' + fmtTokens(s.total) + ' tokens estimés &middot; '
-    + fmtPct(s.total) + ' de la fenêtre &middot; ' + s.nb + ' fichiers</span></div>'
-    + '<div class="piste"><div class="pile" style="width:' + remplissage.toFixed(2) + '%">'
-    + segs.map(r => '<span class="seg" style="width:' + (100 * r.o / s.total).toFixed(2)
-        + '%;background:' + r.c + '" title="' + esc(r.n) + ' - ' + poids(r.o) + '"></span>').join("")
-    + '</div></div>'
-    + '<div class="pile-leg">' + segs.map(r => '<span><i style="background:' + r.c + '"></i>'
-        + esc(r.n) + ' <b>' + poids(r.o) + '</b></span>').join("") + '</div>'
-    + '<details class="detail-stock"><summary>Détail fichier par fichier</summary><table>'
-    + segs.map(r => r.fics.map(f => '<tr><td><i style="display:inline-block;width:8px;height:8px;border-radius:2px;'
-        + 'margin-right:6px;background:' + r.c + '"></i>' + esc(f.nom) + '</td>'
-        + '<td class="p">' + esc(f.zone) + '</td>'
-        + '<td class="p">' + poids(f.o) + '</td>'
-        + '<td class="p">' + fmtTokens(f.o) + ' t.</td></tr>').join("")).join("")
-    + '</table></details></div>';
-}
-
-/* Les contradictions : la copie du champ Contexte porte un texte que le depot a modifie. */
-function blocContradictions(a){
-  if (!a.contras.length)
-    return '<div class="contra ok"><h4>Aucune contradiction</h4>'
-      + (a.dateSync ? 'Aucun fichier copié n\'a été modifié depuis ta synchronisation.'
-                    : 'Les écritures des 30 derniers jours sont des ajouts : la copie de son champ Contexte ne dit rien de contraire.')
-      + ' Aucun geste nécessaire.' + depuisQuand(a)
-      + '<div style="margin-top:6px">' + boutonSynchro(a) + "</div></div>";
-  const parFichier = new Map();
-  for (const c of a.contras){
-    if (!parFichier.has(c.fichier)) parFichier.set(c.fichier, c);
-  }
-  return '<div class="contra"><h4>' + parFichier.size + ' fichier'
-    + (parFichier.size > 1 ? 's modifiés' : ' modifié') + ' depuis la copie - contradiction possible</h4>'
-    + 'Sa copie porte encore l\'ancien texte. Appuie sur « Sync now » dans la connexion GitHub de son Projet.'
-    + '<ul>' + [...parFichier.values()].map(c => '<li><b>' + esc(c.fichier) + '</b> - ' + esc(c.quoi)
-        + ' le ' + c.quand.toLocaleDateString("fr-FR") + ' <span class="mut">(' + esc(courte(c.titre, 60)) + ')</span></li>').join("")
-    + '</ul>' + depuisQuand(a)
-    + '<div style="margin-top:6px">' + boutonSynchro(a)
-    + ' <span class="mut">après avoir appuyé sur « Sync now » dans son Projet.</span></div></div>';
 }
 
 function rendreAgents(){
