@@ -176,6 +176,26 @@ background:var(--carte);border:2px solid var(--ard)}
 @keyframes apparait{from{opacity:0}to{opacity:1}}
 [hidden]{display:none !important}
 @media (max-width:640px){h1{font-size:22px}.c-res{min-width:240px}}
+
+.pile-bloc{margin:10px 0 4px}
+.pile-tete{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.pile-tete b{font-size:15px}
+.pile-tete .unites{font-size:12px;color:var(--mut)}
+.piste{background:var(--fond2);border:1px solid var(--fil);border-radius:5px;height:22px;overflow:hidden}
+.pile{display:flex;height:100%;border-radius:4px 0 0 4px;overflow:hidden}
+.seg{display:block;height:100%}
+.pile-leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:11.5px;color:var(--mut)}
+.pile-leg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:middle}
+.detail-stock{margin-top:8px;font-size:12px}
+.detail-stock summary{cursor:pointer;color:var(--enc);font-weight:600}
+.detail-stock table{width:100%;border-collapse:collapse;margin-top:6px}
+.detail-stock td{padding:3px 6px;border-bottom:1px solid var(--fil);vertical-align:top}
+.detail-stock td.p{text-align:right;white-space:nowrap;color:var(--mut)}
+.contra{margin-top:10px;border:1px solid #d9b3b3;background:#fbf3f3;border-radius:6px;padding:8px 10px;font-size:12.5px}
+.contra.ok{border-color:#b9d9c0;background:#f3faf5}
+.contra h4{margin:0 0 4px;font-size:12.5px}
+.contra ul{margin:4px 0 0;padding-left:18px}
+.contra li{margin:2px 0}
 </style></head>
 <body><div class="page">
 <h1>Console d'administration</h1>
@@ -235,7 +255,7 @@ background:var(--carte);border:2px solid var(--ard)}
 </section>
 
 <section id="vue-agents" hidden>
-  <p class="legende">L'agent comme installation : sa conformité (protocole mémoire, veille, métadonnées, avatar), sa mémoire vive et sa vitalité. L'inventaire de ses documents n'est pas répété ici : il vit dans le tunnel.</p>
+  <p class="legende">L'agent comme installation : sa conformité (protocole mémoire, veille, métadonnées, avatar), son stock de savoirs cumulatifs et sa vitalité. L'inventaire de ses documents n'est pas répété ici : il vit dans le tunnel.</p>
   <div id="agents"></div>
 </section>
 
@@ -349,6 +369,54 @@ function derniereDate(txt){
   return best;
 }
 
+
+/* ─── LE STOCK DE SAVOIRS CUMULATIFS ────────────────────────────────────────
+   Ce que NOTRE systeme ajoute au fonctionnement nominal, present a chaque echange :
+   la copie des dossiers coches (instructions/, savoir/, socle-commun/).
+   Ce n'est PAS « la memoire vive » : la memoire vive est toute la fenetre de contexte.
+   Registres : classement PROVISOIRE par nom de fichier, en attente de l'etiquetage declare (P23). */
+const REGISTRES = [
+  ["Doctrine",             "#6b5b95", /^METAMODELE\.md$/i],
+  ["Coopération",          "#3f7a6a", /^(REGLES_COMMUNES|PROTOCOLE_COLLABORATION)\.md$/i],
+  ["Langage",              "#c8862f", /^(REDACTION|CONSIGNES_LANGAGE|REGLES_EDITORIALES)\.md$/i],
+  ["Identité et mission",  "#2f6f9f", /^(INSTRUCTIONS_PROJET|CHAMP_PROJET|MISSION|START_HERE)\.md$/i],
+  ["Mécanique de mémoire", "#7a8b3f", /^(PROTOCOLE_MEMOIRE|VERSION|CATALOGUE)\.md$/i],
+  ["Normes de production", "#a5673f", /^(GABARITS.*|CARTE_GENERATEURS)\.md$/i],
+  ["Jamais mobilisés",     "#a33b3b", /^(DEMARRAGE_SESSION|PROMPT_VEILLE|SOURCES_VEILLE)\.md$/i]
+];
+const REG_FOND = ["Fond métier", "#5c6670"];
+const RATIO_TOKEN = 3.3, FENETRE = 1000000;
+function registreDe(nom){
+  for (const r of REGISTRES) if (r[2].test(nom)) return r;
+  return REG_FOND;
+}
+function enTokens(o){ return Math.round(o / RATIO_TOKEN); }
+function partFenetre(o){ return 100 * enTokens(o) / FENETRE; }
+function fmtTokens(o){ return enTokens(o).toLocaleString("fr-FR"); }
+function fmtPct(o){ const p = partFenetre(o); return (p < 1 ? p.toFixed(2) : p.toFixed(1)).replace(".", ",") + " %"; }
+
+/* Le stock d'un agent : chaque fichier copie, son registre, son poids. */
+function calculeStock(arbre, agent, socle){
+  const fics = [];
+  for (const n of arbre){
+    const q = n.path.split("/");
+    if (n.type !== "blob" || n.size == null) continue;
+    if (q.length === 3 && q[0] === agent && (q[1] === "instructions" || q[1] === "savoir") && q[2] !== ".gitkeep")
+      fics.push({nom: q[2], zone: q[1], o: n.size});
+  }
+  for (const s of socle) fics.push({nom: s.nom, zone: "socle-commun", o: s.o});
+  const parReg = new Map();
+  for (const f of fics){
+    const r = registreDe(f.nom);
+    if (!parReg.has(r[0])) parReg.set(r[0], {n: r[0], c: r[1], o: 0, fics: []});
+    const e = parReg.get(r[0]); e.o += f.o; e.fics.push(f);
+  }
+  const ordre = REGISTRES.map(r => r[0]).concat([REG_FOND[0]]);
+  const reg = ordre.filter(n => parReg.has(n)).map(n => parReg.get(n));
+  for (const e of reg) e.fics.sort((a, b) => b.o - a.o);
+  return {reg, total: fics.reduce((s, f) => s + f.o, 0), nb: fics.length};
+}
+
 async function collecte(){
   LIGNES = []; AGENTS = []; VEILLES = [];
   const arbres = {};
@@ -419,9 +487,29 @@ async function collecte(){
     const v = await texteOuNull(depot, agent + "/savoir/VERSION.md");
     const num = v && v.match(/VERSION\s*:\s*(\d+)/);
     const quoi = v && v.match(/^- v\d+.*$/m);
+    const socle = arbres[depot].filter(n => n.type === "blob" && n.path.startsWith("socle-commun/")
+                    && !/README/i.test(n.path)).map(n => ({nom: n.path.split("/").pop(), o: n.size || 0}));
+    const stock = calculeStock(arbres[depot], agent, socle);
+    /* CONTRADICTIONS : un fichier COPIE modifie ou supprime au depot contredit la copie du champ Contexte.
+       Un AJOUT ne contredit jamais (la copie n'en dit rien). Detail lu sur les commits recents. */
+    const contras = [];
+    const recents = rec.filter(c => new Date(c.commit.committer.date).getTime() > limite30).slice(0, 8);
+    for (const c of recents){
+      try {
+        const d = await api("/repos/" + depot + "/commits/" + c.sha);
+        for (const f of (d.files || [])){
+          const q = f.filename.split("/");
+          const copie = (q.length === 3 && q[0] === agent && (q[1] === "instructions" || q[1] === "savoir"));
+          if (copie && (f.status === "modified" || f.status === "removed"))
+            contras.push({fichier: q[2], quand: new Date(c.commit.committer.date),
+                          quoi: f.status === "removed" ? "supprimé" : "modifié",
+                          titre: c.commit.message.split("\n")[0]});
+        }
+      } catch (e) { /* commit illisible : on ne devine pas */ }
+    }
     AGENTS.push({agent, depot, version: num ? num[1] : null,
                  evolution: quoi ? quoi[0].replace(/^- /, "") : "",
-                 maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30});
+                 maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30, stock, contras});
   }
 
   /* veilles actives */
@@ -597,6 +685,48 @@ function courte(t, n){ t = (t || "").trim(); return t.length > n ? t.slice(0, n 
 
 /* ECRAN AGENTS - l'agent comme INSTALLATION : identite, conformite, memoire vive, vitalite.
    L'inventaire de ses documents vit dans le tunnel : il n'est pas repete ici. */
+
+/* La pile du stock : chaque agent a la MEME echelle, pour que les ecarts se voient. */
+function pileStock(a, maxTotal){
+  const s = a.stock, remplissage = maxTotal ? (100 * s.total / maxTotal) : 0;
+  const segs = s.reg.filter(r => r.o > 0);
+  return '<div class="pile-bloc">'
+    + '<div class="pile-tete"><b>' + poids(s.total) + '</b>'
+    + '<span class="unites">~' + fmtTokens(s.total) + ' tokens estimés &middot; '
+    + fmtPct(s.total) + ' de la fenêtre &middot; ' + s.nb + ' fichiers</span></div>'
+    + '<div class="piste"><div class="pile" style="width:' + remplissage.toFixed(2) + '%">'
+    + segs.map(r => '<span class="seg" style="width:' + (100 * r.o / s.total).toFixed(2)
+        + '%;background:' + r.c + '" title="' + esc(r.n) + ' - ' + poids(r.o) + '"></span>').join("")
+    + '</div></div>'
+    + '<div class="pile-leg">' + segs.map(r => '<span><i style="background:' + r.c + '"></i>'
+        + esc(r.n) + ' <b>' + poids(r.o) + '</b></span>').join("") + '</div>'
+    + '<details class="detail-stock"><summary>Détail fichier par fichier</summary><table>'
+    + segs.map(r => r.fics.map(f => '<tr><td><i style="display:inline-block;width:8px;height:8px;border-radius:2px;'
+        + 'margin-right:6px;background:' + r.c + '"></i>' + esc(f.nom) + '</td>'
+        + '<td class="p">' + esc(f.zone) + '</td>'
+        + '<td class="p">' + poids(f.o) + '</td>'
+        + '<td class="p">' + fmtTokens(f.o) + ' t.</td></tr>').join("")).join("")
+    + '</table></details></div>';
+}
+
+/* Les contradictions : la copie du champ Contexte porte un texte que le depot a modifie. */
+function blocContradictions(a){
+  if (!a.contras.length)
+    return '<div class="contra ok"><h4>Aucune contradiction détectée sur 30 jours</h4>'
+      + 'Les écritures récentes sont des ajouts : la copie de son champ Contexte ne dit rien de contraire. '
+      + 'Aucune synchronisation à la main n\'est nécessaire.</div>';
+  const parFichier = new Map();
+  for (const c of a.contras){
+    if (!parFichier.has(c.fichier)) parFichier.set(c.fichier, c);
+  }
+  return '<div class="contra"><h4>' + parFichier.size + ' fichier'
+    + (parFichier.size > 1 ? 's modifiés' : ' modifié') + ' depuis la copie - contradiction possible</h4>'
+    + 'Sa copie porte encore l\'ancien texte. Appuie sur « Sync now » dans la connexion GitHub de son Projet.'
+    + '<ul>' + [...parFichier.values()].map(c => '<li><b>' + esc(c.fichier) + '</b> - ' + esc(c.quoi)
+        + ' le ' + c.quand.toLocaleDateString("fr-FR") + ' <span class="mut">(' + esc(courte(c.titre, 60)) + ')</span></li>').join("")
+    + '</ul></div>';
+}
+
 function rendreAgents(){
   if (!AGENTS.length){ $("agents").innerHTML = '<div class="cadre"><p class="vide">Aucun agent trouve.</p></div>'; return; }
   const nonConformes = AGENTS.filter(a => !a.conf.memoire).length;
@@ -604,8 +734,17 @@ function rendreAgents(){
   let h = '<div class="synthese">' + mesure(AGENTS.length, "agents")
     + mesure(nonConformes, "sans protocole mémoire", nonConformes > 0)
     + mesure(sansVeille, "sans veille", sansVeille > 0)
-    + mesure(AGENTS.filter(a => a.vol["savoir"].o > 400000).length, "mémoire vive lourde",
-             AGENTS.some(a => a.vol["savoir"].o > 400000)) + "</div>";
+    + mesure(AGENTS.filter(a => a.contras.length).length, "à synchroniser",
+             AGENTS.some(a => a.contras.length)) + "</div>"
+    + '<div class="cadre" style="margin-bottom:12px"><p class="legende" style="margin:0">'
+    + '<b>Stock de savoirs cumulatifs</b> - ce que notre système ajoute au fonctionnement nominal, présent à chaque échange : '
+    + 'la copie des dossiers cochés (instructions, savoir, socle commun). Ce n\'est pas la mémoire vive, qui est toute la fenêtre de contexte. '
+    + 'Total du parc : <b>' + poids(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + '</b> &middot; ~'
+    + fmtTokens(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + ' tokens estimés. '
+    + 'Estimation au ratio de 3,3 caractères par token ; part calculée sur une fenêtre d\'un million. '
+    + 'Les documents versés à la main dans le champ Contexte ne sont pas mesurables depuis le dépôt : ils s\'ajoutent à ces chiffres. '
+    + 'Répartition par registre <b>provisoire</b> tant que les fichiers ne portent pas leur registre déclaré.</p></div>';
+  const maxTotal = Math.max(...AGENTS.map(a => a.stock.total));
 
   h += AGENTS.map(a => {
     const eq = a.depot.split("/")[1];
@@ -627,13 +766,14 @@ function rendreAgents(){
         + (admin ? coche(true, "avatar attribué") : coche(false, "avatar à attribuer"))
       + "</div>"
       + '<div class="mesures">'
-        + mesure(a.version != null ? "v" + a.version : "-", age != null ? "mémoire vive, " + age + " j" : "mémoire vive")
-        + mesure(poids(vive.o), "poids en vive", vive.o > 400000)
+        + mesure(a.version != null ? "v" + a.version : "-", age != null ? "version, " + age + " j" : "version")
+        + mesure(fmtPct(a.stock.total), "de la fenêtre", partFenetre(a.stock.total) > 10)
         + mesure(a.actifs30, "gravures sur 30 j", a.actifs30 === 0)
         + (admin ? "" : mesure(attente, "en attente de toi", attente > 0))
         + (admin ? "" : mesure(dette, "résumés dus", dette > 0))
       + "</div>"
-      + (admin ? "" : jauge(a.vol))
+      + pileStock(a, maxTotal)
+      + blocContradictions(a)
       + '<p class="evo"><b>Dernière évolution</b> - ' + esc(courte(a.evolution, 150)) + "</p>"
       + '<p class="pieds">Dernière gravure au dépôt : '
       + (a.activite ? a.activite.date.toLocaleDateString("fr-FR") + " par " + esc(a.activite.qui)
