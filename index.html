@@ -196,6 +196,10 @@ background:var(--carte);border:2px solid var(--ard)}
 .contra h4{margin:0 0 4px;font-size:12.5px}
 .contra ul{margin:4px 0 0;padding-left:18px}
 .contra li{margin:2px 0}
+
+.bandeau{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-size:12px;color:var(--mut)}
+.bandeau .bouge{color:#8a5a1a;background:#fdf4e6;border:1px solid #e8d4ae;border-radius:5px;padding:2px 7px}
+.bandeau .btnc.mini{padding:3px 9px;font-size:12px;margin:0}
 </style></head>
 <body><div class="page">
 <h1>Console d'administration</h1>
@@ -226,6 +230,7 @@ background:var(--carte);border:2px solid var(--ard)}
 </div>
 
 <section id="vue-tunnel" hidden>
+  <div class="bandeau" id="bandeau-tunnel"></div>
   <div id="etat" class="etat" hidden></div>
   <div class="compteurs" id="compteurs"></div>
   <div class="outils">
@@ -255,11 +260,13 @@ background:var(--carte);border:2px solid var(--ard)}
 </section>
 
 <section id="vue-agents" hidden>
+  <div class="bandeau" id="bandeau-agents"></div>
   <p class="legende">L'agent comme installation : sa conformité (protocole mémoire, veille, métadonnées, avatar), son stock de savoirs cumulatifs et sa vitalité. L'inventaire de ses documents n'est pas répété ici : il vit dans le tunnel.</p>
   <div id="agents"></div>
 </section>
 
 <section id="vue-veille" hidden>
+  <div class="bandeau" id="bandeau-veille"></div>
   <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles métier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalisé est signalé comme tel.</p>
   <div id="veille"></div>
 </section>
@@ -417,9 +424,22 @@ function calculeStock(arbre, agent, socle){
   return {reg, total: fics.reduce((s, f) => s + f.o, 0), nb: fics.length};
 }
 
-async function collecte(){
-  LIGNES = []; AGENTS = []; VEILLES = [];
-  const arbres = {};
+/* ─── CHARGEMENT PAR ONGLET ────────────────────────────────────────────────
+   Chaque onglet a sa propre collecte, lancee a sa premiere ouverture, et son
+   propre bouton d'actualisation : « actualiser » ne recharge que l'onglet ouvert.
+   Le tunnel est la base : les deux autres s'appuient sur ses lignes. */
+let ARBRES = {};
+const ETAT = {tunnel: {fait: false, quand: null, shas: null},
+              agents: {fait: false, quand: null, shas: null},
+              veille: {fait: false, quand: null, shas: null}};
+async function shasDepots(){
+  const o = {};
+  for (const d of DEPOTS){ try { const c = await api("/repos/" + d + "/commits?per_page=1"); o[d] = c[0].sha; } catch(e){ o[d] = null; } }
+  return o;
+}
+async function collecteTunnel(){
+  LIGNES = [];
+  const arbres = ARBRES = {};
   for (const dep of DEPOTS){ progres("Lecture du dépôt " + dep.split("/")[1] + "..."); arbres[dep] = await arbre(dep); }
 
   /* agents = dossiers de premier niveau portant au moins une zone */
@@ -463,6 +483,27 @@ async function collecte(){
         date: dateDe(Object.values(d.z)[0][0]) || ""
       });
     }
+  }
+  ETAT.tunnel.fait = true; ETAT.tunnel.quand = new Date(); ETAT.tunnel.shas = await shasDepots();
+}
+
+/* Les agents : conformite, fraicheur, stock de savoirs cumulatifs, contradictions. */
+async function collecteAgents(){
+  if (!ETAT.tunnel.fait) await collecteTunnel();
+  AGENTS = [];
+  const arbres = ARBRES;
+  const listeAgents = [];
+  for (const dep of DEPOTS){
+    const noms = new Set();
+    for (const n of arbres[dep]){
+      const p = n.path.split("/");
+      if (p.length >= 2 && ZONES.includes(p[1]) && !EXCLUS.includes(p[0])) noms.add(p[0]);
+    }
+    for (const a of [...noms].sort()) listeAgents.push({depot: dep, agent: a});
+  }
+  let faitA = 0;
+  for (const {depot, agent} of listeAgents){
+    progres("Agent " + agent + " (" + (++faitA) + " sur " + listeAgents.length + ")...");
     const vol = {};
     for (const z of ZONES) vol[z] = {n: 0, o: 0};
     for (const n of arbres[depot]){
@@ -512,7 +553,13 @@ async function collecte(){
                  maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30, stock, contras});
   }
 
-  /* veilles actives */
+  ETAT.agents.fait = true; ETAT.agents.quand = new Date(); ETAT.agents.shas = await shasDepots();
+}
+
+/* La veille : dispositif, passages, rendement des prises. */
+async function collecteVeille(){
+  if (!ETAT.tunnel.fait) await collecteTunnel();
+  VEILLES = [];
   progres("État des veilles...");
   {
     const cs = await commits("jlucb67/SOCLE", "ADMIN/savoir/VEILLE.md", 6);
@@ -555,6 +602,41 @@ async function collecte(){
       v.attente = dv.filter(r => r.z["informations-publiques"]).length;
     }
   }
+  ETAT.veille.fait = true; ETAT.veille.quand = new Date(); ETAT.veille.shas = await shasDepots();
+}
+
+/* ─── BANDEAU DE CHARGEMENT, un par onglet ────────────────────────────────
+   Dit quand cet onglet a ete charge et porte SON bouton d'actualisation.
+   Le signal de changement est GROSSIER, et se formule comme tel : il repond
+   « quelque chose a change dans ce depot », pas « ce que cet onglet affiche a change ». */
+async function majBandeaux(){
+  const shas = await shasDepots();
+  for (const nom of ["tunnel", "agents", "veille"]){
+    const e = ETAT[nom], b = $("bandeau-" + nom);
+    if (!b) continue;
+    if (!e.fait){ b.innerHTML = ""; continue; }
+    const bouges = e.shas ? DEPOTS.filter(d => shas[d] && e.shas[d] && shas[d] !== e.shas[d]) : [];
+    b.innerHTML = '<span class="quand">Chargé à ' + e.quand.toLocaleTimeString("fr-FR", {hour: "2-digit", minute: "2-digit"}) + "</span>"
+      + (bouges.length ? '<span class="bouge">Le dépôt ' + bouges.map(d => esc(d.split("/")[1])).join(" et ")
+          + " a changé depuis - quelque part, pas forcément dans ce que cet onglet affiche.</span>" : "")
+      + '<button class="btnc mini" data-recharge="' + nom + '">Actualiser cet onglet</button>';
+    b.querySelector("[data-recharge]").addEventListener("click", () => recharger(nom));
+  }
+}
+async function recharger(nom){
+  const y = window.scrollY;
+  const memo = nom === "tunnel" ? {q: $("q").value, ft: $("ft").value, fa: $("fa").value,
+                                   fz: $("fz").value, fc: $("fc").value, fe: $("fe").value} : null;
+  $("voile").hidden = false;
+  try {
+    if (nom === "tunnel"){ await collecteTunnel(); rendreCompteurs(); rendreTunnel();
+      for (const k in memo){ if ($(k)) $(k).value = memo[k]; } filtrer(); }
+    else if (nom === "agents"){ ETAT.agents.fait = false; await collecteAgents(); rendreAgents(); }
+    else { ETAT.veille.fait = false; await collecteVeille(); rendreVeille(); }
+    await majBandeaux();
+    window.scrollTo(0, y);
+  } catch(e){ etat("Actualisation impossible : " + e.message, 1); }
+  finally { $("voile").hidden = true; }
 }
 
 /* ---------- rendu du tunnel ---------- */
@@ -904,7 +986,7 @@ async function suivre(demandes){
       etatHtml("<b>C'est fait : le robot a déplacé tes documents au dépôt.</b> La liste ci-dessous a été lue avant, "
         + "elle les montre encore à leur ancienne place. "
         + '<button id="rafraichir" class="btnc" style="margin-top:8px">Actualiser la liste</button>');
-      $("rafraichir").addEventListener("click", rafraichir);
+      $("rafraichir").addEventListener("click", () => recharger("tunnel"));
       return;
     }
     const sec = Math.round((Date.now() - debut) / 1000);
@@ -915,22 +997,6 @@ async function suivre(demandes){
 }
 function etatHtml(html, err){
   const d = $("etat"); d.hidden = false; d.className = "etat" + (err ? " err" : ""); d.innerHTML = html;
-}
-/* Relire les depots sans recharger la page : les filtres et la position de lecture sont conserves. */
-async function rafraichir(){
-  const memo = {q: $("q").value, ft: $("ft").value, fa: $("fa").value, fz: $("fz").value, fc: $("fc").value, fe: $("fe").value};
-  const y = window.scrollY;
-  etatHtml("Mise à jour de la liste...");
-  try {
-    await collecte();
-    rendreCompteurs(); rendreTunnel(); rendreAgents(); rendreVeille();
-    for (const k in memo){ if ($(k)) $(k).value = memo[k]; }
-    filtrer();
-    window.scrollTo(0, y);
-    $("sous").textContent = "État réel des dépôts, lu le " + new Date().toLocaleString("fr-FR") + ".";
-    etatHtml("Liste à jour.");
-    setTimeout(() => { $("etat").hidden = true; }, 4000);
-  } catch(e){ etatHtml("Mise à jour impossible : " + e.message, 1); }
 }
 async function envoyer(act, it){
   if (!it.length){
@@ -966,9 +1032,18 @@ function brancherActions(){
 }
 
 /* ---------- ouverture ---------- */
-function vue(nom){
+async function vue(nom){
   $$("#onglets .onglet").forEach(b => b.setAttribute("aria-selected", b.dataset.vue === nom ? "true" : "false"));
   ["tunnel", "agents", "veille"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
+  if (!ETAT[nom].fait){
+    $("voile").hidden = false;
+    try {
+      if (nom === "agents"){ await collecteAgents(); rendreAgents(); }
+      else if (nom === "veille"){ await collecteVeille(); rendreVeille(); }
+    } catch(e){ etat("Chargement impossible : " + e.message, 1); }
+    finally { $("voile").hidden = true; }
+  }
+  await majBandeaux();
 }
 async function ouvrir(){
   CLE = $("cle").value.trim();
@@ -978,10 +1053,10 @@ async function ouvrir(){
   $("etat").hidden = true;
   $("corps").hidden = true; $("onglets").hidden = true; $("voile").hidden = false;
   try {
-    await collecte();
-    rendreCompteurs(); rendreTunnel(); rendreAgents(); rendreVeille();
+    await collecteTunnel();
+    rendreCompteurs(); rendreTunnel();
     $("voile").hidden = true;
-    $("onglets").hidden = false; vue("tunnel");
+    $("onglets").hidden = false; await vue("tunnel");
     $("corps").hidden = false;
     $("sous").textContent = "État réel des dépôts, lu le " + new Date().toLocaleString("fr-FR") + ".";
     document.querySelector(".acces").classList.add("replie");
