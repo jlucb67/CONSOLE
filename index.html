@@ -492,8 +492,30 @@ async function collecteTunnel(){
 /* ETAT DE LA COPIE, declare par l'agent lui-meme (tache quotidienne).
    Seul l'agent voit sa copie : il ecrit dans <Agent>/ETAT_COPIE.json le numero de
    VERSION que porte son champ Contexte. La console compare au numero du depot. */
+let VEILLES_NOMS = new Set(), AVATARS = new Map();
+/* L'onglet Agents doit connaitre les veilles et les avatars sans charger l'onglet Veille :
+   deux lectures legeres, dans le SOCLE. */
+async function lireVeillesEtAvatars(){
+  VEILLES_NOMS = new Set(["ADMIN"]);
+  const va = await texteOuNull("jlucb67/SOCLE", "ADMIN/instructions/VEILLES_ACTIVES.md");
+  if (va) for (const l of va.split("\n")){
+    const m = l.match(/index\s*:\s*([^\/\s]+)\//);
+    if (m) VEILLES_NOMS.add(m[1].trim());
+  }
+  AVATARS = new Map();
+  const pr = await texteOuNull("jlucb67/SOCLE", "ADMIN/instructions/PROCEDURES.md");
+  if (pr){
+    const bloc = pr.split("Inventaire des avatars")[1];
+    if (bloc) for (const l of bloc.split("\n").slice(0, 20)){
+      const m = l.match(/^-\s*(?:Agent\s+)?([A-Za-zÀ-ÿ0-9_-]+)\s*:\s*(\S+)\s*\(/);
+      if (m && !/^Agents$/i.test(m[1])) AVATARS.set(m[1], m[2]);
+    }
+  }
+}
+
 async function collecteAgents(){
   if (!ETAT.tunnel.fait) await collecteTunnel();
+  await lireVeillesEtAvatars();
   AGENTS = [];
   const arbres = ARBRES;
   const listeAgents = [];
@@ -575,7 +597,7 @@ async function collecteVeille(){
   {
     const cs = await commits("jlucb67/SOCLE", "ADMIN/savoir/VEILLE.md", 6);
     VEILLES.push({nom: "Veille plateforme (Admin)", depot: "jlucb67/SOCLE", index: "ADMIN/savoir/VEILLE.md",
-      cadence: "hebdomadaire (lundi 11:00)", plateforme: true,
+      cadence: "hebdomadaire (lundi 08:00)", plateforme: true,
       passages: cs.map(c => ({date: new Date(c.commit.committer.date), qui: c.commit.author.name,
                               titre: c.commit.message.split("\n")[0]})),
       derniere: cs.length ? new Date(cs[0].commit.committer.date) : null,
@@ -862,7 +884,7 @@ function rendreAgents(){
         + coche(a.conf.memoire, "protocole mémoire")
         + coche(!!v, "veille branchée")
         + (admin ? coche(true, "tunnel sans objet", true) : coche(a.conf.meta, "métadonnées"))
-        + (admin ? coche(true, "avatar attribué") : coche(false, "avatar à attribuer"))
+        + (AVATARS.has(a.agent) ? coche(true, "avatar " + AVATARS.get(a.agent)) : coche(false, "avatar à attribuer"))
       + "</div>"
       + '<div class="mesures">'
         + mesure(a.version != null ? "v" + a.version : "-", age != null ? "version, " + age + " j" : "version")
@@ -882,7 +904,8 @@ function rendreAgents(){
   $("agents").innerHTML = h;
 }
 function veilleDe(a){
-  return VEILLES.find(v => v.plateforme ? a.agent === "ADMIN" : v.index.split("/")[0] === a.agent);
+  const v = VEILLES.find(x => x.plateforme ? a.agent === "ADMIN" : x.index.split("/")[0] === a.agent);
+  return v || (VEILLES_NOMS.has(a.agent) ? {nom: "veille active", allege: true} : null);
 }
 
 /* ECRAN VEILLE - le PROCESSUS : le dispositif, ses passages, le rendement de ses prises.
