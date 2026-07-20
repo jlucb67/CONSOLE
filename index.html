@@ -946,7 +946,7 @@ function rendreVeille(){
 function rendreCompteurs(){
   const nz1 = LIGNES.filter(r => zonecode(r)[0] === "Z1").length;
   const nz2 = LIGNES.filter(r => zonecode(r)[0] === "Z2").length;
-  const nz3 = LIGNES.filter(r => zonecode(r)[0] === "Z3").length;
+  const nz3 = LIGNES.filter(r => r.z["savoir"]).length;
   const lg = $("tunnel-legende");
   if (lg) lg.innerHTML =
       '<span class="lz lz1"><b>Z1</b> triage <em>' + nz1 + '</em><small>informations-publiques/</small></span>'
