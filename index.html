@@ -55,6 +55,7 @@ tbody tr:nth-child(even){background:#f8fafc}tbody tr:hover{background:#f1f5fa}
 .btn.plein{background:var(--sceau);color:#fff}
 .btn.creux{border:1px solid var(--sceau);color:var(--sceau);background:var(--sceau2)}
 .btn.vert{border:1px solid var(--vert);color:var(--vert);background:var(--vert2)}
+.btn.suppr{border:1px solid #b23b3b;color:#b23b3b;background:#fbf1f1}
 .c-sel{width:28px}.sel{width:16px;height:16px;accent-color:var(--sceau)}
 .barre{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--enc);color:#fff;border-radius:10px;padding:10px 12px;margin:14px 0 0;
 position:sticky;bottom:8px;z-index:5;box-shadow:0 4px 18px rgba(22,35,58,.25)}
@@ -87,8 +88,8 @@ letter-spacing:.5px;text-align:center;border-radius:5px;padding:4px 0;color:#fff
 .c-ac{height:1px}
 .zoneac{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;min-height:64px}
 .zoneac .btn{margin:0}
-.lesboutons{display:flex;flex-direction:column;gap:5px;width:100%;align-items:center;margin:auto 0}
-.btn.mini{font-size:10.5px;font-weight:700;padding:5px 6px;border-radius:5px;width:52px;margin:0;line-height:1.1}
+.lesboutons{display:flex;flex-direction:column;gap:14px;width:100%;align-items:center;margin:auto 0}
+.btn.mini{font-size:10.5px;font-weight:700;padding:8px 6px;border-radius:5px;width:56px;margin:0;line-height:1.1}
 .c-nom{min-width:120px}
 .c-fic{display:none}
 .z-1{background:var(--ocre)}.z-2{background:var(--ard)}.z-3{background:var(--vert)}
@@ -201,6 +202,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .bandeau{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;font-size:12px;color:var(--mut)}
 .bandeau .bouge{color:#8a5a1a;background:#fdf4e6;border:1px solid #e8d4ae;border-radius:5px;padding:2px 7px}
 .bandeau .btnc.mini{padding:3px 9px;font-size:12px;margin:0}
+.lz em{font-style:normal;font-weight:800;font-size:14px;margin-left:3px}
 </style></head>
 <body><div class="page">
 <h1>Console d'administration</h1>
@@ -235,20 +237,14 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="etat" class="etat" hidden></div>
   <div class="compteurs" id="compteurs"></div>
   <div class="outils">
+    <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (mémoire vive)</option></select>
     <input id="q" placeholder="Rechercher un document, un résumé, une origine">
     <select id="fc"><option value="">Actualités et fond</option><option value="actu">Actualités</option><option value="fond">Documents de fond</option></select>
     <select id="fe"><option value="">Tous les formats</option></select>
-    <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (mémoire vive)</option></select>
     <select id="ft"><option value="">Tous les tags</option></select>
     <select id="fa"><option value="">Tous les agents</option></select>
   </div>
-  <div class="tunnel-legende">
-    <span class="lz lz1"><b>Z1</b> triage<small>informations-publiques/</small></span>
-    <span class="fleche">&rsaquo;</span>
-    <span class="lz lz2"><b>Z2</b> accessible<small>connaissances-stockees/</small></span>
-    <span class="fleche">&rsaquo;</span>
-    <span class="lz lz3"><b>Z3</b> memoire vive<small>savoir/</small></span>
-  </div>
+  <div class="tunnel-legende" id="tunnel-legende"></div>
   <div id="tunnel"></div>
   <div class="barre" id="barre" hidden>
     <b id="cpt">0 document selectionne</b>
@@ -705,7 +701,7 @@ function actions(r){
   const c = zc ? '<input type="checkbox" class="sel"' + d + ">" : "";
   let b = '<span class="mut">-</span>';
   if (zc === "Z1") b = '<button class="btn plein mini" title="Classer en Zone 2 (docs accessibles)" data-act="bibliotheque"' + d + ">vers Z2</button>"
-    + '<button class="btn creux mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
+    + '<button class="btn suppr mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
   else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter en Zone 3 (mémoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
   return '<span class="zoneac">' + (c || "<span></span>") + '<span class="lesboutons">' + b + "</span></span>";
 }
@@ -948,6 +944,16 @@ function rendreVeille(){
   $("veille").innerHTML = h;
 }
 function rendreCompteurs(){
+  const nz1 = LIGNES.filter(r => zonecode(r)[0] === "Z1").length;
+  const nz2 = LIGNES.filter(r => zonecode(r)[0] === "Z2").length;
+  const nz3 = LIGNES.filter(r => zonecode(r)[0] === "Z3").length;
+  const lg = $("tunnel-legende");
+  if (lg) lg.innerHTML =
+      '<span class="lz lz1"><b>Z1</b> triage <em>' + nz1 + '</em><small>informations-publiques/</small></span>'
+    + '<span class="fleche">&rsaquo;</span>'
+    + '<span class="lz lz2"><b>Z2</b> accessible <em>' + nz2 + '</em><small>connaissances-stockees/</small></span>'
+    + '<span class="fleche">&rsaquo;</span>'
+    + '<span class="lz lz3"><b>Z3</b> mémoire vive <em>' + nz3 + '</em><small>savoir/</small></span>';
   const z1 = LIGNES.filter(r => r.z["informations-publiques"]).length;
   const nonLus = LIGNES.filter(r => r.resume === "non lu").length;
   const retard = VEILLES.filter(v => !v.derniere || jours(v.derniere) > 8).length;
