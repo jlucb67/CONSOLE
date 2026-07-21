@@ -716,8 +716,10 @@ function tr(r, id){
   const fz = r.z[ZDOS[zv]] || ["", "", 0];
   const autres = ZONES.filter(z => z !== ZDOS[zv] && r.z[z]).map(z => r.z[z][1]).filter(e => e && e !== fz[1]);
   const fmt = fz[1] + (autres.length ? " (" + [...new Set(autres)].join(", ") + ")" : "");
-  const past = '<span class="lag">' + esc(r.agent) + "</span>"
-    + '<span class="zpast z-' + zv[1] + '">' + zv + '</span><span class="zmot">' + ZMOT[zv] + "</span>"
+  const ordreZ = [["informations-publiques", "Z1"], ["connaissances-stockees", "Z2"], ["savoir", "Z3"]];
+  const badges = ordreZ.filter(([d]) => r.z[d]).map(([, z]) =>
+    '<span class="zpast z-' + z[1] + '">' + z + '</span><span class="zmot">' + ZMOT[z] + "</span>").join("");
+  const past = '<span class="lag">' + esc(r.agent) + "</span>" + badges
     + '<span class="lfmt">' + esc(fmt) + '</span><span class="lpds">' + poids(fz[2]) + "</span>";
   const res = (r.resume && r.resume !== "non lu")
     ? esc(r.resume)
