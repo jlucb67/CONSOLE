@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 20 -->
+<!-- VERSION_CONSOLE: 21 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,7 +281,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 20;
+  const ICI = 21;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -793,11 +793,11 @@ function rendreTunnel(){
   const actus = LIGNES.filter(r => r.cat === "actu").sort((a, b) => (b.date + b.doc).localeCompare(a.date + a.doc));
   const fonds = LIGNES.filter(r => r.cat !== "actu");
   let h = "";
-  h += "<h2>Actualites - " + actus.length + " document" + (actus.length > 1 ? "s" : "") + "</h2>";
+  h += '<h2 data-grp="actu">Actualités <span class="cpt-grp">' + actus.length + " document" + (actus.length > 1 ? "s" : "") + "</span></h2>";
   h += actus.length ? tableau(actus) : '<div class="cadre"><p class="vide">Aucune actualite.</p></div>';
   const grp = {};
   for (const r of fonds) (grp[r.tags[0] || "#à-taguer"] = grp[r.tags[0] || "#à-taguer"] || []).push(r);
-  h += "<h2>Documents de fond - " + fonds.length + " document" + (fonds.length > 1 ? "s" : "") + "</h2>";
+  h += '<h2 data-grp="fond">Documents de fond <span class="cpt-grp">' + fonds.length + " document" + (fonds.length > 1 ? "s" : "") + "</span></h2>";
   for (const t of Object.keys(grp).sort()) h += '<h3 class="grp">' + esc(t) + "</h3>" + tableau(grp[t]);
   if (!fonds.length) h += '<div class="cadre"><p class="vide">Aucun document de fond.</p></div>';
   $("tunnel").innerHTML = h;
@@ -831,6 +831,20 @@ function filtrer(){
     }
   });
   majCompteursZones(t, tg, ag, ca, ex);
+  majTitresSections();
+}
+
+/* Les titres « Actualités » et « Documents de fond » comptent leurs lignes visibles. */
+function majTitresSections(){
+  document.querySelectorAll("#tunnel h2[data-grp]").forEach(h2 => {
+    let n = h2.nextElementSibling, vus = 0;
+    while (n && n.tagName !== "H2"){
+      if (n.querySelectorAll) vus += [...n.querySelectorAll("tr.doc")].filter(r => r.style.display !== "none").length;
+      n = n.nextElementSibling;
+    }
+    const c = h2.querySelector(".cpt-grp");
+    if (c) c.textContent = vus + " document" + (vus > 1 ? "s" : "");
+  });
 }
 
 /* Les compteurs des trois zones suivent tous les filtres SAUF celui des zones :
