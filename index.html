@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 19 -->
+<!-- VERSION_CONSOLE: 20 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,7 +281,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 19;
+  const ICI = 20;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -830,6 +830,24 @@ function filtrer(){
       h.style.display = vis ? "" : "none"; n.style.display = vis ? "" : "none";
     }
   });
+  majCompteursZones(t, tg, ag, ca, ex);
+}
+
+/* Les compteurs des trois zones suivent tous les filtres SAUF celui des zones :
+   cliquer Z1 ne doit pas faire tomber Z2 et Z3 a zero. */
+function majCompteursZones(t, tg, ag, ca, ex){
+  let z1 = 0, z2 = 0, z3 = 0;
+  $$("#tunnel tr.doc").forEach(r => {
+    const ok = (!t || r.dataset.txt.includes(t)) && (!tg || r.dataset.tags.split(" ").includes(tg))
+      && (!ag || r.dataset.agent === ag) && (!ca || r.dataset.cat === ca)
+      && (!ex || r.dataset.ext.split(" ").includes(ex));
+    if (!ok) return;
+    const z = r.dataset.zone;
+    if (z === "Z1") z1++; else if (z === "Z2") z2++; else if (z === "Z3") z3++;
+  });
+  const l = $("tunnel-legende"); if (!l) return;
+  const e = l.querySelectorAll(".lz em");
+  if (e.length === 3){ e[0].textContent = z1; e[1].textContent = z2; e[2].textContent = z3; }
 }
 
 /* ---------- rendu des deux autres ecrans ---------- */
