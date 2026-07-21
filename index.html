@@ -722,7 +722,7 @@ function tr(r, id){
     ? esc(r.resume)
     : '<span class="mut">Pas encore lu - resume a produire.</span>';
   const exts = [...new Set(ZONES.filter(z => r.z[z]).map(z => r.z[z][1]))].join(" ");
-  return '<tr class="doc" data-id="' + id + '" data-zone="' + zv + '" data-cat="' + r.cat + '" data-ext="' + esc(exts) + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
+  return '<tr class="doc" data-id="' + id + '" data-zone="' + zClass + '" data-cat="' + r.cat + '" data-ext="' + esc(exts) + '" data-agent="' + esc(r.agent) + '" data-tags="' + esc(r.tags.join(" ")) + '" data-statut="' + esc(r.statut) + '"'
     + ' data-txt="' + esc((r.doc + " " + r.resume + " " + r.origine).toLowerCase()) + '">'
     + '<td class="c-zone">' + past + "</td>"
     + '<td class="c-doc">' + lesTags(r)
