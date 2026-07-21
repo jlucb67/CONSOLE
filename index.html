@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 18 -->
+<!-- VERSION_CONSOLE: 19 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -243,11 +243,11 @@ background:var(--carte);border:2px solid var(--ard)}
   <div class="compteurs" id="compteurs"></div>
   <div class="outils">
     <select id="fz"><option value="">Toutes les zones</option><option value="Z1">Zone 1 (triage)</option><option value="Z2">Zone 2 (docs accessibles)</option><option value="Z3">Zone 3 (mémoire vive)</option></select>
+    <select id="fa"><option value="">Tous les agents</option></select>
     <input id="q" placeholder="Rechercher un document, un résumé, une origine">
     <select id="fc"><option value="">Actualités et fond</option><option value="actu">Actualités</option><option value="fond">Documents de fond</option></select>
     <select id="fe"><option value="">Tous les formats</option></select>
     <select id="ft"><option value="">Tous les tags</option></select>
-    <select id="fa"><option value="">Tous les agents</option></select>
   </div>
   <div class="tunnel-legende" id="tunnel-legende"></div>
   <div id="tunnel"></div>
@@ -281,7 +281,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 18;
+  const ICI = 19;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
