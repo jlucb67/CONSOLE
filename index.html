@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 16 -->
+<!-- VERSION_CONSOLE: 17 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -278,7 +278,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 16;
+  const ICI = 17;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -478,7 +478,7 @@ async function collecteTunnel(){
       const p = n.path.split("/");
       if (p.length !== 3 || p[0] !== agent || !ZONES.includes(p[1])) continue;
       const zone = p[1], fic = p[2];
-      if (/^(VEILLE|README|CATALOGUE|VERSION)\.md$/i.test(fic)) continue;
+      if (/^(VEILLE|README|CATALOGUE|VERSION)\.md$/i.test(fic)) continue;  /* index et README : jamais des documents */
       const cle = fic.replace(DATED, "").replace(/\.[^.]+$/, "");
       if (zone === "savoir" && !meta[fic] && !dateDe(fic)) continue;
       const d = docs[cle] || (docs[cle] = {agent, depot, doc: fic, z: {}, meta: null});
@@ -721,23 +721,22 @@ function zonesOccupees(r){
 }
 function actions(r){
   const zo = zonesOccupees(r);
-  const fic = (r.z["informations-publiques"] || r.z["connaissances-stockees"] || r.z["savoir"] || [r.doc])[0];
+  const enZ1 = r.z["informations-publiques"], enZ2 = r.z["connaissances-stockees"], enZ3 = r.z["savoir"];
+  const fic = (enZ1 || enZ2 || enZ3 || [r.doc])[0];
   const d = ' data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + (zo[0] || "") + '"';
 
-  /* DOUBLON : le document occupe plus d'une zone. On ne propose pas de promotion,
-     mais l'action qui resorbe - retirer la copie en trop selon la regle du 16/07
-     (le lourd reste en Z2, le texte vif en Z3 ; jamais le meme aux deux endroits). */
-  if (zo.length > 1){
-    let b, act, lib;
-    if (r.z["connaissances-stockees"] && r.z["savoir"]){
-      act = "retirer-z3"; lib = "retirer la copie de Z3";
-      b = '<button class="btn suppr mini" title="Le meme fichier est en Z2 et en Z3. Retirer la copie de Z3 (le stock Z2 fait foi)." data-act="retirer-z3"' + d + ">retirer Z3</button>";
-    } else if (r.z["informations-publiques"] && (r.z["connaissances-stockees"] || r.z["savoir"])){
-      act = "retirer-z1"; lib = "retirer la copie de Z1";
-      b = '<button class="btn suppr mini" title="Ce document est deja classe plus loin. Retirer sa copie restee en Z1 (triage)." data-act="retirer-z1"' + d + ">retirer Z1</button>";
-    } else { b = '<span class="mut">-</span>'; }
-    const c = '<input type="checkbox" class="sel" data-act="' + (act || "") + '"' + d + ">";
-    return '<span class="zoneac"><span class="pastdbl" title="Document present dans ' + zo.join(" + ") + ' - a resorber">⚠ ' + zo.join("+") + '</span>' + c + '<span class="lesboutons">' + b + "</span></span>";
+  /* ANOMALIE : le document est encore en Zone 1 (triage) alors qu'il est deja classe
+     plus loin (Z2 et/ou Z3). Le triage n'a pas ete solde. Action : retirer la copie de Z1. */
+  if (enZ1 && (enZ2 || enZ3)){
+    const c = '<input type="checkbox" class="sel" data-act="retirer-z1"' + d + ">";
+    const b = '<button class="btn suppr mini" title="Ce document est deja classe en ' + zo.filter(z=>z!=="Z1").join(" et ") + '. Retirer sa copie restee en Zone 1 (triage)." data-act="retirer-z1"' + d + ">retirer Z1</button>";
+    return '<span class="zoneac"><span class="pastdbl" title="Encore en Zone 1 alors que deja classe - triage a solder">⚠ reste en Z1</span>' + c + '<span class="lesboutons">' + b + "</span></span>";
+  }
+
+  /* COUPLE NORMAL Z2+Z3 : forme lourde au stock (Z2) + resume leger vivant (Z3).
+     Regle du 16/07 : c'est le regime prevu, pas un doublon. Aucune action de resorption. */
+  if (enZ2 && enZ3){
+    return '<span class="zoneac"><span></span><span class="lesboutons"><span class="mut" title="Deux formes du meme document : original au stock (Z2), resume en memoire vive (Z3). Regime normal.">couple Z2+Z3</span></span></span>';
   }
 
   /* Cas normal : une seule zone. */
@@ -746,7 +745,7 @@ function actions(r){
   let b = '<span class="mut">-</span>';
   if (zc === "Z1") b = '<button class="btn plein mini" title="Classer en Zone 2 (docs accessibles)" data-act="bibliotheque"' + d + ">vers Z2</button>"
     + '<button class="btn suppr mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
-  else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter en Zone 3 (mémoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
+  else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter un résumé en Zone 3 (mémoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
   else if (zc === "Z3") b = '<span class="mut" title="Deja en memoire vive">en Z3</span>';
   return '<span class="zoneac">' + (c || "<span></span>") + '<span class="lesboutons">' + b + "</span></span>";
 }
