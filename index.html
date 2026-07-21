@@ -711,6 +711,7 @@ function lesTags(r){
 }
 function tr(r, id){
   const zv = zoneVive(r);
+  const zClass = zonecode(r)[0] || zv;
   const dj = r.date ? r.date.split("-").reverse().join("/") : "-";
   const fz = r.z[ZDOS[zv]] || ["", "", 0];
   const autres = ZONES.filter(z => z !== ZDOS[zv] && r.z[z]).map(z => r.z[z][1]).filter(e => e && e !== fz[1]);
