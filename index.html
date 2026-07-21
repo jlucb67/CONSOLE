@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 21 -->
+<!-- VERSION_CONSOLE: 22 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,7 +281,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 21;
+  const ICI = 22;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1120,10 +1120,9 @@ async function suivre(demandes){
       } catch(e){ /* on retentera au tour suivant */ }
     }
     if (traitees === demandes.length){
-      etatHtml("<b>C'est fait : le robot a déplacé tes documents au dépôt.</b> La liste ci-dessous a été lue avant, "
-        + "elle les montre encore à leur ancienne place. "
-        + '<button id="rafraichir" class="btnc" style="margin-top:8px">Actualiser la liste</button>');
-      $("rafraichir").addEventListener("click", () => recharger("tunnel"));
+      etatHtml("<b>C'est fait.</b> Le robot a déplacé tes documents. Actualisation de la liste...");
+      await recharger("tunnel");
+      etat("");
       return;
     }
     const sec = Math.round((Date.now() - debut) / 1000);
