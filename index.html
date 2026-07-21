@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
+<!-- VERSION_CONSOLE: 15 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -273,6 +274,21 @@ background:var(--carte);border:2px solid var(--ard)}
 </div>
 
 <script>
+/* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
+   seule, une seule fois, sans que JL ait a toucher l'adresse. */
+(async function verifieVersion(){
+  const ICI = 15;
+  try {
+    const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
+    const t = await r.text();
+    const m = t.match(/VERSION_CONSOLE:\s*(\d+)/);
+    if (m && Number(m[1]) > ICI && !sessionStorage.getItem("rechargee-" + m[1])){
+      sessionStorage.setItem("rechargee-" + m[1], "1");
+      location.reload(true);
+    }
+  } catch(e){ /* hors ligne : on garde la version en cache */ }
+})();
+
 const DEPOTS = ["jlucb67/SOCLE", "jlucb67/GENERAL", "jlucb67/LFI"];
 const ZONES = ["informations-publiques", "connaissances-stockees", "savoir"];
 const ZLBL = {"informations-publiques":"Zone 1 (triage)", "connaissances-stockees":"Zone 2 (docs accessibles)", "savoir":"Zone 3 (mémoire vive)"};
