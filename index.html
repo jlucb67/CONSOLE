@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 15 -->
+<!-- VERSION_CONSOLE: 16 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -204,6 +204,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .bandeau .bouge{color:#8a5a1a;background:#fdf4e6;border:1px solid #e8d4ae;border-radius:5px;padding:2px 7px}
 .bandeau .btnc.mini{padding:3px 9px;font-size:12px;margin:0}
 .lz em{font-style:normal;font-weight:800;font-size:14px;margin-left:3px}
+.pastdbl{display:block;font-size:9px;font-weight:800;color:#8a5a1a;background:#fdf4e6;border:1px solid #e8d4ae;border-radius:4px;padding:1px 4px;margin-bottom:5px;text-align:center;white-space:nowrap}
 </style></head>
 <body><div class="page">
 <h1>Console d'administration</h1>
@@ -277,7 +278,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 15;
+  const ICI = 16;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -711,14 +712,42 @@ function nomFichier(r){
   const z = zoneVive(r);
   return (r.z[ZDOS[z]] || [r.doc])[0];
 }
+function zonesOccupees(r){
+  const o = [];
+  if (r.z["informations-publiques"]) o.push("Z1");
+  if (r.z["connaissances-stockees"]) o.push("Z2");
+  if (r.z["savoir"]) o.push("Z3");
+  return o;
+}
 function actions(r){
-  const [zc, fic] = zonecode(r);
-  const d = ' data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + zc + '"';
+  const zo = zonesOccupees(r);
+  const fic = (r.z["informations-publiques"] || r.z["connaissances-stockees"] || r.z["savoir"] || [r.doc])[0];
+  const d = ' data-a="' + esc(r.agent) + '" data-f="' + esc(fic) + '" data-d="' + esc(r.depot) + '" data-z="' + (zo[0] || "") + '"';
+
+  /* DOUBLON : le document occupe plus d'une zone. On ne propose pas de promotion,
+     mais l'action qui resorbe - retirer la copie en trop selon la regle du 16/07
+     (le lourd reste en Z2, le texte vif en Z3 ; jamais le meme aux deux endroits). */
+  if (zo.length > 1){
+    let b, act, lib;
+    if (r.z["connaissances-stockees"] && r.z["savoir"]){
+      act = "retirer-z3"; lib = "retirer la copie de Z3";
+      b = '<button class="btn suppr mini" title="Le meme fichier est en Z2 et en Z3. Retirer la copie de Z3 (le stock Z2 fait foi)." data-act="retirer-z3"' + d + ">retirer Z3</button>";
+    } else if (r.z["informations-publiques"] && (r.z["connaissances-stockees"] || r.z["savoir"])){
+      act = "retirer-z1"; lib = "retirer la copie de Z1";
+      b = '<button class="btn suppr mini" title="Ce document est deja classe plus loin. Retirer sa copie restee en Z1 (triage)." data-act="retirer-z1"' + d + ">retirer Z1</button>";
+    } else { b = '<span class="mut">-</span>'; }
+    const c = '<input type="checkbox" class="sel" data-act="' + (act || "") + '"' + d + ">";
+    return '<span class="zoneac"><span class="pastdbl" title="Document present dans ' + zo.join(" + ") + ' - a resorber">⚠ ' + zo.join("+") + '</span>' + c + '<span class="lesboutons">' + b + "</span></span>";
+  }
+
+  /* Cas normal : une seule zone. */
+  const zc = zo[0] || "";
   const c = zc ? '<input type="checkbox" class="sel"' + d + ">" : "";
   let b = '<span class="mut">-</span>';
   if (zc === "Z1") b = '<button class="btn plein mini" title="Classer en Zone 2 (docs accessibles)" data-act="bibliotheque"' + d + ">vers Z2</button>"
     + '<button class="btn suppr mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
   else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter en Zone 3 (mémoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
+  else if (zc === "Z3") b = '<span class="mut" title="Deja en memoire vive">en Z3</span>';
   return '<span class="zoneac">' + (c || "<span></span>") + '<span class="lesboutons">' + b + "</span></span>";
 }
 function lesTags(r){
@@ -985,7 +1014,8 @@ function rendreCompteurs(){
 /* ---------- demandes (envoi direct ou commande a coller) ---------- */
 function libelle(act){
   return act === "bibliotheque" ? "vers Zone 2 (docs accessibles)" : act === "vivant" ? "vers Zone 3 (mémoire vive)"
-    : act === "deversoir" ? "retour en Zone 1 (triage)" : "supprimer de la Zone 1";
+    : act === "deversoir" ? "retour en Zone 1 (triage)" : act === "retirer-z3" ? "retirer la copie de Zone 3 (doublon)"
+    : act === "retirer-z1" ? "retirer la copie de Zone 1 (doublon)" : "supprimer de la Zone 1";
 }
 function choisis(){ return $$(".sel:checked").map(c => ({a: c.dataset.a, f: c.dataset.f, z: c.dataset.z, d: c.dataset.d})); }
 function eligibles(it, act){ const zc = (act === "vivant" || act === "deversoir") ? "Z2" : "Z1"; return it.filter(i => i.z === zc); }
