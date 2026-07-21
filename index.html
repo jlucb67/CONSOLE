@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 17 -->
+<!-- VERSION_CONSOLE: 18 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -130,6 +130,9 @@ tr.doc[data-zone="Z3"] td:first-child{box-shadow:inset 4px 0 0 var(--vert)}
 .acces.replie #cle,.acces.replie #ouvrir,.acces.replie #oublier,.acces.replie label{display:none}
 .acces:not(.replie) #gerer{display:none}
 #gerer{font:inherit;font-size:12.5px;font-weight:600;background:none;border:0;color:var(--ard);cursor:pointer;text-decoration:underline;padding:0}
+.lz{cursor:pointer;font:inherit;border:none;text-align:left;transition:filter .12s}
+.lz:hover{filter:brightness(1.08)}
+.lz.actif{outline:2px solid var(--enc);outline-offset:1px}
 .tunnel-legende{display:flex;align-items:center;gap:4px;background:var(--carte);border:1px solid var(--fil);
 border-radius:8px;padding:5px 6px;margin:0 0 12px;overflow-x:auto}
 .lz{flex:1 1 0;min-width:0;display:flex;align-items:baseline;gap:5px;border-radius:5px;
@@ -278,7 +281,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 17;
+  const ICI = 18;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -809,6 +812,8 @@ function rendreTunnel(){
   filtrer();
 }
 function filtrer(){
+  const zActive = $("fz") ? $("fz").value : "";
+  document.querySelectorAll("#tunnel-legende [data-fz]").forEach(y => y.classList.toggle("actif", y.dataset.fz === zActive));
   const t = $("q").value.trim().toLowerCase(), tg = $("ft").value, ag = $("fa").value,
         zo = $("fz").value, ca = $("fc").value, ex = $("fe").value;
   $$("#tunnel tr.doc").forEach(r => {
@@ -996,11 +1001,17 @@ function rendreCompteurs(){
   const nz3 = LIGNES.filter(r => r.z["savoir"]).length;
   const lg = $("tunnel-legende");
   if (lg) lg.innerHTML =
-      '<span class="lz lz1"><b>Z1</b> triage <em>' + nz1 + '</em><small>informations-publiques/</small></span>'
+      '<button class="lz lz1" data-fz="Z1"><b>Z1</b> triage <em>' + nz1 + '</em><small>informations-publiques/</small></button>'
     + '<span class="fleche">&rsaquo;</span>'
-    + '<span class="lz lz2"><b>Z2</b> accessible <em>' + nz2 + '</em><small>connaissances-stockees/</small></span>'
+    + '<button class="lz lz2" data-fz="Z2"><b>Z2</b> accessible <em>' + nz2 + '</em><small>connaissances-stockees/</small></button>'
     + '<span class="fleche">&rsaquo;</span>'
-    + '<span class="lz lz3"><b>Z3</b> mémoire vive <em>' + nz3 + '</em><small>savoir/</small></span>';
+    + '<button class="lz lz3" data-fz="Z3"><b>Z3</b> mémoire vive <em>' + nz3 + '</em><small>savoir/</small></button>';
+  lg.querySelectorAll("[data-fz]").forEach(x => x.addEventListener("click", () => {
+    const z = x.dataset.fz;
+    $("fz").value = ($("fz").value === z) ? "" : z;   /* re-appuyer sur la zone active = tout afficher */
+    filtrer();
+    lg.querySelectorAll("[data-fz]").forEach(y => y.classList.toggle("actif", y.dataset.fz === $("fz").value));
+  }));
   const z1 = LIGNES.filter(r => r.z["informations-publiques"]).length;
   const nonLus = LIGNES.filter(r => r.resume === "non lu").length;
   const retard = VEILLES.filter(v => !v.derniere || jours(v.derniere) > 8).length;
