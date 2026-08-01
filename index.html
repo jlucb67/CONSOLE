@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 22 -->
+<!-- VERSION_CONSOLE: 23 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -142,6 +142,12 @@ padding:4px 8px;color:#fff;font-size:11px;line-height:1.2;white-space:nowrap;ove
 .lz1{background:var(--ocre)}.lz2{background:var(--ard)}.lz3{background:var(--vert)}
 .fleche{align-self:center;color:var(--mut);font-size:15px;line-height:1}
 .fiche-agent{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:12px 14px;margin:0 0 10px}
+.listesavoirs{list-style:none;margin:0;padding:0}
+.listesavoirs li{padding:3px 0;border-bottom:1px solid var(--fil);font-size:13.5px}
+.listesavoirs li:last-child{border-bottom:0}
+.orphelins{margin-top:8px;font-size:13px}
+.orphelins summary{cursor:pointer;color:var(--mut)}
+.orphelins ul{margin:6px 0 0 18px;color:var(--mut);font-size:12.5px}
 .fiche-agent header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 6px}
 .fiche-agent h3{font-family:"Iowan Old Style",Palatino,Georgia,serif;font-size:17px;margin:0;border:0;padding:0}
 .fiche-agent .eq{font-family:Consolas,"SF Mono",monospace;font-size:10px;color:var(--mut);
@@ -235,6 +241,7 @@ background:var(--carte);border:2px solid var(--ard)}
   <button class="onglet" role="tab" data-vue="tunnel" aria-selected="true"><span class="long">Tunnel d'acquisition des connaissances</span><span class="court">Tunnel</span></button>
   <button class="onglet" role="tab" data-vue="agents" aria-selected="false"><span class="long">Gestion des agents</span><span class="court">Agents</span></button>
   <button class="onglet" role="tab" data-vue="veille" aria-selected="false"><span class="long">Supervision de la veille</span><span class="court">Veille</span></button>
+  <button class="onglet" role="tab" data-vue="savoirs" aria-selected="false"><span class="long">Savoirs des agents</span><span class="court">Savoirs</span></button>
 </div>
 
 <section id="vue-tunnel" hidden>
@@ -267,6 +274,12 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="agents"></div>
 </section>
 
+<section id="vue-savoirs" hidden>
+  <div class="bandeau" id="bandeau-savoirs"></div>
+  <p class="legende">Ce que chaque agent SAIT, et non ce qu'il possede : le contenu de sa Zone 3 (memoire vive), et la part de son stock de Zone 2 deja digeree en savoir. Un document est dit couvert quand sa ligne de <code>META_DOCUMENTS.tsv</code> nomme, en colonne « savoir », un fichier de <code>savoir/</code> qui existe reellement - ou quand un savoir porte le meme nom que lui.</p>
+  <div id="savoirs"></div>
+</section>
+
 <section id="vue-veille" hidden>
   <div class="bandeau" id="bandeau-veille"></div>
   <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles métier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalisé est signalé comme tel.</p>
@@ -281,7 +294,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 22;
+  const ICI = 23;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -449,7 +462,8 @@ function calculeStock(arbre, agent, socle){
 let ARBRES = {};
 const ETAT = {tunnel: {fait: false, quand: null, shas: null},
               agents: {fait: false, quand: null, shas: null},
-              veille: {fait: false, quand: null, shas: null}};
+              veille: {fait: false, quand: null, shas: null},
+              savoirs: {fait: false, quand: null, shas: null}};
 async function shasDepots(){
   const o = {};
   for (const d of DEPOTS){ try { const c = await api("/repos/" + d + "/commits?per_page=1"); o[d] = c[0].sha; } catch(e){ o[d] = null; } }
@@ -671,7 +685,7 @@ async function collecteVeille(){
    « quelque chose a change dans ce depot », pas « ce que cet onglet affiche a change ». */
 async function majBandeaux(){
   const shas = await shasDepots();
-  for (const nom of ["tunnel", "agents", "veille"]){
+  for (const nom of ["tunnel", "agents", "veille", "savoirs"]){
     const e = ETAT[nom], b = $("bandeau-" + nom);
     if (!b) continue;
     if (!e.fait){ b.innerHTML = ""; continue; }
@@ -692,6 +706,7 @@ async function recharger(nom){
     if (nom === "tunnel"){ await collecteTunnel(); rendreCompteurs(); rendreTunnel();
       for (const k in memo){ if ($(k)) $(k).value = memo[k]; } filtrer(); }
     else if (nom === "agents"){ ETAT.agents.fait = false; await collecteAgents(); rendreAgents(); }
+    else if (nom === "savoirs"){ ETAT.savoirs.fait = false; await collecteSavoirs(); rendreSavoirs(); }
     else { ETAT.veille.fait = false; await collecteVeille(); rendreVeille(); }
     await majBandeaux();
     window.scrollTo(0, y);
@@ -1187,14 +1202,99 @@ function brancherActions(){
 }
 
 /* ---------- ouverture ---------- */
+
+/* ---------- onglet SAVOIRS : ce que chaque agent sait ---------- */
+let SAVOIRS = [];
+const INDEX_Z3 = /^(VERSION|CATALOGUE|README|VEILLE|TABLEAU_DE_BORD)\.md$/i;
+
+async function collecteSavoirs(){
+  if (!ETAT.tunnel.fait) await collecteTunnel();
+  SAVOIRS = [];
+  progres("Savoirs des agents...");
+  const parAgent = {};
+  for (const dep of DEPOTS){
+    for (const n of arbres[dep]){
+      if (n.type !== "blob") continue;
+      const q = n.path.split("/");
+      if (q.length !== 3 || q[1] !== "savoir") continue;
+      const ag = q[0], fic = q[2];
+      if (fic === ".gitkeep" || ag === "pack-modele") continue;  /* le moule n est pas un agent */
+      const e = parAgent[ag] || (parAgent[ag] = {agent: ag, depot: dep, fichiers: [], index: []});
+      (INDEX_Z3.test(fic) ? e.index : e.fichiers).push({nom: fic, poids: n.size || 0});
+    }
+  }
+  /* couverture du stock de Zone 2, agent par agent */
+  for (const ag in parAgent){
+    const e = parAgent[ag];
+    const noms = new Set(e.fichiers.map(f => f.nom));
+    const z2 = LIGNES.filter(r => r.agent === ag && r.z["connaissances-stockees"]);
+    e.stock = z2.length;
+    e.couverts = z2.filter(r => (r.couvert && r.couvert.length) || r.z["savoir"]).length;
+    e.orphelins = z2.filter(r => !((r.couvert && r.couvert.length) || r.z["savoir"]))
+                    .map(r => r.doc).sort();
+    /* combien de documents chaque savoir couvre-t-il ? */
+    const compte = {};
+    for (const r of z2) for (const f of (r.couvert || [])) compte[f] = (compte[f] || 0) + 1;
+    for (const r of z2) if (r.z["savoir"]) { const f = r.z["savoir"][0]; if (noms.has(f)) compte[f] = (compte[f] || 0) + 1; }
+    e.fichiers.forEach(f => { f.couvre = compte[f.nom] || 0; });
+    e.fichiers.sort((a, b) => b.poids - a.poids);
+    e.total = e.fichiers.reduce((t, f) => t + f.poids, 0);
+    SAVOIRS.push(e);
+  }
+  SAVOIRS.sort((a, b) => a.agent.localeCompare(b.agent));
+  ETAT.savoirs.fait = true; ETAT.savoirs.quand = new Date(); ETAT.savoirs.shas = await shasDepots();
+}
+
+function rendreSavoirs(){
+  if (!SAVOIRS.length){ $("savoirs").innerHTML = '<div class="cadre"><p class="vide">Aucun savoir trouve.</p></div>'; return; }
+  const stock = SAVOIRS.reduce((t, e) => t + e.stock, 0);
+  const couv = SAVOIRS.reduce((t, e) => t + e.couverts, 0);
+  const sans = SAVOIRS.filter(e => !e.fichiers.length).length;
+  let h = '<div class="synthese">'
+    + mesure(SAVOIRS.reduce((t, e) => t + e.fichiers.length, 0), "savoirs en memoire vive")
+    + mesure(poids(SAVOIRS.reduce((t, e) => t + e.total, 0)), "poids total")
+    + mesure(couv + " / " + stock, "documents digeres", stock > 0 && couv < stock)
+    + mesure(sans, "agents sans aucun savoir", sans > 0) + "</div>";
+
+  for (const e of SAVOIRS){
+    const pct = e.stock ? Math.round(100 * e.couverts / e.stock) : null;
+    h += '<div class="fiche-agent"><header><h3>' + esc(e.agent) + "</h3>"
+       + '<span class="eq">' + esc(e.depot.split("/")[1]) + "</span>"
+       + '<span class="mut">' + e.fichiers.length + " savoir" + (e.fichiers.length > 1 ? "s" : "")
+       + (e.total ? " &middot; " + poids(e.total) : "") + "</span>"
+       + (pct === null ? "" : '<span class="mut" title="Documents de Zone 2 dont le savoir est ecrit">couverture du stock : <b>'
+           + e.couverts + " / " + e.stock + "</b> (" + pct + "%)</span>")
+       + "</header>";
+    if (!e.fichiers.length){
+      h += '<p class="vide">Aucun savoir ecrit : cet agent ne porte encore que ses index. Tout ce qu\'il possede reste a lire.</p>';
+    } else {
+      h += "<ul class=\"listesavoirs\">";
+      for (const f of e.fichiers){
+        h += "<li><code>" + esc(f.nom) + "</code> <span class=\"mut\">" + poids(f.poids)
+           + (f.couvre ? " &middot; couvre " + f.couvre + " document" + (f.couvre > 1 ? "s" : "") : "")
+           + "</span></li>";
+      }
+      h += "</ul>";
+    }
+    if (e.orphelins.length){
+      h += '<details class="orphelins"><summary>' + e.orphelins.length
+         + " document" + (e.orphelins.length > 1 ? "s" : "") + " de Zone 2 sans savoir ecrit</summary><ul>"
+         + e.orphelins.map(d => "<li>" + esc(d) + "</li>").join("") + "</ul></details>";
+    }
+    h += "</div>";
+  }
+  $("savoirs").innerHTML = h;
+}
+
 async function vue(nom){
   $$("#onglets .onglet").forEach(b => b.setAttribute("aria-selected", b.dataset.vue === nom ? "true" : "false"));
-  ["tunnel", "agents", "veille"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
+  ["tunnel", "agents", "veille", "savoirs"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
   if (!ETAT[nom].fait){
     $("voile").hidden = false;
     try {
       if (nom === "agents"){ await collecteAgents(); rendreAgents(); }
       else if (nom === "veille"){ await collecteVeille(); rendreVeille(); }
+      else if (nom === "savoirs"){ await collecteSavoirs(); rendreSavoirs(); }
     } catch(e){ etat("Chargement impossible : " + e.message, 1); }
     finally { $("voile").hidden = true; }
   }
