@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 25 -->
+<!-- VERSION_CONSOLE: 26 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -142,6 +142,9 @@ padding:4px 8px;color:#fff;font-size:11px;line-height:1.2;white-space:nowrap;ove
 .lz1{background:var(--ocre)}.lz2{background:var(--ard)}.lz3{background:var(--vert)}
 .fleche{align-self:center;color:var(--mut);font-size:15px;line-height:1}
 .fiche-agent{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:12px 14px;margin:0 0 10px}
+.barre{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:2px 0 10px;background:var(--fil)}
+.barre span{display:block;height:100%}
+.pastille{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline}
 .listesavoirs{list-style:none;margin:0;padding:0}
 .listesavoirs li{padding:3px 0;border-bottom:1px solid var(--fil);font-size:13.5px}
 .listesavoirs li:last-child{border-bottom:0}
@@ -277,6 +280,7 @@ background:var(--carte);border:2px solid var(--ard)}
 <section id="vue-savoirs" hidden>
   <div class="bandeau" id="bandeau-savoirs"></div>
   <p class="legende">Ce que chaque agent SAIT, et non ce qu'il possede : le contenu de sa Zone 3 (memoire vive), et la part de son stock de Zone 2 deja digeree en savoir. Un document est dit couvert quand sa ligne de <code>META_DOCUMENTS.tsv</code> nomme, en colonne « savoir », un fichier de <code>savoir/</code> qui existe reellement - ou quand un savoir porte le meme nom que lui.</p>
+  <div class="outils"><select id="fsav"><option value="">Tous les agents</option></select></div>
   <div id="savoirs"></div>
 </section>
 
@@ -294,7 +298,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 25;
+  const ICI = 26;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1206,6 +1210,7 @@ function brancherActions(){
 
 /* ---------- onglet SAVOIRS : ce que chaque agent sait ---------- */
 let SAVOIRS = [];
+const TEINTES = ["#3c78d8", "#149e60", "#cf8933", "#8e63ce", "#b65775", "#2da2bb", "#a46a21", "#43d692"];
 const INDEX_Z3 = /^(VERSION|CATALOGUE|README|VEILLE|TABLEAU_DE_BORD)\.md$/i;
 
 async function collecteSavoirs(){
@@ -1260,7 +1265,7 @@ function rendreSavoirs(){
 
   for (const e of SAVOIRS){
     const pct = e.stock ? Math.round(100 * e.couverts / e.stock) : null;
-    h += '<div class="fiche-agent"><header><h3>' + esc(e.agent) + "</h3>"
+    h += '<div class="fiche-agent" data-ag="' + esc(e.agent) + '"><header><h3>' + esc(e.agent) + "</h3>"
        + '<span class="eq">' + esc(e.depot.split("/")[1]) + "</span>"
        + '<span class="mut">' + e.fichiers.length + " savoir" + (e.fichiers.length > 1 ? "s" : "")
        + (e.total ? " &middot; " + poids(e.total) : "") + "</span>"
@@ -1270,9 +1275,18 @@ function rendreSavoirs(){
     if (!e.fichiers.length){
       h += '<p class="vide">Aucun savoir ecrit : cet agent ne porte encore que ses index. Tout ce qu\'il possede reste a lire.</p>';
     } else {
+      /* composition de la memoire vive : un segment par savoir, largeur au prorata du poids */
+      h += '<div class="barre" title="Composition de la memoire vive de cet agent">';
+      e.fichiers.forEach((f, i) => {
+        h += '<span style="width:' + (100 * f.poids / (e.total || 1)).toFixed(1) + '%;background:'
+           + TEINTES[i % TEINTES.length] + '" title="' + esc(f.nom) + " - " + poids(f.poids) + '"></span>';
+      });
+      h += "</div>";
       h += "<ul class=\"listesavoirs\">";
       for (const f of e.fichiers){
-        h += "<li><code>" + esc(f.nom) + "</code> <span class=\"mut\">" + poids(f.poids)
+        const idx = e.fichiers.indexOf(f);
+        h += '<li><span class="pastille" style="background:' + TEINTES[idx % TEINTES.length] + '"></span>'
+           + "<code>" + esc(f.nom) + "</code> <span class=\"mut\">" + poids(f.poids)
            + (f.couvre ? " &middot; couvre " + f.couvre + " document" + (f.couvre > 1 ? "s" : "") : "")
            + "</span></li>";
       }
@@ -1286,6 +1300,18 @@ function rendreSavoirs(){
     h += "</div>";
   }
   $("savoirs").innerHTML = h;
+  const sel = $("fsav");
+  if (sel){
+    const choisi = sel.value;
+    sel.innerHTML = '<option value="">Tous les agents</option>'
+      + SAVOIRS.map(e => '<option value="' + esc(e.agent) + '">' + esc(e.agent) + "</option>").join("");
+    sel.value = choisi;
+    filtrerSavoirs();
+  }
+}
+function filtrerSavoirs(){
+  const a = $("fsav") ? $("fsav").value : "";
+  $$("#savoirs .fiche-agent").forEach(f => { f.hidden = !!a && f.dataset.ag !== a; });
 }
 
 async function vue(nom){
@@ -1334,6 +1360,7 @@ $("oublier").addEventListener("click", () => {
   $("cle").value = ""; CLE = ""; $("etatcle").textContent = "clé oubliée";
 });
 $$("#onglets .onglet").forEach(b => b.addEventListener("click", () => vue(b.dataset.vue)));
+if ($("fsav")) $("fsav").addEventListener("change", filtrerSavoirs);
 ["q", "ft", "fa", "fz", "fc", "fe"].forEach(i => $(i).addEventListener("input", filtrer));
 $("vider").addEventListener("click", () => { $$(".sel").forEach(c => c.checked = false); majsel(); });
 $$(".barre [data-act]").forEach(b => b.addEventListener("click", () => envoyer(b.dataset.act, eligibles(choisis(), b.dataset.act))));
