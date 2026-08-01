@@ -372,7 +372,8 @@ function metaParse(txt){
     m[c[1].trim()] = {
       doc: (c[0]||"").trim(), tags: (c[2]||"").trim().split(/\s+/).filter(Boolean),
       statut: (c[3]||"").trim(), origine: (c[4]||"").trim(),
-      resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase()
+      resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase(),
+      savoir: (c[7]||"").trim()
     };
   }
   return m;
@@ -475,6 +476,14 @@ async function collecteTunnel(){
   for (const {depot, agent} of listeAgents){
     progres("Documents de " + agent + " (" + (++fait) + " sur " + listeAgents.length + ")...");
     const meta = metaParse(await texteOuNull(depot, agent + "/META_DOCUMENTS.tsv"));
+    /* fichiers reellement presents en Zone 3 : sert a reconnaitre un document deja couvert
+       par un savoir portant un AUTRE nom (colonne « savoir » du TSV). */
+    const savoirsPresents = new Set();
+    for (const n of arbres[depot]){
+      if (n.type !== "blob") continue;
+      const q = n.path.split("/");
+      if (q.length === 3 && q[0] === agent && q[1] === "savoir") savoirsPresents.add(q[2]);
+    }
     const docs = {};
     for (const n of arbres[depot]){
       if (n.type !== "blob") continue;
@@ -496,6 +505,8 @@ async function collecteTunnel(){
         tags: m.tags && m.tags.length ? m.tags : [],
         statut: m.statut || "-", origine: m.origine || "-",
         resume: m.resume || "non lu",
+        couvert: (m.savoir || "").split(/[;,]/).map(x => x.trim()).filter(Boolean)
+                   .filter(f => savoirsPresents.has(f)),
         cat: (m.cat === "actualite" || /veille/i.test(m.origine || "")) ? "actu" : "fond",
         date: dateDe(Object.values(d.z)[0][0]) || ""
       });
@@ -744,11 +755,19 @@ function actions(r){
 
   /* Cas normal : une seule zone. */
   const zc = zo[0] || "";
-  const c = zc ? '<input type="checkbox" class="sel"' + d + ">" : "";
+  const dejaCouvert = zc === "Z2" && r.couvert && r.couvert.length;
+  const c = (zc && !dejaCouvert) ? '<input type="checkbox" class="sel"' + d + ">" : "";
   let b = '<span class="mut">-</span>';
   if (zc === "Z1") b = '<button class="btn plein mini" title="Classer en Zone 2 (docs accessibles)" data-act="bibliotheque"' + d + ">vers Z2</button>"
     + '<button class="btn suppr mini" title="Supprimer de la Zone 1 (triage)" data-act="supprimer"' + d + ">suppr.</button>";
-  else if (zc === "Z2") b = '<button class="btn vert mini" title="Monter un résumé en Zone 3 (mémoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
+  else if (zc === "Z2"){
+    /* Le savoir tire de ce document peut vivre en Zone 3 sous un AUTRE nom (une synthese qui
+       couvre plusieurs documents). La colonne « savoir » du TSV nomme ce ou ces fichiers :
+       s ils existent, le document est deja couvert - ne pas proposer de le promouvoir. */
+    b = (r.couvert && r.couvert.length)
+      ? '<span class="mut" title="Deja couvert en memoire vive par : ' + esc(r.couvert.join(", ")) + '">couvert en Z3</span>'
+      : '<button class="btn vert mini" title="Monter un résumé en Zone 3 (mémoire vive)" data-act="vivant"' + d + ">vers Z3</button>";
+  }
   else if (zc === "Z3") b = '<span class="mut" title="Deja en memoire vive">en Z3</span>';
   return '<span class="zoneac">' + (c || "<span></span>") + '<span class="lesboutons">' + b + "</span></span>";
 }
