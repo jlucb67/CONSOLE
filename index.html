@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 24 -->
+<!-- VERSION_CONSOLE: 25 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -294,7 +294,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 24;
+  const ICI = 25;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -505,6 +505,7 @@ async function collecteTunnel(){
       if (p.length !== 3 || p[0] !== agent || !ZONES.includes(p[1])) continue;
       const zone = p[1], fic = p[2];
       if (/^(VEILLE|README|CATALOGUE|VERSION)\.md$/i.test(fic)) continue;  /* index et README : jamais des documents */
+      if (/^\.|^(\.gitkeep|\.gitignore|\.DS_Store|Thumbs\.db)$/i.test(fic)) continue;  /* fichiers techniques : jamais des documents */
       const cle = fic.replace(DATED, "").replace(/\.[^.]+$/, "");
       if (zone === "savoir" && !meta[fic] && !dateDe(fic)) continue;
       const d = docs[cle] || (docs[cle] = {agent, depot, doc: fic, z: {}, meta: null});
