@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 26 -->
+<!-- VERSION_CONSOLE: 27 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -142,8 +142,8 @@ padding:4px 8px;color:#fff;font-size:11px;line-height:1.2;white-space:nowrap;ove
 .lz1{background:var(--ocre)}.lz2{background:var(--ard)}.lz3{background:var(--vert)}
 .fleche{align-self:center;color:var(--mut);font-size:15px;line-height:1}
 .fiche-agent{background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:12px 14px;margin:0 0 10px}
-.barre{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:2px 0 10px;background:var(--fil)}
-.barre span{display:block;height:100%}
+.compo{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:2px 0 10px;background:var(--fil);padding:0;gap:0}
+.compo span{display:block;height:100%;flex:0 0 auto}
 .pastille{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline}
 .listesavoirs{list-style:none;margin:0;padding:0}
 .listesavoirs li{padding:3px 0;border-bottom:1px solid var(--fil);font-size:13.5px}
@@ -298,7 +298,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 26;
+  const ICI = 27;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1276,7 +1276,7 @@ function rendreSavoirs(){
       h += '<p class="vide">Aucun savoir ecrit : cet agent ne porte encore que ses index. Tout ce qu\'il possede reste a lire.</p>';
     } else {
       /* composition de la memoire vive : un segment par savoir, largeur au prorata du poids */
-      h += '<div class="barre" title="Composition de la memoire vive de cet agent">';
+      h += '<div class="compo" title="Composition de la memoire vive de cet agent">';
       e.fichiers.forEach((f, i) => {
         h += '<span style="width:' + (100 * f.poids / (e.total || 1)).toFixed(1) + '%;background:'
            + TEINTES[i % TEINTES.length] + '" title="' + esc(f.nom) + " - " + poids(f.poids) + '"></span>';
