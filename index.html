@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 35 -->
+<!-- VERSION_CONSOLE: 36 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,6 +281,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-sommaire a{display:block;color:var(--enc);text-decoration:none;padding:3px 0}
 .sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
 .sav-chemin{margin-top:28px;padding-top:8px;border-top:1px solid var(--fil);font-size:10.5px;color:var(--mut);word-break:break-all}
+@media (max-width:640px){.sav-tete{row-gap:6px}.sav-tete select{max-width:44vw;padding:6px 7px}.sav-vues button{padding:6px 9px;font-size:12px}}
 .feuille-alerte{background:#fdeaea;color:#b03030;font-size:12.5px;font-weight:600;padding:7px 14px;border-bottom:1px solid #f2c5c5;flex:none}
 .feuille-corps{flex:1;overflow:auto;max-height:none;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
 
@@ -394,7 +395,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 35;
+  const ICI = 36;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -487,7 +488,7 @@ function metaParse(txt){
       statut: (c[3]||"").trim(), origine: (c[4]||"").trim(),
       resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase(),
       savoir: (c[7]||"").trim(),
-      auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim()
+      auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim(), lecture: (c[10]||"").trim().toLowerCase()
     };
   }
   return m;
@@ -1683,16 +1684,21 @@ async function collecteSav(){
     const m = meta[nom];
     const inf = SAV_IDX[nom] || null;
     if (inf) pris[inf.chemin] = 1;
-    (m.savoir || "").split(",").forEach(sv => { sv = sv.trim(); if (sv && SAV_IDX[sv]) pris[SAV_IDX[sv].chemin] = 1; });
-    const r3 = nom.match(/^(.*)_03-synthese\.md$/i);
-    if (r3) ["_00-brut-youtube.txt", "_01-integral.md", "_02-structure.md"].forEach(sfx => {
-      const s = SAV_IDX[r3[1] + sfx]; if (s) pris[s.chemin] = 1;
+    (m.savoir || "").split(",").forEach(sv => {
+      sv = sv.trim(); if (!sv) return;
+      if (SAV_IDX[sv]) pris[SAV_IDX[sv].chemin] = 1;
+      const hom = /^RESUME_/i.test(sv) ? sv.replace(/^RESUME_/i, "FICHE_") : sv.replace(/^FICHE_/i, "RESUME_");
+      if (hom !== sv && SAV_IDX[hom]) pris[SAV_IDX[hom].chemin] = 1;
     });
+    const r3 = nom.match(/^(.*)_03-synthese\.md$/i);
+    if (r3) for (const autre in SAV_IDX){
+      if (autre !== nom && autre.indexOf(r3[1] + "_0") === 0) pris[SAV_IDX[autre].chemin] = 1;
+    }
     if (savProgrammatique(nom.match(/^\d{4}-\d{2}-\d{2}_([^_]+)_/) ? RegExp.$1 : "") && !/_ch\d+/i.test(nom)
         && inf && inf.taille < 4000) { continue; }  /* chapeaux de partie quasi vides : pas des documents */
     const ent = {doc: m.doc || nom, fichier: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
                  zone: inf ? bibZone(inf.chemin) : "", tags: m.tags, statut: m.statut, resume: m.resume,
-                 savoir: m.savoir, auteur: "", materiau: "", hors: false};
+                 savoir: m.savoir, lecture: m.lecture || "", auteur: "", materiau: "", hors: false};
     ent.auteur = savAuteurDe(Object.assign({}, ent, {auteur: m.auteur}));
     ent.materiau = savMateriauDe(Object.assign({}, ent, {materiau: m.materiau}));
     SAV_MAT.push(ent);
@@ -1702,7 +1708,7 @@ async function collecteSav(){
     const z = bibZone(f.chemin);
     if (z !== "Zone 1" && z !== "Zone 2") continue;
     SAV_MAT.push({doc: f.nom.replace(SAV_LISIBLE, ""), fichier: f.nom, chemin: f.chemin, taille: f.taille,
-                  zone: z, tags: [], statut: "", resume: "", savoir: "", auteur: "", materiau: "", hors: true});
+                  zone: z, tags: [], statut: "", resume: "", savoir: "", lecture: "", auteur: "", materiau: "", hors: true});
   }
   /* la memoire vive : les fiches de savoir/ */
   SAV_Z3 = fichiers.filter(f => bibZone(f.chemin) === "Zone 3" && SAV_LISIBLE.test(f.nom) && !SAV_EXCLUS.test(f.chemin));
@@ -1792,13 +1798,22 @@ function savLigneMat(m){
       + savBtnLire(prof.synthese, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
   } else {
     const svs = (m.savoir || "").split(",").map(s => s.trim()).filter(s => SAV_LISIBLE.test(s) && SAV_IDX[s]);
-    if (svs.length){
-      /* une fiche de lecture liee : longue ou courte selon son ampleur reelle */
-      const inf = SAV_IDX[svs[0]];
-      boutons = savBtnLire(inf.chemin, m.doc, alerte, inf.taille >= 40000 ? "Long" : "R\u00e9sum\u00e9", "sav-long");
+    const longs = svs.filter(s => !/^RESUME_/i.test(s));
+    let court = svs.find(s => /^RESUME_/i.test(s)) || "";
+    if (!court && longs[0]){
+      const conv = longs[0].replace(/^FICHE_/i, "RESUME_");
+      if (conv !== longs[0] && SAV_IDX[conv]) court = conv;
+    }
+    if (longs.length && court){
+      boutons = savBtnLire(SAV_IDX[longs[0]].chemin, m.doc, alerte, "Long", "sav-long")
+        + savBtnLire(SAV_IDX[court].chemin, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
+    } else if (longs.length || court){
+      const inf = SAV_IDX[longs[0] || court];
+      const lib = m.lecture === "resume" ? "R\u00e9sum\u00e9" : m.lecture === "long" ? "Long"
+        : (court ? "R\u00e9sum\u00e9" : (inf.taille >= 40000 ? "Long" : "R\u00e9sum\u00e9"));
+      boutons = savBtnLire(inf.chemin, m.doc, alerte, lib, "sav-long");
     } else if (m.chemin && SAV_LISIBLE.test(m.chemin)){
-      /* le document lui-meme est le texte : integral */
-      boutons = savBtnLire(m.chemin, m.doc, alerte, "Long", "sav-long");
+      boutons = savBtnLire(m.chemin, m.doc, alerte, m.lecture === "resume" ? "R\u00e9sum\u00e9" : "Long", "sav-long");
     }
   }
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
