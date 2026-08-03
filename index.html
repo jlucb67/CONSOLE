@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 29 -->
+<!-- VERSION_CONSOLE: 30 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -232,9 +232,19 @@ background:var(--carte);border:2px solid var(--ard)}
 .doct-btn{font:inherit;font-size:12.5px;border:1px solid var(--fil);background:var(--pap);border-radius:6px;padding:3px 10px;cursor:pointer}
 .doct-btn:hover{border-color:var(--enc)}
 .doct-ligne{display:flex;gap:8px;align-items:center;padding:4px 0;border-top:1px solid var(--fil)}
-.doct-lecteur{background:var(--carte);border:2px solid var(--enc);border-radius:8px;margin:12px 0;overflow:hidden}
-.doct-lect-barre{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--fil);background:var(--pap)}
 .doct-corps{padding:10px 14px;max-height:70vh;overflow:auto;font-size:14px}
+.feuille-voile{position:fixed;inset:0;background:rgba(25,18,12,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.feuille-voile.ouvert{opacity:1;pointer-events:auto}
+.feuille{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--pap);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.28);max-height:88vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .25s ease}
+.feuille.ouvert{transform:translateY(0)}
+@media (min-width:800px){.feuille{left:50%;right:auto;width:min(780px,92vw);transform:translate(-50%,105%)}.feuille.ouvert{transform:translate(-50%,0)}}
+.feuille-poignee{width:38px;height:4px;border-radius:2px;background:var(--fil);margin:7px auto 3px;flex:none}
+.feuille-barre{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 14px 9px;border-bottom:1px solid var(--fil);flex:none}
+.feuille-titres{display:flex;flex-direction:column;min-width:0}
+.feuille-titres b{font-size:14.5px}
+.feuille-titres .mut{font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.feuille-corps{flex:1;overflow:auto;max-height:none;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
+
 .doct-corps h2{font-size:16px;margin:14px 0 6px}.doct-corps h3{font-size:14.5px;margin:12px 0 4px}
 .doct-corps h4{font-size:13.5px;margin:10px 0 4px}
 .doct-corps blockquote{margin:8px 0;padding:6px 10px;border-left:3px solid var(--fil);color:var(--mut)}
@@ -328,6 +338,13 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="biblio"></div>
 </section>
 
+<div id="feuille-voile" class="feuille-voile"></div>
+<div id="feuille" class="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
+  <div class="feuille-poignee"></div>
+  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
+  <div id="feuille-corps" class="feuille-corps doct-corps"></div>
+</div>
+
 <section id="vue-veille" hidden>
   <div class="bandeau" id="bandeau-veille"></div>
   <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles métier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalisé est signalé comme tel.</p>
@@ -342,7 +359,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 29;
+  const ICI = 30;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1449,8 +1466,6 @@ function doctFicheLigne(f){
 
 function rendreDoctrine(){
   const z = $("doctrine");
-  const lect = '<div id="doct-lecteur" class="doct-lecteur" hidden><div class="doct-lect-barre"><b id="doct-lect-titre"></b>'
-    + '<button id="doct-fermer" class="doct-btn">Fermer</button></div><div id="doct-lect-corps" class="doct-corps"></div></div>';
   let h;
   if (!THEM || !THEM.length){
     h = '<div class="cadre"><p class="vide">' + (THEM_BRUT === null
@@ -1482,22 +1497,33 @@ function rendreDoctrine(){
     const hors = FICHES_Z3.filter(f => !ratt[f.nom]);
     if (hors.length) h += '<div class="cadre"><p class="legende">Fiches de mémoire vive hors référentiel :</p>' + hors.map(doctFicheLigne).join("") + "</div>";
   }
-  z.innerHTML = h + lect;
+  z.innerHTML = h;
   z.onclick = async ev => {
     const b = ev.target.closest("[data-lire]");
     if (b){ await lireDansLecteur("doct", b.dataset.lire, b.dataset.titre); return; }
-    if (ev.target.id === "doct-fermer") $("doct-lecteur").hidden = true;
   };
 }
 
+function feuilleOuvre(titre){
+  $("feuille-titre").textContent = titre;
+  $("feuille-info").textContent = "";
+  $("feuille").classList.add("ouvert");
+  $("feuille-voile").classList.add("ouvert");
+  document.body.style.overflow = "hidden";
+}
+function feuilleFerme(){
+  $("feuille").classList.remove("ouvert");
+  $("feuille-voile").classList.remove("ouvert");
+  document.body.style.overflow = "";
+}
 async function lireDansLecteur(pref, chemin, titre){
-  const lec = $(pref + "-lecteur"), corps = $(pref + "-lect-corps"), ti = $(pref + "-lect-titre");
-  ti.textContent = titre || chemin.split("/").pop();
-  corps.innerHTML = '<p class="mut">Chargement...</p>'; lec.hidden = false;
-  try { lec.scrollIntoView({behavior: "smooth", block: "nearest"}); } catch(e){}
+  const corps = $("feuille-corps");
+  feuilleOuvre(titre || chemin.split("/").pop());
+  corps.innerHTML = '<p class="mut">Chargement...</p>'; corps.scrollTop = 0;
   try {
     const t = await texte(DEP_DOCT, chemin);
     corps.innerHTML = /\.md$/i.test(chemin) ? mdVersHtml(t) : "<pre>" + esc(t) + "</pre>";
+    $("feuille-info").textContent = chemin.indexOf(AG_DOCT + "/") === 0 ? chemin.slice(AG_DOCT.length + 1) : chemin;
   } catch(e){ corps.innerHTML = '<p class="vide">Lecture impossible : ' + esc(e.message) + "</p>"; }
 }
 
@@ -1616,9 +1642,7 @@ function rendreBiblio(){
     + bibSel("bib-st", "Tous les statuts", sts, BIB_F.st)
     + bibSel("bib-cat", "Toutes catégories", cats, BIB_F.cat)
     + '<span class="mut" id="bib-nb"></span></div>'
-    + '<div id="bib-liste"></div>'
-    + '<div id="bib-lecteur" class="doct-lecteur" hidden><div class="doct-lect-barre"><b id="bib-lect-titre"></b>'
-    + '<button id="bib-fermer" class="doct-btn">Fermer</button></div><div id="bib-lect-corps" class="doct-corps"></div></div>';
+    + '<div id="bib-liste"></div>';
   $("bib-q").addEventListener("input", ev => { BIB_F.q = ev.target.value; bibListe(); });
   ["zone", "tag", "st", "cat"].forEach(k => {
     $("bib-" + k).addEventListener("change", ev => { BIB_F[k] = ev.target.value; bibListe(); });
@@ -1628,11 +1652,14 @@ function rendreBiblio(){
     if (tb){ BIB_F.tag = tb.dataset.tag; const sl = $("bib-tag"); if (sl) sl.value = tb.dataset.tag; bibListe(); return; }
     const b = ev.target.closest("[data-lire]");
     if (b){ await lireDansLecteur("bib", b.dataset.lire, b.dataset.titre); return; }
-    if (ev.target.id === "bib-fermer") $("bib-lecteur").hidden = true;
   });
   bibListe();
 }
 
+
+$("feuille-fermer").addEventListener("click", feuilleFerme);
+$("feuille-voile").addEventListener("click", feuilleFerme);
+document.addEventListener("keydown", ev => { if (ev.key === "Escape") feuilleFerme(); });
 async function vue(nom){
   $$("#onglets .onglet").forEach(b => b.setAttribute("aria-selected", b.dataset.vue === nom ? "true" : "false"));
   ["tunnel", "agents", "veille", "savoirs", "doctrine", "biblio"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
