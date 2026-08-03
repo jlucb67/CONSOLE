@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 32 -->
+<!-- VERSION_CONSOLE: 33 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -280,6 +280,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-sommaire b{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;margin:0 0 4px}
 .sav-sommaire a{display:block;color:var(--enc);text-decoration:none;padding:3px 0}
 .sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
+.sav-chemin{margin-top:28px;padding-top:8px;border-top:1px solid var(--fil);font-size:10.5px;color:var(--mut);word-break:break-all}
 .feuille-alerte{background:#fdeaea;color:#b03030;font-size:12.5px;font-weight:600;padding:7px 14px;border-bottom:1px solid #f2c5c5;flex:none}
 .feuille-corps{flex:1;overflow:auto;max-height:none;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
 
@@ -393,7 +394,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 32;
+  const ICI = 33;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1532,6 +1533,28 @@ function avecSommaire(html){
     + "</div>" + h;
 }
 
+function savEpureMd(txt){
+  /* Retire de l'AFFICHAGE (jamais des sources) les blocs techniques : en-tetes de fichier,
+     source video et statuts, notes editoriales, sommaires internes, controles. */
+  const lignes = String(txt || "").replace(/\r/g, "").split("\n");
+  const out = [];
+  let i = 0, sauteSection = false, debut = true;
+  const LIGNE_TECH = /^\s*(?:>\s*)?(?:[-*]\s+)?\*{0,2}(Source vid\u00e9o|Statut|Contr\u00f4le d.int\u00e9grit\u00e9|Dur\u00e9e transcrite|Source de contextualisation|\u00c9v\u00e9nement|Evenement|Intervenants|Vers\u00e9 au corpus|Verse au corpus|Date)\s*\*{0,2}\s*:/i;
+  const TITRE_TECH = /^#{1,4}\s+.*(Note \u00e9ditoriale|Note editoriale|Sommaire)/i;
+  for (const l of lignes){
+    const t = l.trim();
+    const estTitre = /^#{1,4}\s+/.test(t);
+    if (sauteSection){ if (estTitre && !TITRE_TECH.test(t)) sauteSection = false; else continue; }
+    if (estTitre && TITRE_TECH.test(t)){ sauteSection = true; continue; }
+    if (debut && /^#\s+/.test(t)) continue;        /* le titre : la feuille le porte deja */
+    if (debut && /^###\s+/.test(t)) continue;      /* l'en-tete technique du fichier */
+    if (LIGNE_TECH.test(t)) continue;
+    if (t && !(debut && estTitre)) debut = false;
+    out.push(l);
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n");
+}
+
 async function lireDansLecteur(depot, agent, chemin, titre, alerte){
   const corps = $("feuille-corps");
   feuilleOuvre(titre || chemin.split("/").pop());
@@ -1539,8 +1562,9 @@ async function lireDansLecteur(depot, agent, chemin, titre, alerte){
   corps.innerHTML = '<p class="mut">Chargement...</p>'; corps.scrollTop = 0;
   try {
     const t = await texte(depot, chemin);
-    corps.innerHTML = /\.md$/i.test(chemin) ? avecSommaire(mdVersHtml(t)) : "<pre>" + esc(t) + "</pre>";
-    $("feuille-info").textContent = (agent && chemin.indexOf(agent + "/") === 0) ? chemin.slice(agent.length + 1) : chemin;
+    const rel = (agent && chemin.indexOf(agent + "/") === 0) ? chemin.slice(agent.length + 1) : chemin;
+    corps.innerHTML = (/\.md$/i.test(chemin) ? avecSommaire(mdVersHtml(savEpureMd(t))) : "<pre>" + esc(t) + "</pre>")
+      + '<p class="sav-chemin">' + esc(rel) + "</p>";
   } catch(e){ corps.innerHTML = '<p class="vide">Lecture impossible : ' + esc(e.message) + "</p>"; }
 }
 
@@ -1573,7 +1597,19 @@ let SAV_VUE = "them";            /* them | mat */
 let SAV_THEM = [], SAV_MARQ = [], SAV_MAT = [], SAV_Z3 = [], SAV_IDX = {};
 let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_BRANCHE = false;
 const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
-const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md)$/i;
+const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md|INDEX\.md)$/i;
+
+function savAuteurDe(m){
+  if (m.auteur) return m.auteur;
+  if ((m.chemin || "").indexOf("/corpus-melenchon/") >= 0) return "M\u00e9lenchon";
+  const r = (m.fichier || "").match(/^\d{4}-\d{2}-\d{2}_([A-Z][^_]*)_/);
+  return r ? r[1].replace(/-/g, " ") : "";
+}
+function savMateriauDe(m){
+  if (m.materiau) return m.materiau;
+  if ((m.chemin || "").indexOf("/corpus-melenchon/") >= 0) return "Corpus vid\u00e9o";
+  return "";
+}
 const AUT_INCONNU = "Auteur \u00e0 renseigner";
 const MAT_INCONNU = "\u00c0 classer";
 
@@ -1626,9 +1662,16 @@ async function collecteSav(){
     const inf = SAV_IDX[nom] || null;
     if (inf) pris[inf.chemin] = 1;
     (m.savoir || "").split(",").forEach(sv => { sv = sv.trim(); if (sv && SAV_IDX[sv]) pris[SAV_IDX[sv].chemin] = 1; });
-    SAV_MAT.push({doc: m.doc || nom, fichier: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
-                  zone: inf ? bibZone(inf.chemin) : "", tags: m.tags, statut: m.statut, resume: m.resume,
-                  savoir: m.savoir, auteur: m.auteur || "", materiau: m.materiau || "", hors: false});
+    const r3 = nom.match(/^(.*)_03-synthese\.md$/i);
+    if (r3) ["_00-brut-youtube.txt", "_01-integral.md", "_02-structure.md"].forEach(sfx => {
+      const s = SAV_IDX[r3[1] + sfx]; if (s) pris[s.chemin] = 1;
+    });
+    const ent = {doc: m.doc || nom, fichier: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
+                 zone: inf ? bibZone(inf.chemin) : "", tags: m.tags, statut: m.statut, resume: m.resume,
+                 savoir: m.savoir, auteur: "", materiau: "", hors: false};
+    ent.auteur = savAuteurDe(Object.assign({}, ent, {auteur: m.auteur}));
+    ent.materiau = savMateriauDe(Object.assign({}, ent, {materiau: m.materiau}));
+    SAV_MAT.push(ent);
   }
   for (const f of fichiers){
     if (pris[f.chemin] || SAV_EXCLUS.test(f.chemin) || !SAV_LISIBLE.test(f.nom)) continue;
@@ -1708,8 +1751,8 @@ function savProfondeurs(m){
      Quand le fichier catalogue EST la synthese : Long = l'integral, Resume = la synthese. */
   const r = m.fichier && m.fichier.match(/^(.*)_03-synthese\.md$/i);
   if (!r) return null;
-  const integ = SAV_IDX[r[1] + "_01-integral.md"], struct = SAV_IDX[r[1] + "_02-structure.md"];
-  return {longue: integ ? integ.chemin : (struct ? struct.chemin : ""), synthese: m.chemin};
+  const struct = SAV_IDX[r[1] + "_02-structure.md"], integ = SAV_IDX[r[1] + "_01-integral.md"];
+  return {longue: struct ? struct.chemin : (integ ? integ.chemin : ""), synthese: m.chemin};
 }
 
 function savLigneMat(m){
