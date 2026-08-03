@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 40 -->
+<!-- VERSION_CONSOLE: 41 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,6 +281,11 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-sommaire a{display:block;color:var(--enc);text-decoration:none;padding:3px 0}
 .sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
 .sav-chemin{margin-top:28px;padding-top:8px;border-top:1px solid var(--fil);font-size:10.5px;color:var(--mut);word-break:break-all}
+#sav-txtbloc{margin:-2px 0 10px}
+#sav-btntxt{font-family:inherit;font-size:12px;color:var(--mut);background:none;border:1px dashed var(--fil);border-radius:6px;padding:5px 10px;cursor:pointer}
+#sav-btntxt:hover{color:var(--enc)}
+.sav-extrait{margin-top:3px;font-size:12px;color:var(--mut);line-height:1.5}
+.sav-extrait b{color:var(--enc)}
 .sav-g{flex:1;min-width:0}
 .sav-tgs{margin-top:3px;line-height:1.9}
 .sav-acap{margin:26px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
@@ -376,6 +381,7 @@ background:var(--carte);border:2px solid var(--ard)}
     <span class="sav-mention" id="sav-mention" hidden>pas encore de référentiel thématique</span>
   </div>
   <div class="sav-tete2" id="sav-outils2"></div>
+  <div id="sav-txtbloc" hidden><button id="sav-btntxt" type="button">Chercher aussi dans les textes</button><div id="sav-restxt"></div></div>
   <div id="sav-corps"></div>
 </section>
 
@@ -399,7 +405,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 40;
+  const ICI = 41;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -457,6 +463,17 @@ async function texte(depot, chemin){
   const d = await api("/repos/" + depot + "/contents/" + chemin);
   return decode(d.content || "");
 }
+async function texteBlob(depot, sha){
+  const d = await api("/repos/" + depot + "/git/blobs/" + sha);
+  return decode(d.content || "");
+}
+async function texteRobuste(depot, chemin){
+  const inf = SAV_IDX[chemin.split("/").pop()];
+  if (inf && inf.sha && inf.taille >= 900000) return texteBlob(depot, inf.sha);
+  const t = await texte(depot, chemin);
+  if (t === "" && inf && inf.sha && inf.taille > 0) return texteBlob(depot, inf.sha);
+  return t;
+}
 async function texteOuNull(depot, chemin){
   try { return await texte(depot, chemin); } catch(e){ return null; }
 }
@@ -492,7 +509,7 @@ function metaParse(txt){
       statut: (c[3]||"").trim(), origine: (c[4]||"").trim(),
       resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase(),
       savoir: (c[7]||"").trim(),
-      auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim(), lecture: (c[10]||"").trim().toLowerCase()
+      auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim(), lecture: normStable((c[10]||"").trim())
     };
   }
   return m;
@@ -1471,17 +1488,35 @@ function mdVersHtml(txt){
    Un agent sans referentiel (pas de THEMATIQUES.md) ouvre directement sur les materiaux. */
 
 function parseReferentiel(txt){
-  /* THEMATIQUES.md, tableau a 8 colonnes :
-     Slug | Nom (JL) | Niveau | Rattachement | Definition | Fiche Zone 3 | Statut | Tags-alias */
+  /* THEMATIQUES.md : tableau lu par son EN-TETE (8 ou 9 colonnes selon les versions).
+     Colonnes reconnues : Slug, Nom, Niveau, Rattachement, Definition, Fiche, Statut, Marqueurs, Tags-alias.
+     Les cases vides s'ecrivent "-", "\u2014" ou "\u2013" : toutes ramenees a vide. */
   if (!txt) return [];
   const out = [];
+  let ix = null;
+  const vide = v => { v = (v || "").trim(); return (v === "-" || v === "\u2014" || v === "\u2013") ? "" : v; };
   for (const l of txt.split("\n")){
     const t = l.trim();
     if (!/^\|/.test(t) || /^\|[\s|:-]+\|$/.test(t)) continue;
     const c = t.replace(/^\||\|$/g, "").split("|").map(x => x.trim());
-    if (c.length < 4 || /^slug$/i.test(c[0])) continue;
-    out.push({slug: c[0] || "", nom: c[1] || "", niveau: c[2] || "", ratt: c[3] === "-" ? "" : (c[3] || ""),
-              def: c[4] || "", fiche: (c[5] === "-" ? "" : (c[5] || "")), statut: c[6] || "", alias: c[7] || ""});
+    if (/^slug$/i.test(c[0])){
+      ix = {};
+      c.forEach((n, i) => {
+        n = n.toLowerCase();
+        if (/^slug/.test(n)) ix.slug = i; else if (/^nom/.test(n)) ix.nom = i;
+        else if (/^niveau/.test(n)) ix.niveau = i; else if (/^rattach/.test(n)) ix.ratt = i;
+        else if (/^d\u00e9f|^def/.test(n)) ix.def = i; else if (/^fiche/.test(n)) ix.fiche = i;
+        else if (/^statut/.test(n)) ix.statut = i; else if (/^marqueur/.test(n)) ix.mq = i;
+        else if (/alias|^tags/.test(n)) ix.alias = i;
+      });
+      continue;
+    }
+    if (c.length < 4) continue;
+    const g = (cle, defaut) => vide(c[ix && ix[cle] !== undefined ? ix[cle] : defaut] || "");
+    out.push({slug: g("slug", 0), nom: g("nom", 1), niveau: g("niveau", 2), ratt: g("ratt", 3),
+              def: g("def", 4), fiche: g("fiche", 5), statut: g("statut", 6),
+              mq: ix && ix.mq !== undefined ? g("mq", 7) : "",
+              alias: g("alias", ix && ix.mq !== undefined ? 8 : 7)});
   }
   return out;
 }
@@ -1576,7 +1611,7 @@ async function lireDansLecteur(depot, agent, chemin, titre, alerte){
   feuilleAlerte(alerte || "");
   corps.innerHTML = '<p class="mut">Chargement...</p>'; corps.scrollTop = 0;
   try {
-    const t = await texte(depot, chemin);
+    const t = await texteRobuste(depot, chemin);
     const rel = (agent && chemin.indexOf(agent + "/") === 0) ? chemin.slice(agent.length + 1) : chemin;
     corps.innerHTML = (/\.md$/i.test(chemin) ? avecSommaire(mdVersHtml(savEpureMd(t))) : "<pre>" + esc(t) + "</pre>")
       + '<p class="sav-chemin">' + esc(rel) + "</p>";
@@ -1611,6 +1646,7 @@ let SAV_AG = "", SAV_DEP = "";   /* agent courant */
 let SAV_VUE = "them";            /* them | mat */
 let SAV_THEM = [], SAV_MARQ = [], SAV_MAT = [], SAV_Z3 = [], SAV_IDX = {};
 let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_BRANCHE = false;
+let SAV_ACAP = [];
 const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
 const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md|INDEX\.md|SOURCES_A_CAPTER\.md|SOURCES_VEILLE\.md)$/i;
 
@@ -1678,7 +1714,7 @@ async function collecteSav(){
   arb.forEach(e => {
     if (e.type !== "blob" || e.path.indexOf(SAV_AG + "/") !== 0) return;
     const nom = e.path.split("/").pop();
-    if (SAV_IDX[nom] === undefined) SAV_IDX[nom] = {chemin: e.path, taille: e.size || 0};
+    if (SAV_IDX[nom] === undefined) SAV_IDX[nom] = {chemin: e.path, taille: e.size || 0, sha: e.sha || ""};
     fichiers.push({nom: nom, chemin: e.path, taille: e.size || 0});
   });
   /* les materiaux : le catalogue d'abord, puis le reste lisible des zones 1 et 2 */
@@ -1716,6 +1752,18 @@ async function collecteSav(){
   }
   /* la memoire vive : les fiches de savoir/ */
   SAV_Z3 = fichiers.filter(f => bibZone(f.chemin) === "Zone 3" && SAV_LISIBLE.test(f.nom) && !SAV_EXCLUS.test(f.chemin));
+  SAV_THEM.forEach(t => {
+    (t.mq || "").split(/\s+/).filter(x => x.charAt(0) === "#").forEach(m => {
+      let e = SAV_MARQ.find(x => x.mq === m);
+      if (!e){ e = {mq: m, nom: "", slugs: []}; SAV_MARQ.push(e); }
+      if (e.slugs.indexOf(t.slug) < 0) e.slugs.push(t.slug);
+    });
+  });
+  SAV_ACAP = [];
+  try {
+    const reg = await texteOuNull(SAV_DEP, SAV_AG + "/informations-publiques/SOURCES_A_CAPTER.md");
+    if (reg) SAV_ACAP = savParseAcapter(reg);
+  } catch(e){}
   ETAT.sav.fait = true; ETAT.sav.quand = new Date(); ETAT.sav.shas = await shasDepots();
 }
 
@@ -1793,6 +1841,65 @@ function savProfondeurs(m){
   return {longue: struct ? struct.chemin : (integ ? integ.chemin : ""), synthese: m.chemin};
 }
 
+function normStable(s){
+  return (s || "").toLowerCase()
+    .replace(/[\u00e0\u00e2\u00e4]/g, "a").replace(/[\u00e9\u00e8\u00ea\u00eb]/g, "e")
+    .replace(/[\u00ee\u00ef]/g, "i").replace(/[\u00f4\u00f6]/g, "o")
+    .replace(/[\u00f9\u00fb\u00fc]/g, "u").replace(/\u00e7/g, "c").replace(/\u0153/g, "o");
+}
+let SAV_TXT = {}, SAV_TXT_OCC = false;
+function savCiblesTexte(){
+  const vus = {}, out = [];
+  function met(chemin, titre){ if (chemin && /\.md$/i.test(chemin) && !vus[chemin]){ vus[chemin] = 1; out.push({chemin: chemin, titre: titre}); } }
+  SAV_MAT.forEach(m => {
+    const prof = savProfondeurs(m);
+    if (prof){ met(prof.longue, m.doc); met(prof.synthese, m.doc); return; }
+    const svs = (m.savoir || "").split(",").map(s => s.trim()).filter(s => SAV_LISIBLE.test(s) && SAV_IDX[s]);
+    if (svs.length){ svs.forEach(s => met(SAV_IDX[s].chemin, m.doc)); return; }
+    if (m.chemin && SAV_LISIBLE.test(m.chemin)) met(m.chemin, m.doc);
+  });
+  SAV_THEM.forEach(t => { const inf = savFicheDe(t); if (inf) met(inf.chemin, t.nom || t.slug); });
+  return out;
+}
+async function savChercheTextes(){
+  if (SAV_TXT_OCC) return;
+  const q = normStable(SAV_Q.trim());
+  const btn = $("sav-btntxt"), zone = $("sav-restxt");
+  if (q.length < 3){ zone.innerHTML = ""; return; }
+  SAV_TXT_OCC = true;
+  const cibles = savCiblesTexte();
+  let n = 0;
+  for (const c of cibles){
+    n++;
+    if (SAV_TXT[c.chemin] === undefined){
+      btn.textContent = "Lecture des textes... " + n + " / " + cibles.length;
+      try {
+        const orig = savEpureMd(await texteRobuste(SAV_DEP, c.chemin));
+        SAV_TXT[c.chemin] = {orig: orig, norm: normStable(orig)};
+      } catch(e){ SAV_TXT[c.chemin] = null; }
+    }
+  }
+  const res = [];
+  for (const c of cibles){
+    const t = SAV_TXT[c.chemin];
+    if (!t) continue;
+    const i = t.norm.indexOf(q);
+    if (i < 0) continue;
+    let deb = Math.max(0, i - 60); if (deb > 0){ const sp = t.orig.indexOf(" ", deb); if (sp >= 0 && sp < i) deb = sp + 1; }
+    const fin = Math.min(t.orig.length, i + q.length + 90);
+    res.push({chemin: c.chemin, titre: c.titre,
+      extrait: (deb > 0 ? "..." : "") + esc(t.orig.slice(deb, i)) + "<b>" + esc(t.orig.slice(i, i + q.length)) + "</b>"
+        + esc(t.orig.slice(i + q.length, fin)) + (fin < t.orig.length ? "..." : "")});
+  }
+  btn.textContent = "Chercher aussi dans les textes";
+  zone.innerHTML = res.length
+    ? '<div class="sav-acap">Dans les textes</div>' + res.map(r =>
+        '<div class="sav-ligne"><div class="sav-g"><span class="sav-nom">' + esc(r.titre) + '</span>'
+        + '<div class="sav-extrait">' + r.extrait + "</div></div>"
+        + '<span class="sav-droite">' + savBtnLire(r.chemin, r.titre, "", "Ouvrir", "sav-long") + "</span></div>").join("")
+    : '<p class="sav-vide">Rien dans les textes pour cette recherche.</p>';
+  SAV_TXT_OCC = false;
+}
 function savParseAcapter(txt){
   const res = [];
   for (const l of txt.split("\n")){
@@ -1875,6 +1982,11 @@ function savRendreMat(){
             + '<span class="sav-droite">' + savBtnLire(m.chemin, m.doc, "", "Long", "sav-long") + "</span></div>").join("")
       + "</div></div>";
   }
+  if (SAV_ACAP.length){
+    h += '<div class="sav-acap" data-ch="a capter">\u00c0 capter</div>'
+      + SAV_ACAP.map(a => '<div class="sav-ligne sav-acap-l" data-ch="' + esc((a.titre + " " + a.statut).toLowerCase()) + '">'
+        + '<div class="sav-g"><span class="sav-nom">' + esc(a.titre) + ' <span class="sav-tg">' + esc(a.statut) + "</span></span></div></div>").join("");
+  }
   return h || '<p class="vide">Aucun mat\u00e9riau ne correspond.</p>';
 }
 
@@ -1918,6 +2030,7 @@ function savBranche(){
     const p = ev.target.value.split("|");
     SAV_DEP = p[0]; SAV_AG = p[1];
     SAV_Q = ""; SAV_MQ = ""; SAV_AUT = ""; SAV_VUE = "them"; $("sav-q").value = "";
+    SAV_TXT = {}; $("sav-restxt").innerHTML = ""; $("sav-txtbloc").hidden = true;
     $("voile").hidden = false;
     try { await collecteSav(); rendreSav(); }
     catch(e){ etat("Lecture impossible : " + e.message, 1); }
@@ -1925,7 +2038,12 @@ function savBranche(){
   });
   $("sav-bthem").addEventListener("click", () => { if (!SAV_THEM.length) return; SAV_VUE = "them"; rendreSav(); });
   $("sav-bmat").addEventListener("click", () => { SAV_VUE = "mat"; rendreSav(); });
-  $("sav-q").addEventListener("input", ev => { SAV_Q = ev.target.value.trim(); rendreSav(); $("sav-q").focus(); });
+  $("sav-q").addEventListener("input", ev => {
+    SAV_Q = ev.target.value.trim();
+    $("sav-restxt").innerHTML = ""; $("sav-txtbloc").hidden = SAV_Q.length < 3;
+    rendreSav(); $("sav-q").focus();
+  });
+  $("sav-btntxt").addEventListener("click", savChercheTextes);
   $("sav-corps").addEventListener("click", async ev => {
     const pl = ev.target.closest("[data-plie]");
     if (pl){ pl.parentElement.classList.toggle("ouverte"); return; }
