@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 27 -->
+<!-- VERSION_CONSOLE: 28 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -217,6 +217,36 @@ background:var(--carte);border:2px solid var(--ard)}
 .bandeau .btnc.mini{padding:3px 9px;font-size:12px;margin:0}
 .lz em{font-style:normal;font-weight:800;font-size:14px;margin-left:3px}
 .pastdbl{display:block;font-size:9px;font-weight:800;color:#8a5a1a;background:#fdf4e6;border:1px solid #e8d4ae;border-radius:4px;padding:1px 4px;margin-bottom:5px;text-align:center;white-space:nowrap}
+
+/* ---------- v28 : doctrine et bibliotheque ---------- */
+.doct-carte,.bib-doc{background:var(--carte);border:1px solid var(--fil);border-radius:8px;padding:10px 12px;margin:0 0 10px}
+.doct-carte header,.bib-doc header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px}
+.doct-carte h3{margin:0;font-size:15px}
+.doct-slug{font-size:11px;color:var(--mut);background:var(--pap);border:1px solid var(--fil);border-radius:4px;padding:1px 5px}
+.doct-st{font-size:11px;font-weight:600;border-radius:10px;padding:2px 8px}
+.doct-st-ok{background:#e7f5ec;color:#1e7c45;border:1px solid #bfe4cd}
+.doct-st-attente{background:#fdf3e4;color:#9a6210;border:1px solid #f2ddb7}
+.doct-st-alerte{background:#fdeaea;color:#b03030;border:1px solid #f2c5c5}
+.doct-def{margin:2px 0 6px}
+.doct-pied{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.doct-btn{font:inherit;font-size:12.5px;border:1px solid var(--fil);background:var(--pap);border-radius:6px;padding:3px 10px;cursor:pointer}
+.doct-btn:hover{border-color:var(--enc)}
+.doct-ligne{display:flex;gap:8px;align-items:center;padding:4px 0;border-top:1px solid var(--fil)}
+.doct-lecteur{background:var(--carte);border:2px solid var(--enc);border-radius:8px;margin:12px 0;overflow:hidden}
+.doct-lect-barre{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--fil);background:var(--pap)}
+.doct-corps{padding:10px 14px;max-height:70vh;overflow:auto;font-size:14px}
+.doct-corps h2{font-size:16px;margin:14px 0 6px}.doct-corps h3{font-size:14.5px;margin:12px 0 4px}
+.doct-corps h4{font-size:13.5px;margin:10px 0 4px}
+.doct-corps blockquote{margin:8px 0;padding:6px 10px;border-left:3px solid var(--fil);color:var(--mut)}
+.doct-corps table,.doct-tab{border-collapse:collapse;margin:8px 0;font-size:13px}
+.doct-corps td{border:1px solid var(--fil);padding:3px 8px;vertical-align:top}
+.doct-corps pre{white-space:pre-wrap;font-size:12.5px}
+.bib-outils{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.bib-outils input[type=search]{flex:1 1 180px;font:inherit;font-size:13.5px;border:1px solid var(--fil);border-radius:6px;padding:5px 9px;background:var(--carte)}
+.bib-outils select{font:inherit;font-size:13px;border:1px solid var(--fil);border-radius:6px;padding:4px 6px;background:var(--carte);max-width:44vw}
+.bib-res{margin:4px 0 6px;font-size:13.5px}
+.bib-tagb{font:inherit;font-size:11.5px;border:1px solid var(--fil);background:var(--pap);border-radius:10px;padding:1px 8px;cursor:pointer;color:var(--mut)}
+.bib-tagb:hover{color:var(--enc);border-color:var(--enc)}
 </style></head>
 <body><div class="page">
 <h1>Console d'administration</h1>
@@ -245,6 +275,8 @@ background:var(--carte);border:2px solid var(--ard)}
   <button class="onglet" role="tab" data-vue="agents" aria-selected="false"><span class="long">Gestion des agents</span><span class="court">Agents</span></button>
   <button class="onglet" role="tab" data-vue="veille" aria-selected="false"><span class="long">Supervision de la veille</span><span class="court">Veille</span></button>
   <button class="onglet" role="tab" data-vue="savoirs" aria-selected="false"><span class="long">Savoirs des agents</span><span class="court">Savoirs</span></button>
+  <button class="onglet" role="tab" data-vue="doctrine" aria-selected="false"><span class="long">Doctrine politique</span><span class="court">Doctrine</span></button>
+  <button class="onglet" role="tab" data-vue="biblio" aria-selected="false"><span class="long">Bibliothèque des sources</span><span class="court">Sources</span></button>
 </div>
 
 <section id="vue-tunnel" hidden>
@@ -284,6 +316,18 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="savoirs"></div>
 </section>
 
+<section id="vue-doctrine" hidden>
+  <div class="bandeau" id="bandeau-doctrine"></div>
+  <p class="legende">La doctrine par thématique : le référentiel <code>THEMATIQUES.md</code> de l'agent MI-Politique - slug immuable, nom choisi par JL, statut d'autorité. Seules les fiches <b>Validées JL</b> font foi ; chaque fiche suit le gabarit : Position, Arguments, Objections et réponses, Racines et divergences, Sources.</p>
+  <div id="doctrine"></div>
+</section>
+
+<section id="vue-biblio" hidden>
+  <div class="bandeau" id="bandeau-biblio"></div>
+  <p class="legende">Toutes les sources de l'agent MI-Politique, par son catalogue <code>META_DOCUMENTS.tsv</code> : recherche, filtres par tag, statut et catégorie, lecture des documents texte dans la page. Les binaires (PDF, docx) se consultent au dépôt.</p>
+  <div id="biblio"></div>
+</section>
+
 <section id="vue-veille" hidden>
   <div class="bandeau" id="bandeau-veille"></div>
   <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles métier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalisé est signalé comme tel.</p>
@@ -298,7 +342,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 27;
+  const ICI = 28;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -467,7 +511,9 @@ let ARBRES = {};
 const ETAT = {tunnel: {fait: false, quand: null, shas: null},
               agents: {fait: false, quand: null, shas: null},
               veille: {fait: false, quand: null, shas: null},
-              savoirs: {fait: false, quand: null, shas: null}};
+              savoirs: {fait: false, quand: null, shas: null},
+              doctrine: {fait: false, quand: null, shas: null},
+              biblio: {fait: false, quand: null, shas: null}};
 async function shasDepots(){
   const o = {};
   for (const d of DEPOTS){ try { const c = await api("/repos/" + d + "/commits?per_page=1"); o[d] = c[0].sha; } catch(e){ o[d] = null; } }
@@ -690,7 +736,7 @@ async function collecteVeille(){
    « quelque chose a change dans ce depot », pas « ce que cet onglet affiche a change ». */
 async function majBandeaux(){
   const shas = await shasDepots();
-  for (const nom of ["tunnel", "agents", "veille", "savoirs"]){
+  for (const nom of ["tunnel", "agents", "veille", "savoirs", "doctrine", "biblio"]){
     const e = ETAT[nom], b = $("bandeau-" + nom);
     if (!b) continue;
     if (!e.fait){ b.innerHTML = ""; continue; }
@@ -712,6 +758,8 @@ async function recharger(nom){
       for (const k in memo){ if ($(k)) $(k).value = memo[k]; } filtrer(); }
     else if (nom === "agents"){ ETAT.agents.fait = false; await collecteAgents(); rendreAgents(); }
     else if (nom === "savoirs"){ ETAT.savoirs.fait = false; await collecteSavoirs(); rendreSavoirs(); }
+    else if (nom === "doctrine"){ ETAT.doctrine.fait = false; await collecteDoctrine(); rendreDoctrine(); }
+    else if (nom === "biblio"){ ETAT.biblio.fait = false; await collecteBiblio(); rendreBiblio(); }
     else { ETAT.veille.fait = false; await collecteVeille(); rendreVeille(); }
     await majBandeaux();
     window.scrollTo(0, y);
@@ -1314,15 +1362,253 @@ function filtrerSavoirs(){
   $$("#savoirs .fiche-agent").forEach(f => { f.hidden = !!a && f.dataset.ag !== a; });
 }
 
+/* ---------- v28 : doctrine et bibliotheque (agent MI-Politique) ---------- */
+const AG_DOCT = "MI-Politique";
+const DEP_DOCT = "jlucb67/LFI";
+let THEM = null, THEM_BRUT = null, FICHES_Z3 = [], BIB = null, BIB_IDX = {}, BIB_F = {q:"", tag:"", st:"", cat:""};
+
+function mdVersHtml(txt){
+  const lignes = String(txt || "").replace(/\r/g, "").split("\n");
+  let h = "", enListe = false, enTab = false, enCit = false;
+  const inline = s => esc(s)
+    .replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>")
+    .replace(/\*([^*]+)\*/g, "<i>$1</i>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  const ferme = () => {
+    if (enListe){ h += "</ul>"; enListe = false; }
+    if (enTab){ h += "</table>"; enTab = false; }
+    if (enCit){ h += "</blockquote>"; enCit = false; }
+  };
+  for (const l of lignes){
+    const t = l.trim();
+    if (!t){ ferme(); continue; }
+    if (/^\|/.test(t)){
+      if (/^\|[\s|:-]+\|$/.test(t)) continue;
+      if (!enTab){ ferme(); h += '<table class="doct-tab">'; enTab = true; }
+      h += "<tr>" + t.replace(/^\||\|$/g, "").split("|").map(c => "<td>" + inline(c.trim()) + "</td>").join("") + "</tr>";
+      continue;
+    }
+    if (enTab){ h += "</table>"; enTab = false; }
+    const m = t.match(/^(#{1,4})\s+(.*)/);
+    if (m){ ferme(); const n = m[1].length + 1; h += "<h" + n + ">" + inline(m[2]) + "</h" + n + ">"; continue; }
+    if (/^>\s?/.test(t)){
+      if (!enCit){ ferme(); h += "<blockquote>"; enCit = true; }
+      h += inline(t.replace(/^>\s?/, "")) + "<br>"; continue;
+    }
+    if (enCit){ h += "</blockquote>"; enCit = false; }
+    if (/^[-*]\s+/.test(t)){
+      if (!enListe){ ferme(); h += "<ul>"; enListe = true; }
+      h += "<li>" + inline(t.replace(/^[-*]\s+/, "")) + "</li>"; continue;
+    }
+    if (/^\d+\.\s+/.test(t)){
+      if (!enListe){ ferme(); h += "<ul>"; enListe = true; }
+      h += "<li>" + inline(t.replace(/^\d+\.\s+/, "")) + "</li>"; continue;
+    }
+    ferme(); h += "<p>" + inline(t) + "</p>";
+  }
+  ferme();
+  return h;
+}
+
+function parseThematiques(txt){
+  if (!txt) return null;
+  const out = [];
+  for (const l of txt.split("\n")){
+    const t = l.trim();
+    if (!/^\|/.test(t) || /^\|[\s|:-]+\|$/.test(t)) continue;
+    const c = t.replace(/^\||\|$/g, "").split("|").map(x => x.trim());
+    if (c.length < 2 || /^slug$/i.test(c[0])) continue;
+    out.push({slug: c[0] || "", nom: c[1] || "", def: c[2] || "", fiche: c[3] || "", statut: c[4] || "", alias: c[5] || ""});
+  }
+  return out;
+}
+
+function doctBadge(st){
+  const s = (st || "").toLowerCase();
+  const cl = s.indexOf("valid") >= 0 ? "ok" : (s.indexOf("revis") >= 0 || s.indexOf("réviser") >= 0) ? "alerte" : "attente";
+  return '<span class="doct-st doct-st-' + cl + '">' + esc(st || "Proposée") + "</span>";
+}
+
+async function collecteDoctrine(){
+  progres("Lecture du référentiel des thématiques...");
+  THEM_BRUT = await texteOuNull(DEP_DOCT, AG_DOCT + "/THEMATIQUES.md");
+  THEM = parseThematiques(THEM_BRUT) || [];
+  progres("Lecture de la mémoire vive...");
+  const arb = (ARBRES[DEP_DOCT] && ARBRES[DEP_DOCT].length) ? ARBRES[DEP_DOCT] : await arbre(DEP_DOCT);
+  FICHES_Z3 = arb.filter(e => e.type === "blob" && e.path.indexOf(AG_DOCT + "/savoir/") === 0
+      && /\.md$/i.test(e.path) && !/\/(VERSION|CATALOGUE)\.md$/i.test(e.path))
+    .map(e => ({nom: e.path.split("/").pop(), chemin: e.path, taille: e.size || 0}));
+  ETAT.doctrine.fait = true; ETAT.doctrine.quand = new Date(); ETAT.doctrine.shas = await shasDepots();
+}
+
+function doctFicheLigne(f){
+  return '<div class="doct-ligne"><button class="doct-btn" data-lire="' + esc(f.chemin) + '" data-titre="' + esc(f.nom)
+    + '">Lire</button> <span>' + esc(f.nom) + '</span> <span class="mut">' + poids(f.taille) + "</span></div>";
+}
+
+function rendreDoctrine(){
+  const z = $("doctrine");
+  const lect = '<div id="doct-lecteur" class="doct-lecteur" hidden><div class="doct-lect-barre"><b id="doct-lect-titre"></b>'
+    + '<button id="doct-fermer" class="doct-btn">Fermer</button></div><div id="doct-lect-corps" class="doct-corps"></div></div>';
+  let h;
+  if (!THEM || !THEM.length){
+    h = '<div class="cadre"><p class="vide">' + (THEM_BRUT === null
+        ? "Le référentiel <code>THEMATIQUES.md</code> n'existe pas encore dans le dépôt."
+        : "Le référentiel est en place mais encore vide : la liste des thématiques est en cours de challenge - l'agent propose, JL nomme et arrête.") + "</p>"
+      + (FICHES_Z3.length ? '<p class="legende">Fiches de mémoire vive déjà présentes, en attente de rattachement :</p>'
+          + FICHES_Z3.map(doctFicheLigne).join("") : "") + "</div>";
+  } else {
+    const nv = THEM.filter(t => /valid/i.test(t.statut)).length;
+    const nr = THEM.filter(t => /revis|réviser/i.test(t.statut)).length;
+    h = '<div class="synthese">' + mesure(THEM.length, "thématiques au référentiel")
+      + mesure(nv + " / " + THEM.length, "validées JL", nv < THEM.length)
+      + mesure(nr, "à réviser", nr > 0)
+      + mesure(FICHES_Z3.length, "fiches en mémoire vive") + "</div>";
+    const parNom = {}; FICHES_Z3.forEach(f => { parNom[f.nom] = f; });
+    for (const t of THEM){
+      const f = t.fiche && parNom[t.fiche];
+      h += '<div class="doct-carte"><header><h3>' + esc(t.nom || t.slug) + "</h3>"
+        + '<code class="doct-slug">' + esc(t.slug) + "</code>" + doctBadge(t.statut) + "</header>"
+        + (t.def ? '<p class="doct-def">' + esc(t.def) + "</p>" : "")
+        + '<div class="doct-pied">'
+        + (f ? '<button class="doct-btn" data-lire="' + esc(f.chemin) + '" data-titre="' + esc(t.nom || t.slug)
+             + '">Ouvrir la fiche</button><span class="mut">' + esc(t.fiche) + " · " + poids(f.taille) + "</span>"
+             : '<span class="mut">' + (t.fiche ? "fiche annoncée introuvable : " + esc(t.fiche) : "fiche à écrire") + "</span>")
+        + (t.alias ? ' <span class="mut">alias : ' + esc(t.alias) + "</span>" : "")
+        + "</div></div>";
+    }
+    const ratt = {}; THEM.forEach(t => { if (t.fiche) ratt[t.fiche] = 1; });
+    const hors = FICHES_Z3.filter(f => !ratt[f.nom]);
+    if (hors.length) h += '<div class="cadre"><p class="legende">Fiches de mémoire vive hors référentiel :</p>' + hors.map(doctFicheLigne).join("") + "</div>";
+  }
+  z.innerHTML = h + lect;
+  z.onclick = async ev => {
+    const b = ev.target.closest("[data-lire]");
+    if (b){ await lireDansLecteur("doct", b.dataset.lire, b.dataset.titre); return; }
+    if (ev.target.id === "doct-fermer") $("doct-lecteur").hidden = true;
+  };
+}
+
+async function lireDansLecteur(pref, chemin, titre){
+  const lec = $(pref + "-lecteur"), corps = $(pref + "-lect-corps"), ti = $(pref + "-lect-titre");
+  ti.textContent = titre || chemin.split("/").pop();
+  corps.innerHTML = '<p class="mut">Chargement...</p>'; lec.hidden = false;
+  try { lec.scrollIntoView({behavior: "smooth", block: "nearest"}); } catch(e){}
+  try {
+    const t = await texte(DEP_DOCT, chemin);
+    corps.innerHTML = /\.md$/i.test(chemin) ? mdVersHtml(t) : "<pre>" + esc(t) + "</pre>";
+  } catch(e){ corps.innerHTML = '<p class="vide">Lecture impossible : ' + esc(e.message) + "</p>"; }
+}
+
+async function collecteBiblio(){
+  progres("Lecture du catalogue des documents...");
+  const t = await texteOuNull(DEP_DOCT, AG_DOCT + "/META_DOCUMENTS.tsv");
+  BIB = t ? metaParse(t) : {};
+  const arb = (ARBRES[DEP_DOCT] && ARBRES[DEP_DOCT].length) ? ARBRES[DEP_DOCT] : await arbre(DEP_DOCT);
+  BIB_IDX = {};
+  arb.forEach(e => {
+    if (e.type === "blob" && e.path.indexOf(AG_DOCT + "/") === 0)
+      BIB_IDX[e.path.split("/").pop()] = {chemin: e.path, taille: e.size || 0};
+  });
+  ETAT.biblio.fait = true; ETAT.biblio.quand = new Date(); ETAT.biblio.shas = await shasDepots();
+}
+
+function bibFiltre(entrees, f){
+  return entrees.filter(function(e){
+    const fic = e[0], m = e[1];
+    if (f.tag && m.tags.indexOf(f.tag) < 0) return false;
+    if (f.st && m.statut !== f.st) return false;
+    if (f.cat && m.cat !== f.cat) return false;
+    if (f.q){
+      const q = f.q.toLowerCase();
+      if ((m.doc + " " + fic + " " + m.resume + " " + m.tags.join(" ")).toLowerCase().indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+}
+
+function bibZone(chemin){
+  if (!chemin) return "";
+  if (chemin.indexOf("/savoir/") >= 0) return "Zone 3";
+  if (chemin.indexOf("/connaissances-stockees/") >= 0) return "Zone 2";
+  if (chemin.indexOf("/informations-publiques/") >= 0) return "Zone 1";
+  return "racine";
+}
+
+function bibSel(id, defaut, vals, cur){
+  return '<select id="' + id + '"><option value="">' + esc(defaut) + "</option>"
+    + vals.map(v => '<option value="' + esc(v) + '"' + (v === cur ? " selected" : "") + ">" + esc(v) + "</option>").join("") + "</select>";
+}
+
+function bibListe(){
+  const z = $("bib-liste");
+  const ent = Object.keys(BIB).map(k => [k, BIB[k]]);
+  const res = bibFiltre(ent, BIB_F);
+  const nb = $("bib-nb"); if (nb) nb.textContent = res.length + " / " + ent.length + " documents";
+  let h = "";
+  for (const e of res){
+    const fic = e[0], m = e[1];
+    const inf = BIB_IDX[fic], lisible = inf && /\.(md|txt|tsv)$/i.test(fic);
+    h += '<div class="bib-doc"><header><b>' + esc(m.doc) + "</b>" + (m.statut ? doctBadge(m.statut) : "") + "</header>"
+      + '<div class="mut">' + esc(fic)
+      + (inf ? " · " + bibZone(inf.chemin) + " · " + poids(inf.taille) : " · <i>absent du dépôt</i>")
+      + (m.cat ? " · " + esc(m.cat) : "") + "</div>"
+      + (m.resume && m.resume !== "non lu" ? '<p class="bib-res">' + esc(m.resume) + "</p>"
+                                           : '<p class="bib-res mut">résumé à venir (« non lu »)</p>')
+      + '<div class="doct-pied">' + m.tags.map(t => '<button class="bib-tagb" data-tag="' + esc(t) + '">' + esc(t) + "</button>").join(" ")
+      + (lisible ? ' <button class="doct-btn" data-lire="' + esc(inf.chemin) + '" data-titre="' + esc(m.doc) + '">Lire</button>'
+                 : (inf ? ' <span class="mut">binaire - se consulte au dépôt</span>' : ""))
+      + "</div></div>";
+  }
+  z.innerHTML = h || '<div class="cadre"><p class="vide">Aucun document ne correspond aux filtres.</p></div>';
+}
+
+function rendreBiblio(){
+  const z = $("biblio");
+  const ent = Object.keys(BIB || {});
+  if (!ent.length){
+    z.innerHTML = '<div class="cadre"><p class="vide">Catalogue vide ou introuvable (<code>META_DOCUMENTS.tsv</code>).</p></div>';
+    return;
+  }
+  const tous = ent.map(k => BIB[k]);
+  const tags = []; tous.forEach(m => m.tags.forEach(t => { if (tags.indexOf(t) < 0) tags.push(t); })); tags.sort();
+  const sts = []; tous.forEach(m => { if (m.statut && sts.indexOf(m.statut) < 0) sts.push(m.statut); }); sts.sort();
+  const cats = []; tous.forEach(m => { if (m.cat && cats.indexOf(m.cat) < 0) cats.push(m.cat); }); cats.sort();
+  z.innerHTML = '<div class="outils bib-outils">'
+    + '<input id="bib-q" type="search" placeholder="Rechercher (titre, résumé, tag, fichier...)" value="' + esc(BIB_F.q) + '">'
+    + bibSel("bib-tag", "Tous les tags", tags, BIB_F.tag)
+    + bibSel("bib-st", "Tous les statuts", sts, BIB_F.st)
+    + bibSel("bib-cat", "Toutes catégories", cats, BIB_F.cat)
+    + '<span class="mut" id="bib-nb"></span></div>'
+    + '<div id="bib-liste"></div>'
+    + '<div id="bib-lecteur" class="doct-lecteur" hidden><div class="doct-lect-barre"><b id="bib-lect-titre"></b>'
+    + '<button id="bib-fermer" class="doct-btn">Fermer</button></div><div id="bib-lect-corps" class="doct-corps"></div></div>';
+  $("bib-q").addEventListener("input", ev => { BIB_F.q = ev.target.value; bibListe(); });
+  ["tag", "st", "cat"].forEach(k => {
+    $("bib-" + k).addEventListener("change", ev => { BIB_F[k] = ev.target.value; bibListe(); });
+  });
+  z.addEventListener("click", async ev => {
+    const tb = ev.target.closest(".bib-tagb");
+    if (tb){ BIB_F.tag = tb.dataset.tag; const s = $("bib-tag"); if (s) s.value = tb.dataset.tag; bibListe(); return; }
+    const b = ev.target.closest("[data-lire]");
+    if (b){ await lireDansLecteur("bib", b.dataset.lire, b.dataset.titre); return; }
+    if (ev.target.id === "bib-fermer") $("bib-lecteur").hidden = true;
+  });
+  bibListe();
+}
+
 async function vue(nom){
   $$("#onglets .onglet").forEach(b => b.setAttribute("aria-selected", b.dataset.vue === nom ? "true" : "false"));
-  ["tunnel", "agents", "veille", "savoirs"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
+  ["tunnel", "agents", "veille", "savoirs", "doctrine", "biblio"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
   if (!ETAT[nom].fait){
     $("voile").hidden = false;
     try {
       if (nom === "agents"){ await collecteAgents(); rendreAgents(); }
       else if (nom === "veille"){ await collecteVeille(); rendreVeille(); }
       else if (nom === "savoirs"){ await collecteSavoirs(); rendreSavoirs(); }
+      else if (nom === "doctrine"){ await collecteDoctrine(); rendreDoctrine(); }
+      else if (nom === "biblio"){ await collecteBiblio(); rendreBiblio(); }
     } catch(e){ etat("Chargement impossible : " + e.message, 1); }
     finally { $("voile").hidden = true; }
   }
