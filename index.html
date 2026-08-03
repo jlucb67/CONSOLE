@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 34 -->
+<!-- VERSION_CONSOLE: 35 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -247,7 +247,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-tete{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:10px;margin:0 0 10px}
 .sav-tete select,.sav-tete input,.sav-tete2 select{font-family:inherit;font-size:13px;color:var(--enc);border:1px solid var(--fil);border-radius:6px;padding:7px 9px;background:#fbfcfe}
 .sav-tete select{max-width:46vw}
-.sav-tete input{flex:1 1 130px;min-width:110px}
+.sav-tete input{flex:1 1 100%}
 .sav-tete2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
 .sav-vues{display:flex;border:1.5px solid var(--enc);border-radius:8px;overflow:hidden;flex:0 0 auto}
 .sav-vues button{font:inherit;font-size:13px;font-weight:600;border:0;background:var(--carte);color:var(--enc);padding:6px 12px;cursor:pointer}
@@ -394,7 +394,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 34;
+  const ICI = 35;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1539,7 +1539,7 @@ function savEpureMd(txt){
   const lignes = String(txt || "").replace(/\r/g, "").split("\n");
   const out = [];
   let sauteNiv = 0, debut = true;
-  const LIGNE_TECH = /^\s*(?:>\s*)?(?:[-*]\s+)?\*{0,2}(Source vid\u00e9o|Statut|Contr\u00f4le d.int\u00e9grit\u00e9|Dur\u00e9e transcrite|Source de contextualisation|\u00c9v\u00e9nement|Evenement|Intervenants|Vers\u00e9 au corpus|Verse au corpus|Date)\s*\*{0,2}\s*:/i;
+  const LIGNE_TECH = /^\s*(?:>\s*)?(?:[-*]\s+)?\*{0,2}(Source[^:\n]{0,60}|Statut|Contr\u00f4le d.int\u00e9grit\u00e9|Dur\u00e9e transcrite|Capture[^:\n]{0,40}|\u00c9v\u00e9nement|Evenement|Intervenants|Vers\u00e9 au corpus|Verse au corpus|Date)\s*\*{0,2}\s*:/i;
   const sansAccents = s => s.toLowerCase().replace(/[\u00e9\u00e8\u00ea\u00eb]/g, "e").replace(/[\u00e0\u00e2]/g, "a")
     .replace(/[\u00ee\u00ef]/g, "i").replace(/[\u00f4]/g, "o").replace(/[\u00fb\u00f9\u00fc]/g, "u").replace(/[\u00e7]/g, "c");
   const MOTS_TECH = ["note editoriale", "sommaire", "identification", "etendue de la lecture", "perimetre de lecture",
@@ -1607,7 +1607,7 @@ let SAV_VUE = "them";            /* them | mat */
 let SAV_THEM = [], SAV_MARQ = [], SAV_MAT = [], SAV_Z3 = [], SAV_IDX = {};
 let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_BRANCHE = false;
 const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
-const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md|INDEX\.md)$/i;
+const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md|INDEX\.md|SOURCES_A_CAPTER\.md|SOURCES_VEILLE\.md)$/i;
 
 function savSegment(m){
   const r = (m.fichier || "").match(/^\d{4}-\d{2}-\d{2}_([^_]+)_/);
@@ -1688,6 +1688,8 @@ async function collecteSav(){
     if (r3) ["_00-brut-youtube.txt", "_01-integral.md", "_02-structure.md"].forEach(sfx => {
       const s = SAV_IDX[r3[1] + sfx]; if (s) pris[s.chemin] = 1;
     });
+    if (savProgrammatique(nom.match(/^\d{4}-\d{2}-\d{2}_([^_]+)_/) ? RegExp.$1 : "") && !/_ch\d+/i.test(nom)
+        && inf && inf.taille < 4000) { continue; }  /* chapeaux de partie quasi vides : pas des documents */
     const ent = {doc: m.doc || nom, fichier: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
                  zone: inf ? bibZone(inf.chemin) : "", tags: m.tags, statut: m.statut, resume: m.resume,
                  savoir: m.savoir, auteur: "", materiau: "", hors: false};
@@ -1723,8 +1725,11 @@ function savBtnLire(chemin, titre, alerte, libelle, classe){
     + '"' + (alerte ? ' data-alerte="' + esc(alerte) + '"' : "") + ">" + libelle + "</button>";
 }
 
+function savFicheDe(t){
+  return (t.fiche && SAV_IDX[t.fiche]) || SAV_IDX[t.slug + ".md"] || null;
+}
 function savLigneThem(t){
-  const inf = t.fiche && SAV_IDX[t.fiche];
+  const inf = savFicheDe(t);
   return '<div class="sav-ligne" data-ch="' + esc((t.nom + " " + t.def + " " + t.slug + " " + t.alias).toLowerCase()) + '">'
     + '<span class="sav-nom">' + esc(t.nom || t.slug) + "</span>"
     + '<span class="sav-droite">' + (inf
@@ -1750,7 +1755,7 @@ function savRendreThem(){
     const dedans = SAV_THEM.filter(t => t.niveau === "2" && t.ratt === b.slug);
     const visibles = dedans.filter(t => savCorrespond(t.nom + " " + t.def + " " + t.slug + " " + t.alias, SAV_Q));
     if (SAV_Q && !visibles.length) return;
-    const nf = dedans.filter(t => t.fiche && SAV_IDX[t.fiche]).length;
+    const nf = dedans.filter(t => savFicheDe(t)).length;
     h += '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>'
       + (i + 1) + ". " + esc(b.nom) + '</span><span class="sav-cpt">' + dedans.length + " th\u00e9matique" + (dedans.length > 1 ? "s" : "")
       + " \u00b7 " + nf + " fiche" + (nf > 1 ? "s" : "") + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
@@ -1758,7 +1763,7 @@ function savRendreThem(){
   });
   if (!h) h = '<p class="vide">Aucune th\u00e9matique ne correspond \u00e0 la recherche.</p>';
   /* fiches de memoire vive hors referentiel : montrer le manque, pas le masquer */
-  const citees = {}; SAV_THEM.forEach(t => { if (t.fiche) citees[t.fiche] = 1; });
+  const citees = {}; SAV_THEM.forEach(t => { if (t.fiche) citees[t.fiche] = 1; citees[t.slug + ".md"] = 1; });
   const hors = SAV_Z3.filter(f => !citees[f.nom]);
   if (hors.length && !SAV_Q){
     h += '<div class="sav-hors"><h4>M\u00e9moire vive hors r\u00e9f\u00e9rentiel</h4>'
@@ -1780,15 +1785,25 @@ function savProfondeurs(m){
 function savLigneMat(m){
   const alerte = savAlerteDe(m);
   const prof = savProfondeurs(m);
-  const cible = prof ? prof.longue : savCibleLongue(m);
-  const resumeOk = m.resume && m.resume.toLowerCase() !== "non lu";
+  let boutons = "";
+  if (prof){
+    /* corpus : les deux profondeurs explicites */
+    boutons = (prof.longue ? savBtnLire(prof.longue, m.doc, alerte, "Long", "sav-long") : "")
+      + savBtnLire(prof.synthese, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
+  } else {
+    const svs = (m.savoir || "").split(",").map(s => s.trim()).filter(s => SAV_LISIBLE.test(s) && SAV_IDX[s]);
+    if (svs.length){
+      /* une fiche de lecture liee : longue ou courte selon son ampleur reelle */
+      const inf = SAV_IDX[svs[0]];
+      boutons = savBtnLire(inf.chemin, m.doc, alerte, inf.taille >= 40000 ? "Long" : "R\u00e9sum\u00e9", "sav-long");
+    } else if (m.chemin && SAV_LISIBLE.test(m.chemin)){
+      /* le document lui-meme est le texte : integral */
+      boutons = savBtnLire(m.chemin, m.doc, alerte, "Long", "sav-long");
+    }
+  }
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
     + '<span class="sav-nom">' + esc(m.doc) + (m.tags.length ? " " + m.tags.map(t => '<span class="sav-tg">' + esc(t) + "</span>").join(" ") : "") + "</span>"
-    + '<span class="sav-droite">'
-    + (cible ? savBtnLire(cible, m.doc, alerte, "Long", "sav-long") : "")
-    + (prof && prof.synthese ? savBtnLire(prof.synthese, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long")
-       : (resumeOk ? '<button class="sav-lire sav-long" data-resume="' + esc(m.fichier) + '"' + (alerte ? ' data-alerte="' + esc(alerte) + '"' : "") + ">R\u00e9sum\u00e9</button>" : ""))
-    + "</span></div>";
+    + '<span class="sav-droite">' + boutons + "</span></div>";
 }
 
 function savCibleLongue(m){
