@@ -24,7 +24,7 @@ section{padding:10px 14px}
 .souligne .lg{font-size:11.5px;color:var(--mut)}
 .btnretour{font:inherit;font-size:12.5px;border:1px solid var(--fil);background:var(--carte);border-radius:8px;padding:5px 10px;cursor:pointer;display:none}
 .branche{background:var(--carte);border:1px solid var(--fil);border-radius:10px;margin:0 0 10px;overflow:hidden}
-.branche>button{all:unset;display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:11px 12px;cursor:pointer;font-weight:700;font-size:14.5px}
+.branche>button{all:unset;display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:11px 12px;cursor:pointer;font-weight:700;font-size:15px}
 .branche .cpt{font-weight:400;font-size:11.5px;color:var(--mut);text-align:right}
 .branche .fl{transition:transform .2s;color:var(--mut)}
 .branche.ouverte .fl{transform:rotate(90deg)}
@@ -32,9 +32,9 @@ section{padding:10px 14px}
 .branche.ouverte .dedans{display:block}
 .ligne{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px dashed var(--fil)}
 .ligne:last-child{border-bottom:0}
-.ligne .nom{font-weight:600;font-size:14px;flex:1 1 auto;min-width:0}
+.ligne .nom{font-weight:400;font-size:14px;flex:1 1 auto;min-width:0}
 .ligne .droite{display:flex;gap:6px;flex:0 0 auto;margin-left:auto}
-.mq{font-size:11px;font-weight:700;color:var(--acc);cursor:pointer;white-space:nowrap}
+.mq{font-size:10.5px;font-weight:600;color:#6b6259;background:#edeae4;border:1px solid var(--fil);border-radius:9px;padding:1px 7px;cursor:pointer;white-space:nowrap}
 .tg{font-size:11px;font-weight:400;color:var(--mut);white-space:nowrap}
 .lire{font:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:7px;padding:5px 14px;cursor:pointer;color:#fff;white-space:nowrap}
 .lire-z2{background:var(--z2)}
@@ -89,7 +89,7 @@ section{padding:10px 14px}
 <section id="vue-them">
   <div class="souligne">
     <select id="selmq" onchange="entrerParMarqueur(this.value)">
-      <option value="">Entrer par un marqueur...</option>
+      <option value="">#</option>
       <option value="#Racisme">#Racisme - Question raciale et coloniale</option>
     </select>
     <button class="btnretour" id="retourarbre" onclick="retourArbre()">← Retour à l'arbre</button>
@@ -97,7 +97,7 @@ section{padding:10px 14px}
 
   <div id="arbre">
     <div class="branche">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Praxis. Théorie et stratégie</span><span class="cpt">8 thématiques · 1 fiche</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>1. Praxis. Théorie et stratégie</span><span class="cpt">8 thématiques · 1 fiche</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="ligne" data-ch="sujet histoire peuple classe">
           <span class="nom">Le sujet de l'histoire</span>
@@ -122,7 +122,7 @@ section{padding:10px 14px}
       </div>
     </div>
     <div class="branche">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Les institutions</span><span class="cpt">5 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>2. Les institutions</span><span class="cpt">5 thématiques · 0 fiche</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="ligne" data-ch="constituante 6e republique ric">
           <span class="nom">La Constituante et la 6e République</span>
@@ -139,7 +139,7 @@ section{padding:10px 14px}
       </div>
     </div>
     <div class="branche">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>L'harmonie entre les humains</span><span class="cpt">12 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>3. L'harmonie entre les humains</span><span class="cpt">12 thématiques · 0 fiche</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="ligne" data-ch="sante service public">
           <span class="nom">La santé</span>
@@ -152,7 +152,7 @@ section{padding:10px 14px}
       </div>
     </div>
     <div class="branche">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>L'harmonie avec la nature</span><span class="cpt">4 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>4. L'harmonie avec la nature</span><span class="cpt">4 thématiques · 0 fiche</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="ligne" data-ch="planification ecologique bifurcation">
           <span class="nom">La planification écologique</span>
@@ -161,7 +161,7 @@ section{padding:10px 14px}
       </div>
     </div>
     <div class="branche">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Ordonner le monde</span><span class="cpt">6 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>5. Ordonner le monde</span><span class="cpt">6 thématiques · 0 fiche</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="ligne" data-ch="imperialisme occidental racisme">
           <span class="nom">L'impérialisme occidental <span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
@@ -180,19 +180,19 @@ section{padding:10px 14px}
   <div class="vuemq" id="vuemq">
     <h2>#Racisme - Question raciale et coloniale</h2>
     <p class="def">Huit thématiques, quatre branches. La distribution dans l'arbre est voulue ; le marqueur rassemble.</p>
-    <div class="grbranche"><h3>Praxis. Théorie et stratégie</h3>
+    <div class="grbranche"><h3>1. Praxis. Théorie et stratégie</h3>
       <div class="ligne"><span class="nom">Le racisme structurel</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
       <div class="ligne"><span class="nom">Postcolonial et décolonial</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
       <div class="ligne"><span class="nom">La question juive</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
     </div>
-    <div class="grbranche"><h3>Les institutions</h3>
+    <div class="grbranche"><h3>2. Les institutions</h3>
       <div class="ligne"><span class="nom">La police et la justice</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
     </div>
-    <div class="grbranche"><h3>L'harmonie entre les humains</h3>
+    <div class="grbranche"><h3>3. L'harmonie entre les humains</h3>
       <div class="ligne"><span class="nom">L'emploi et les discriminations</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
       <div class="ligne"><span class="nom">Kanaky et décolonisation</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
     </div>
-    <div class="grbranche"><h3>Ordonner le monde</h3>
+    <div class="grbranche"><h3>5. Ordonner le monde</h3>
       <div class="ligne"><span class="nom">L'impérialisme occidental</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
       <div class="ligne"><span class="nom">Israël et la Palestine</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
     </div>
