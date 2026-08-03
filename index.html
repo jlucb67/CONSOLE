@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 33 -->
+<!-- VERSION_CONSOLE: 34 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -394,7 +394,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 33;
+  const ICI = 34;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1538,14 +1538,24 @@ function savEpureMd(txt){
      source video et statuts, notes editoriales, sommaires internes, controles. */
   const lignes = String(txt || "").replace(/\r/g, "").split("\n");
   const out = [];
-  let i = 0, sauteSection = false, debut = true;
+  let sauteNiv = 0, debut = true;
   const LIGNE_TECH = /^\s*(?:>\s*)?(?:[-*]\s+)?\*{0,2}(Source vid\u00e9o|Statut|Contr\u00f4le d.int\u00e9grit\u00e9|Dur\u00e9e transcrite|Source de contextualisation|\u00c9v\u00e9nement|Evenement|Intervenants|Vers\u00e9 au corpus|Verse au corpus|Date)\s*\*{0,2}\s*:/i;
-  const TITRE_TECH = /^#{1,4}\s+.*(Note \u00e9ditoriale|Note editoriale|Sommaire)/i;
+  const sansAccents = s => s.toLowerCase().replace(/[\u00e9\u00e8\u00ea\u00eb]/g, "e").replace(/[\u00e0\u00e2]/g, "a")
+    .replace(/[\u00ee\u00ef]/g, "i").replace(/[\u00f4]/g, "o").replace(/[\u00fb\u00f9\u00fc]/g, "u").replace(/[\u00e7]/g, "c");
+  const MOTS_TECH = ["note editoriale", "sommaire", "identification", "etendue de la lecture", "perimetre de lecture",
+    "limites du texte", "ce que cette fiche permet", "manques du fonds", "ce que cette version corrige",
+    "zone 3", "zone 2", "memoire vive", "tracabilite", "historique des versions"];
+  const titreTech = t => { const n = sansAccents(t); return MOTS_TECH.some(m => n.indexOf(m) >= 0); };
   for (const l of lignes){
     const t = l.trim();
-    const estTitre = /^#{1,4}\s+/.test(t);
-    if (sauteSection){ if (estTitre && !TITRE_TECH.test(t)) sauteSection = false; else continue; }
-    if (estTitre && TITRE_TECH.test(t)){ sauteSection = true; continue; }
+    const mT = t.match(/^(#{1,4})\s+/);
+    const estTitre = !!mT, niv = mT ? mT[1].length : 0;
+    if (sauteNiv){
+      if (!estTitre || niv > sauteNiv) continue;         /* toujours dans la section sautee */
+      if (titreTech(t)){ sauteNiv = niv; continue; }      /* nouvelle section technique */
+      sauteNiv = 0;                                       /* section normale : on reprend */
+    }
+    if (estTitre && titreTech(t)){ sauteNiv = niv; continue; }
     if (debut && /^#\s+/.test(t)) continue;        /* le titre : la feuille le porte deja */
     if (debut && /^###\s+/.test(t)) continue;      /* l'en-tete technique du fichier */
     if (LIGNE_TECH.test(t)) continue;
@@ -1599,15 +1609,27 @@ let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_BRANCHE = false;
 const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
 const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md|INDEX\.md)$/i;
 
+function savSegment(m){
+  const r = (m.fichier || "").match(/^\d{4}-\d{2}-\d{2}_([^_]+)_/);
+  return r ? r[1] : "";
+}
+function savProgrammatique(seg){
+  const b = seg.toLowerCase();
+  return b.indexOf("nfp") >= 0 || b.indexOf("programme") >= 0 || /20\d\d$/.test(b);
+}
 function savAuteurDe(m){
   if (m.auteur) return m.auteur;
   if ((m.chemin || "").indexOf("/corpus-melenchon/") >= 0) return "M\u00e9lenchon";
-  const r = (m.fichier || "").match(/^\d{4}-\d{2}-\d{2}_([A-Z][^_]*)_/);
-  return r ? r[1].replace(/-/g, " ") : "";
+  const seg = savSegment(m);
+  if (!seg) return "";
+  if (savProgrammatique(seg)) return "LFI";
+  if (/^m[e\u00e9]lenchon/i.test(seg)) return "M\u00e9lenchon";
+  return /^[A-Z]/.test(seg) ? seg.replace(/-/g, " ") : "";
 }
 function savMateriauDe(m){
   if (m.materiau) return m.materiau;
   if ((m.chemin || "").indexOf("/corpus-melenchon/") >= 0) return "Corpus vid\u00e9o";
+  if (savProgrammatique(savSegment(m))) return "Programme";
   return "";
 }
 const AUT_INCONNU = "Auteur \u00e0 renseigner";
