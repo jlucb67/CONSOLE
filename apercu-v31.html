@@ -104,11 +104,11 @@ section{padding:10px 14px}
           <span class="droite"><button class="lire lire-z3" onclick="ouvrirFicheThem()">Lire</button></span>
         </div>
         <div class="ligne" data-ch="racisme structurel theorie racisme">
-          <span class="nom">Le racisme structurel <span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">Le racisme structurel</span>
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
         <div class="ligne" data-ch="question juive antisemitisme emancipation racisme">
-          <span class="nom">La question juive <span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">La question juive</span>
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
         <div class="ligne" data-ch="strategie revolution citoyenne">
@@ -129,7 +129,7 @@ section{padding:10px 14px}
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
         <div class="ligne" data-ch="police justice repression racisme">
-          <span class="nom">La police et la justice <span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">La police et la justice</span>
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
         <div class="ligne" data-ch="ecoregions territoire">
@@ -146,7 +146,7 @@ section{padding:10px 14px}
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
         <div class="ligne" data-ch="kanaky decolonisation referendum racisme">
-          <span class="nom">Kanaky et décolonisation <span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">Kanaky et décolonisation</span>
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
       </div>
@@ -164,11 +164,11 @@ section{padding:10px 14px}
       <button onclick="this.parentElement.classList.toggle('ouverte')"><span>5. Ordonner le monde</span><span class="cpt">6 thématiques · 0 fiche</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="ligne" data-ch="imperialisme occidental racisme">
-          <span class="nom">L'impérialisme occidental <span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">L'impérialisme occidental</span>
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
         <div class="ligne" data-ch="israel palestine geopolitique racisme">
-          <span class="nom">Israël et la Palestine <span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">Israël et la Palestine</span>
           <span class="droite"><span class="aecrire">fiche à écrire</span></span>
         </div>
       </div>
@@ -213,6 +213,43 @@ section{padding:10px 14px}
   </div>
 
   <div id="lesauteurs">
+    <div class="branche" data-aut="Jaurès">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Jaurès</span><span class="cpt">1 matériau</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Brochure</h4>
+          <div class="ligne" data-ch="armee nouvelle jaures">
+            <span class="nom">L'Armée nouvelle <span class="tg">#strategie</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="branche" data-aut="LFI (collectif)">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>LFI (collectif)</span><span class="cpt">2 matériaux</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Programme</h4>
+          <div class="ligne" data-ch="avenir en commun 2025 programme">
+            <span class="nom">L'Avenir en commun, édition 2025 <span class="tg">#programme</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="branche" data-aut="Marx et Engels">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Marx et Engels</span><span class="cpt">10 matériaux</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Livre</h4>
+          <div class="ligne" data-ch="capital livre marx">
+            <span class="nom">Le Capital, livre I <span class="tg">#travail</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button><button class="lire lire-z2" onclick="ouvrirCourt()">Résumé</button></span>
+          </div>
+          <div class="ligne" data-ch="manifeste parti communiste marx engels">
+            <span class="nom">Le Manifeste du parti communiste <span class="tg">#classe</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="branche" data-aut="Mélenchon">
       <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Mélenchon</span><span class="cpt">3 matériaux</span><span class="fl">▶</span></button>
       <div class="dedans">
@@ -236,49 +273,12 @@ section{padding:10px 14px}
         </div>
       </div>
     </div>
-    <div class="branche" data-aut="Marx et Engels">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Marx et Engels</span><span class="cpt">10 matériaux</span><span class="fl">▶</span></button>
-      <div class="dedans">
-        <div class="groupe-mat"><h4>Livre</h4>
-          <div class="ligne" data-ch="capital livre marx">
-            <span class="nom">Le Capital, livre I <span class="tg">#travail</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button><button class="lire lire-z2" onclick="ouvrirCourt()">Résumé</button></span>
-          </div>
-          <div class="ligne" data-ch="manifeste parti communiste marx engels">
-            <span class="nom">Le Manifeste du parti communiste <span class="tg">#classe</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="branche" data-aut="Trotsky">
       <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Trotsky</span><span class="cpt">4 matériaux</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="groupe-mat"><h4>Livre</h4>
           <div class="ligne" data-ch="leur morale et la notre trotsky">
             <span class="nom">Leur morale et la nôtre <span class="tg">#morale</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="branche" data-aut="Jaurès">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Jaurès</span><span class="cpt">1 matériau</span><span class="fl">▶</span></button>
-      <div class="dedans">
-        <div class="groupe-mat"><h4>Brochure</h4>
-          <div class="ligne" data-ch="armee nouvelle jaures">
-            <span class="nom">L'Armée nouvelle <span class="tg">#strategie</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="branche" data-aut="LFI (collectif)">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>LFI (collectif)</span><span class="cpt">2 matériaux</span><span class="fl">▶</span></button>
-      <div class="dedans">
-        <div class="groupe-mat"><h4>Programme</h4>
-          <div class="ligne" data-ch="avenir en commun 2025 programme">
-            <span class="nom">L'Avenir en commun, édition 2025 <span class="tg">#programme</span></span>
             <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
           </div>
         </div>
