@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 30 -->
+<!-- VERSION_CONSOLE: 31 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -243,6 +243,39 @@ background:var(--carte);border:2px solid var(--ard)}
 .feuille-titres{display:flex;flex-direction:column;min-width:0}
 .feuille-titres b{font-size:14.5px}
 .feuille-titres .mut{font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.sav-vues{display:flex;border:1.5px solid var(--enc);border-radius:8px;overflow:hidden}
+.sav-vues button{font:inherit;font-size:13px;font-weight:600;border:0;background:var(--carte);color:var(--enc);padding:6px 12px;cursor:pointer}
+.sav-vues button.actif{background:var(--enc);color:#fff}
+.sav-vues button.sav-off{opacity:.38;cursor:not-allowed}
+.sav-mention{font-size:11.5px;color:#9a6210;background:#fdf3e4;border:1px solid #f2ddb7;border-radius:8px;padding:4px 9px}
+.sav-br{background:var(--carte);border:1px solid var(--fil);border-radius:10px;margin:0 0 10px;overflow:hidden}
+.sav-br>button{font:inherit;display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:11px 12px;cursor:pointer;font-weight:700;font-size:15px;border:0;background:none;color:var(--enc);text-align:left}
+.sav-cpt{font-weight:400;font-size:11.5px;color:var(--mut);text-align:right;flex:0 0 auto}
+.sav-fl{transition:transform .2s;color:var(--mut)}
+.sav-br.ouverte .sav-fl{transform:rotate(90deg)}
+.sav-dedans{display:none;border-top:1px solid var(--fil);padding:8px 10px}
+.sav-br.ouverte .sav-dedans{display:block}
+.sav-ligne{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px dashed var(--fil)}
+.sav-ligne:last-child{border-bottom:0}
+.sav-nom{font-weight:400;font-size:14px;flex:1 1 auto;min-width:0}
+.sav-droite{display:flex;gap:6px;flex:0 0 auto;margin-left:auto}
+.sav-tg{font-size:10.5px;font-weight:600;color:#6b6259;background:#edeae4;border:1px solid var(--fil);border-radius:9px;padding:1px 7px;white-space:nowrap}
+.sav-lire{font:inherit;font-size:12.5px;font-weight:600;border:0;border-radius:7px;padding:5px 14px;cursor:pointer;color:#fff;white-space:nowrap}
+.sav-long{background:#1c5a96}
+.sav-vert{background:#1e7c45}
+.sav-aecrire{font-size:11.5px;color:var(--mut);font-style:italic;white-space:nowrap}
+.sav-h4{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 2px;padding:0 6px}
+.sav-porte h2{font-size:16px;margin:4px 0 10px}
+.sav-grbr{margin:0 0 12px}
+.sav-grbr h3{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px}
+.sav-hors{margin:14px 0 0;background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:8px 10px}
+.sav-hors h4{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:2px 0 4px}
+.sav-sommaire{background:var(--carte);border:1px solid var(--fil);border-radius:9px;padding:8px 12px;margin:0 0 12px;font-size:13px}
+.sav-sommaire b{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;margin:0 0 4px}
+.sav-sommaire a{display:block;color:var(--enc);text-decoration:none;padding:3px 0}
+.sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
+.feuille-alerte{background:#fdeaea;color:#b03030;font-size:12.5px;font-weight:600;padding:7px 14px;border-bottom:1px solid #f2c5c5;flex:none}
 .feuille-corps{flex:1;overflow:auto;max-height:none;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
 
 .doct-corps h2{font-size:16px;margin:14px 0 6px}.doct-corps h3{font-size:14.5px;margin:12px 0 4px}
@@ -284,9 +317,8 @@ background:var(--carte);border:2px solid var(--ard)}
   <button class="onglet" role="tab" data-vue="tunnel" aria-selected="true"><span class="long">Tunnel d'acquisition des connaissances</span><span class="court">Tunnel</span></button>
   <button class="onglet" role="tab" data-vue="agents" aria-selected="false"><span class="long">Gestion des agents</span><span class="court">Agents</span></button>
   <button class="onglet" role="tab" data-vue="veille" aria-selected="false"><span class="long">Supervision de la veille</span><span class="court">Veille</span></button>
-  <button class="onglet" role="tab" data-vue="savoirs" aria-selected="false"><span class="long">Savoirs des agents</span><span class="court">Savoirs</span></button>
-  <button class="onglet" role="tab" data-vue="doctrine" aria-selected="false"><span class="long">Doctrine politique</span><span class="court">Doctrine</span></button>
-  <button class="onglet" role="tab" data-vue="biblio" aria-selected="false"><span class="long">Bibliothèque des sources</span><span class="court">Sources</span></button>
+  <button class="onglet" role="tab" data-vue="savoirs" aria-selected="false"><span class="long">Contenus des agents</span><span class="court">Contenus</span></button>
+  <button class="onglet" role="tab" data-vue="sav" aria-selected="false"><span class="long">Savoirs</span><span class="court">Savoirs</span></button>
 </div>
 
 <section id="vue-tunnel" hidden>
@@ -326,22 +358,23 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="savoirs"></div>
 </section>
 
-<section id="vue-doctrine" hidden>
-  <div class="bandeau" id="bandeau-doctrine"></div>
-  <p class="legende">La doctrine par thématique : le référentiel <code>THEMATIQUES.md</code> de l'agent MI-Politique - slug immuable, nom choisi par JL, statut d'autorité. Seules les fiches <b>Validées JL</b> font foi ; chaque fiche suit le gabarit : Position, Arguments, Objections et réponses, Racines et divergences, Sources.</p>
-  <div id="doctrine"></div>
-</section>
-
-<section id="vue-biblio" hidden>
-  <div class="bandeau" id="bandeau-biblio"></div>
-  <p class="legende">Toutes les sources de l'agent MI-Politique, par son catalogue <code>META_DOCUMENTS.tsv</code> : recherche, filtres par tag, statut et catégorie, lecture en page de tout document texte - catalogué ou non, Zone 3 et Zone 2 comprises. Les binaires (PDF, docx) se consultent au dépôt.</p>
-  <div id="biblio"></div>
+<section id="vue-sav" hidden>
+  <div class="bandeau" id="bandeau-sav"></div>
+  <div class="outils sav-tete">
+    <select id="sav-agent"></select>
+    <div class="sav-vues"><button id="sav-bthem" class="actif" type="button">Thématiques</button><button id="sav-bmat" type="button">Matériaux</button></div>
+    <input id="sav-q" type="search" placeholder="Rechercher...">
+    <span class="sav-mention" id="sav-mention" hidden>Pas encore de référentiel thématique pour cet agent - vue Matériaux directe.</span>
+  </div>
+  <div class="outils" id="sav-outils2"></div>
+  <div id="sav-corps"></div>
 </section>
 
 <div id="feuille-voile" class="feuille-voile"></div>
 <div id="feuille" class="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
   <div class="feuille-poignee"></div>
   <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
+  <div id="feuille-alerte" class="feuille-alerte" hidden></div>
   <div id="feuille-corps" class="feuille-corps doct-corps"></div>
 </div>
 
@@ -359,7 +392,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 30;
+  const ICI = 31;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -451,7 +484,8 @@ function metaParse(txt){
       doc: (c[0]||"").trim(), tags: (c[2]||"").trim().split(/\s+/).filter(Boolean),
       statut: (c[3]||"").trim(), origine: (c[4]||"").trim(),
       resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase(),
-      savoir: (c[7]||"").trim()
+      savoir: (c[7]||"").trim(),
+      auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim()
     };
   }
   return m;
@@ -529,8 +563,7 @@ const ETAT = {tunnel: {fait: false, quand: null, shas: null},
               agents: {fait: false, quand: null, shas: null},
               veille: {fait: false, quand: null, shas: null},
               savoirs: {fait: false, quand: null, shas: null},
-              doctrine: {fait: false, quand: null, shas: null},
-              biblio: {fait: false, quand: null, shas: null}};
+              sav: {fait: false, quand: null, shas: null}};
 async function shasDepots(){
   const o = {};
   for (const d of DEPOTS){ try { const c = await api("/repos/" + d + "/commits?per_page=1"); o[d] = c[0].sha; } catch(e){ o[d] = null; } }
@@ -775,8 +808,7 @@ async function recharger(nom){
       for (const k in memo){ if ($(k)) $(k).value = memo[k]; } filtrer(); }
     else if (nom === "agents"){ ETAT.agents.fait = false; await collecteAgents(); rendreAgents(); }
     else if (nom === "savoirs"){ ETAT.savoirs.fait = false; await collecteSavoirs(); rendreSavoirs(); }
-    else if (nom === "doctrine"){ ETAT.doctrine.fait = false; await collecteDoctrine(); rendreDoctrine(); }
-    else if (nom === "biblio"){ ETAT.biblio.fait = false; await collecteBiblio(); rendreBiblio(); }
+    else if (nom === "sav"){ ETAT.sav.fait = false; await collecteSav(); rendreSav(); }
     else { ETAT.veille.fait = false; await collecteVeille(); rendreVeille(); }
     await majBandeaux();
     window.scrollTo(0, y);
@@ -1380,10 +1412,6 @@ function filtrerSavoirs(){
 }
 
 /* ---------- v28 : doctrine et bibliotheque (agent MI-Politique) ---------- */
-const AG_DOCT = "MI-Politique";
-const DEP_DOCT = "jlucb67/LFI";
-let THEM = null, THEM_BRUT = null, FICHES_Z3 = [], BIB = [], BIB_IDX = {}, BIB_F = {q:"", tag:"", st:"", cat:"", zone:""};
-
 function mdVersHtml(txt){
   const lignes = String(txt || "").replace(/\r/g, "").split("\n");
   let h = "", enListe = false, enTab = false, enCit = false;
@@ -1428,85 +1456,50 @@ function mdVersHtml(txt){
   return h;
 }
 
-function parseThematiques(txt){
-  if (!txt) return null;
+/* ---------- onglet SAVOIRS : la consultation des savoirs, pour chaque agent ----------
+   Deux vues d'un meme cas d'usage : par THEMATIQUE (l'arbre du referentiel de l'agent,
+   la porte des marqueurs #Majuscule, la fiche de Zone 3 en feuille) et par MATERIAU
+   (les documents du catalogue, classes par auteur puis par type de materiau ; bouton
+   Long = la version longue de Zone 2, bouton Resume = le resume du catalogue).
+   Un agent sans referentiel (pas de THEMATIQUES.md) ouvre directement sur les materiaux. */
+
+function parseReferentiel(txt){
+  /* THEMATIQUES.md, tableau a 8 colonnes :
+     Slug | Nom (JL) | Niveau | Rattachement | Definition | Fiche Zone 3 | Statut | Tags-alias */
+  if (!txt) return [];
   const out = [];
   for (const l of txt.split("\n")){
     const t = l.trim();
     if (!/^\|/.test(t) || /^\|[\s|:-]+\|$/.test(t)) continue;
     const c = t.replace(/^\||\|$/g, "").split("|").map(x => x.trim());
-    if (c.length < 2 || /^slug$/i.test(c[0])) continue;
-    out.push({slug: c[0] || "", nom: c[1] || "", def: c[2] || "", fiche: c[3] || "", statut: c[4] || "", alias: c[5] || ""});
+    if (c.length < 4 || /^slug$/i.test(c[0])) continue;
+    out.push({slug: c[0] || "", nom: c[1] || "", niveau: c[2] || "", ratt: c[3] === "-" ? "" : (c[3] || ""),
+              def: c[4] || "", fiche: (c[5] === "-" ? "" : (c[5] || "")), statut: c[6] || "", alias: c[7] || ""});
   }
   return out;
 }
 
-function doctBadge(st){
-  const s = (st || "").toLowerCase();
-  const cl = s.indexOf("valid") >= 0 ? "ok" : (s.indexOf("revis") >= 0 || s.indexOf("réviser") >= 0) ? "alerte" : "attente";
-  return '<span class="doct-st doct-st-' + cl + '">' + esc(st || "Proposée") + "</span>";
-}
-
-async function collecteDoctrine(){
-  progres("Lecture du référentiel des thématiques...");
-  THEM_BRUT = await texteOuNull(DEP_DOCT, AG_DOCT + "/THEMATIQUES.md");
-  THEM = parseThematiques(THEM_BRUT) || [];
-  progres("Lecture de la mémoire vive...");
-  const arb = (ARBRES[DEP_DOCT] && ARBRES[DEP_DOCT].length) ? ARBRES[DEP_DOCT] : await arbre(DEP_DOCT);
-  FICHES_Z3 = arb.filter(e => e.type === "blob" && e.path.indexOf(AG_DOCT + "/savoir/") === 0
-      && /\.md$/i.test(e.path) && !/\/(VERSION|CATALOGUE)\.md$/i.test(e.path))
-    .map(e => ({nom: e.path.split("/").pop(), chemin: e.path, taille: e.size || 0}));
-  ETAT.doctrine.fait = true; ETAT.doctrine.quand = new Date(); ETAT.doctrine.shas = await shasDepots();
-}
-
-function doctFicheLigne(f){
-  return '<div class="doct-ligne"><button class="doct-btn" data-lire="' + esc(f.chemin) + '" data-titre="' + esc(f.nom)
-    + '">Lire</button> <span>' + esc(f.nom) + '</span> <span class="mut">' + poids(f.taille) + "</span></div>";
-}
-
-function rendreDoctrine(){
-  const z = $("doctrine");
-  let h;
-  if (!THEM || !THEM.length){
-    h = '<div class="cadre"><p class="vide">' + (THEM_BRUT === null
-        ? "Le référentiel <code>THEMATIQUES.md</code> n'existe pas encore dans le dépôt."
-        : "Le référentiel est en place mais encore vide : la liste des thématiques est en cours de challenge - l'agent propose, JL nomme et arrête.") + "</p>"
-      + (FICHES_Z3.length ? '<p class="legende">Fiches de mémoire vive déjà présentes, en attente de rattachement :</p>'
-          + FICHES_Z3.map(doctFicheLigne).join("") : "") + "</div>";
-  } else {
-    const nv = THEM.filter(t => /valid/i.test(t.statut)).length;
-    const nr = THEM.filter(t => /revis|réviser/i.test(t.statut)).length;
-    h = '<div class="synthese">' + mesure(THEM.length, "thématiques au référentiel")
-      + mesure(nv + " / " + THEM.length, "validées JL", nv < THEM.length)
-      + mesure(nr, "à réviser", nr > 0)
-      + mesure(FICHES_Z3.length, "fiches en mémoire vive") + "</div>";
-    const parNom = {}; FICHES_Z3.forEach(f => { parNom[f.nom] = f; });
-    for (const t of THEM){
-      const f = t.fiche && parNom[t.fiche];
-      h += '<div class="doct-carte"><header><h3>' + esc(t.nom || t.slug) + "</h3>"
-        + '<code class="doct-slug">' + esc(t.slug) + "</code>" + doctBadge(t.statut) + "</header>"
-        + (t.def ? '<p class="doct-def">' + esc(t.def) + "</p>" : "")
-        + '<div class="doct-pied">'
-        + (f ? '<button class="doct-btn" data-lire="' + esc(f.chemin) + '" data-titre="' + esc(t.nom || t.slug)
-             + '">Ouvrir la fiche</button><span class="mut">' + esc(t.fiche) + " · " + poids(f.taille) + "</span>"
-             : '<span class="mut">' + (t.fiche ? "fiche annoncée introuvable : " + esc(t.fiche) : "fiche à écrire") + "</span>")
-        + (t.alias ? ' <span class="mut">alias : ' + esc(t.alias) + "</span>" : "")
-        + "</div></div>";
-    }
-    const ratt = {}; THEM.forEach(t => { if (t.fiche) ratt[t.fiche] = 1; });
-    const hors = FICHES_Z3.filter(f => !ratt[f.nom]);
-    if (hors.length) h += '<div class="cadre"><p class="legende">Fiches de mémoire vive hors référentiel :</p>' + hors.map(doctFicheLigne).join("") + "</div>";
+function parseMarqueurs(txt){
+  /* MARQUEURS.md, tableau : Marqueur | Nom (JL) | Ce qu'il relie | Thematiques portees | Statut.
+     Les slugs relies sont les valeurs entre accents graves de la 4e colonne. */
+  if (!txt) return [];
+  const out = [];
+  for (const l of txt.split("\n")){
+    const t = l.trim();
+    if (!/^\|/.test(t) || /^\|[\s|:-]+\|$/.test(t)) continue;
+    const c = t.replace(/^\||\|$/g, "").split("|").map(x => x.trim());
+    if (c.length < 4 || /^marqueur$/i.test(c[0]) || c[0].charAt(0) !== "#") continue;
+    const slugs = [];
+    (c[3].match(/`([^`]+)`/g) || []).forEach(s => slugs.push(s.replace(/`/g, "")));
+    out.push({mq: c[0], nom: c[1] || "", slugs: slugs});
   }
-  z.innerHTML = h;
-  z.onclick = async ev => {
-    const b = ev.target.closest("[data-lire]");
-    if (b){ await lireDansLecteur("doct", b.dataset.lire, b.dataset.titre); return; }
-  };
+  return out;
 }
 
 function feuilleOuvre(titre){
   $("feuille-titre").textContent = titre;
   $("feuille-info").textContent = "";
+  $("feuille-alerte").hidden = true;
   $("feuille").classList.add("ouvert");
   $("feuille-voile").classList.add("ouvert");
   document.body.style.overflow = "hidden";
@@ -1516,18 +1509,49 @@ function feuilleFerme(){
   $("feuille-voile").classList.remove("ouvert");
   document.body.style.overflow = "";
 }
-async function lireDansLecteur(pref, chemin, titre){
+function feuilleAlerte(texte){
+  const a = $("feuille-alerte");
+  if (texte){ a.textContent = texte; a.hidden = false; } else { a.hidden = true; }
+}
+
+const SOMMAIRE_SEUIL = 15000;
+function avecSommaire(html){
+  /* Au-dela d'environ 15 Ko : pose des ancres sur les titres et prefixe un sommaire. */
+  if (!html || html.length < SOMMAIRE_SEUIL) return html;
+  const titres = [];
+  let n = 0;
+  const h = html.replace(/<h([23])>(.*?)<\/h\1>/g, function(_, niv, contenu){
+    n++;
+    titres.push({id: "somm-" + n, niv: niv, txt: contenu.replace(/<[^>]+>/g, "")});
+    return '<h' + niv + ' id="somm-' + n + '">' + contenu + "</h" + niv + ">";
+  });
+  if (titres.length < 2) return html;
+  return '<div class="sav-sommaire"><b>Sommaire</b>'
+    + titres.map(t => '<a href="#' + t.id + '"' + (t.niv === "3" ? ' class="sav-somm2"' : "") + ">" + t.txt + "</a>").join("")
+    + "</div>" + h;
+}
+
+async function lireDansLecteur(depot, agent, chemin, titre, alerte){
   const corps = $("feuille-corps");
   feuilleOuvre(titre || chemin.split("/").pop());
+  feuilleAlerte(alerte || "");
   corps.innerHTML = '<p class="mut">Chargement...</p>'; corps.scrollTop = 0;
   try {
-    const t = await texte(DEP_DOCT, chemin);
-    corps.innerHTML = /\.md$/i.test(chemin) ? mdVersHtml(t) : "<pre>" + esc(t) + "</pre>";
-    $("feuille-info").textContent = chemin.indexOf(AG_DOCT + "/") === 0 ? chemin.slice(AG_DOCT.length + 1) : chemin;
+    const t = await texte(depot, chemin);
+    corps.innerHTML = /\.md$/i.test(chemin) ? avecSommaire(mdVersHtml(t)) : "<pre>" + esc(t) + "</pre>";
+    $("feuille-info").textContent = (agent && chemin.indexOf(agent + "/") === 0) ? chemin.slice(agent.length + 1) : chemin;
   } catch(e){ corps.innerHTML = '<p class="vide">Lecture impossible : ' + esc(e.message) + "</p>"; }
 }
 
-/* ---- bibliotheque v29 : tout le fonds, catalogue ou non ---- */
+function lireTexteBrut(titre, sousTitre, contenu, alerte){
+  feuilleOuvre(titre);
+  feuilleAlerte(alerte || "");
+  $("feuille-info").textContent = sousTitre || "";
+  const corps = $("feuille-corps");
+  corps.innerHTML = "<p>" + esc(contenu) + "</p>";
+  corps.scrollTop = 0;
+}
+
 function bibZone(chemin){
   if (!chemin) return "";
   if (chemin.indexOf("/savoir/") >= 0) return "Zone 3";
@@ -1540,120 +1564,257 @@ function bibZone(chemin){
   if (chemin.indexOf("/outillage/") >= 0) return "outillage";
   return "racine";
 }
-const BIB_ORDRE_ZONES = ["Zone 3", "Zone 2", "Zone 1", "productions", "livrables", "instructions", "journal", "outillage", "racine", ""];
 
-async function collecteBiblio(){
-  progres("Lecture du catalogue et du dépôt...");
-  const t = await texteOuNull(DEP_DOCT, AG_DOCT + "/META_DOCUMENTS.tsv");
-  const meta = t ? metaParse(t) : {};
-  const arb = (ARBRES[DEP_DOCT] && ARBRES[DEP_DOCT].length) ? ARBRES[DEP_DOCT] : await arbre(DEP_DOCT);
-  BIB_IDX = {};
-  const exclus = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md)$/i;
+/* ---- etat de l'onglet ---- */
+let SAV_AGENTS = null;           /* [{nom, dep}] decouverts une fois */
+let SAV_AG = "", SAV_DEP = "";   /* agent courant */
+let SAV_VUE = "them";            /* them | mat */
+let SAV_THEM = [], SAV_MARQ = [], SAV_MAT = [], SAV_Z3 = [], SAV_IDX = {};
+let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_BRANCHE = false;
+const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
+const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md)$/i;
+const AUT_INCONNU = "Auteur \u00e0 renseigner";
+const MAT_INCONNU = "\u00c0 classer";
+
+async function savDecouvreAgents(){
+  const vus = {};
+  const liste = [];
+  for (const dep of DEPOTS){
+    progres("Rep\u00e9rage des agents de " + dep.split("/")[1] + "...");
+    const arb = (ARBRES[dep] && ARBRES[dep].length) ? ARBRES[dep] : (ARBRES[dep] = await arbre(dep));
+    arb.forEach(e => {
+      if (e.type !== "blob") return;
+      const p = e.path.split("/");
+      if (p.length < 3) return;
+      const nom = p[0], zone = p[1];
+      if (nom === "pack-modele" || nom === "socle-commun" || nom === "socle") return;
+      if (zone !== "informations-publiques" && zone !== "connaissances-stockees" && zone !== "savoir") return;
+      const cle = dep + "/" + nom;
+      if (!vus[cle]){ vus[cle] = 1; liste.push({nom: nom, dep: dep}); }
+    });
+  }
+  liste.sort((a, b) => a.nom === "MI-Politique" ? -1 : b.nom === "MI-Politique" ? 1 : a.nom.localeCompare(b.nom, "fr"));
+  return liste;
+}
+
+async function collecteSav(){
+  if (!SAV_AGENTS){
+    SAV_AGENTS = await savDecouvreAgents();
+    if (SAV_AGENTS.length){ SAV_AG = SAV_AGENTS[0].nom; SAV_DEP = SAV_AGENTS[0].dep; }
+  }
+  if (!SAV_AG){ ETAT.sav.fait = true; ETAT.sav.quand = new Date(); ETAT.sav.shas = await shasDepots(); return; }
+  progres("Lecture des savoirs de " + SAV_AG + "...");
+  const refBrut = await texteOuNull(SAV_DEP, SAV_AG + "/THEMATIQUES.md");
+  SAV_THEM = parseReferentiel(refBrut);
+  SAV_MARQ = SAV_THEM.length ? parseMarqueurs(await texteOuNull(SAV_DEP, SAV_AG + "/MARQUEURS.md")) : [];
+  const meta = metaParse(await texteOuNull(SAV_DEP, SAV_AG + "/META_DOCUMENTS.tsv"));
+  const arb = (ARBRES[SAV_DEP] && ARBRES[SAV_DEP].length) ? ARBRES[SAV_DEP] : (ARBRES[SAV_DEP] = await arbre(SAV_DEP));
+  SAV_IDX = {};
   const fichiers = [];
   arb.forEach(e => {
-    if (e.type !== "blob" || e.path.indexOf(AG_DOCT + "/") !== 0) return;
+    if (e.type !== "blob" || e.path.indexOf(SAV_AG + "/") !== 0) return;
     const nom = e.path.split("/").pop();
-    if (BIB_IDX[nom] === undefined) BIB_IDX[nom] = {chemin: e.path, taille: e.size || 0};
-    if (!exclus.test(e.path)) fichiers.push({nom: nom, chemin: e.path, taille: e.size || 0});
+    if (SAV_IDX[nom] === undefined) SAV_IDX[nom] = {chemin: e.path, taille: e.size || 0};
+    fichiers.push({nom: nom, chemin: e.path, taille: e.size || 0});
   });
-  BIB = [];
+  /* les materiaux : le catalogue d'abord, puis le reste lisible des zones 1 et 2 */
+  SAV_MAT = [];
   const pris = {};
   for (const nom in meta){
-    const inf = BIB_IDX[nom] || null;
+    const m = meta[nom];
+    const inf = SAV_IDX[nom] || null;
     if (inf) pris[inf.chemin] = 1;
-    BIB.push(Object.assign({cle: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
-                            hors: false, zone: inf ? bibZone(inf.chemin) : ""}, meta[nom]));
+    (m.savoir || "").split(",").forEach(sv => { sv = sv.trim(); if (sv && SAV_IDX[sv]) pris[SAV_IDX[sv].chemin] = 1; });
+    SAV_MAT.push({doc: m.doc || nom, fichier: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
+                  zone: inf ? bibZone(inf.chemin) : "", tags: m.tags, statut: m.statut, resume: m.resume,
+                  savoir: m.savoir, auteur: m.auteur || "", materiau: m.materiau || "", hors: false});
   }
   for (const f of fichiers){
-    if (pris[f.chemin]) continue;
-    BIB.push({cle: f.chemin, doc: f.nom.replace(/\.(md|txt|tsv)$/i, ""), chemin: f.chemin, taille: f.taille,
-              hors: true, zone: bibZone(f.chemin), tags: [], statut: "", origine: "", resume: "", cat: "", savoir: ""});
+    if (pris[f.chemin] || SAV_EXCLUS.test(f.chemin) || !SAV_LISIBLE.test(f.nom)) continue;
+    const z = bibZone(f.chemin);
+    if (z !== "Zone 1" && z !== "Zone 2") continue;
+    SAV_MAT.push({doc: f.nom.replace(SAV_LISIBLE, ""), fichier: f.nom, chemin: f.chemin, taille: f.taille,
+                  zone: z, tags: [], statut: "", resume: "", savoir: "", auteur: "", materiau: "", hors: true});
   }
-  BIB.sort(function(a, b){
-    const za = BIB_ORDRE_ZONES.indexOf(a.zone), zb = BIB_ORDRE_ZONES.indexOf(b.zone);
-    if (za !== zb) return za - zb;
-    return a.doc.localeCompare(b.doc, "fr");
-  });
-  ETAT.biblio.fait = true; ETAT.biblio.quand = new Date(); ETAT.biblio.shas = await shasDepots();
+  /* la memoire vive : les fiches de savoir/ */
+  SAV_Z3 = fichiers.filter(f => bibZone(f.chemin) === "Zone 3" && SAV_LISIBLE.test(f.nom) && !SAV_EXCLUS.test(f.chemin));
+  ETAT.sav.fait = true; ETAT.sav.quand = new Date(); ETAT.sav.shas = await shasDepots();
 }
 
-function bibFiltre(entrees, f){
-  return entrees.filter(function(m){
-    if (f.zone && m.zone !== f.zone) return false;
-    if (f.tag && m.tags.indexOf(f.tag) < 0) return false;
-    if (f.st && m.statut !== f.st) return false;
-    if (f.cat && m.cat !== f.cat) return false;
-    if (f.q){
-      const q = f.q.toLowerCase();
-      if ((m.doc + " " + m.cle + " " + m.chemin + " " + m.resume + " " + m.tags.join(" ")).toLowerCase().indexOf(q) < 0) return false;
-    }
-    return true;
-  });
+function savCorrespond(texteLigne, q){
+  if (!q) return true;
+  const t = (texteLigne || "").toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(m => t.indexOf(m) >= 0);
 }
 
-function bibSel(id, defaut, vals, cur){
-  return '<select id="' + id + '"><option value="">' + esc(defaut) + "</option>"
-    + vals.map(v => '<option value="' + esc(v) + '"' + (v === cur ? " selected" : "") + ">" + esc(v) + "</option>").join("") + "</select>";
+function savAlerteDe(m){
+  return /non\s*v[e\u00e9]rifi/i.test(m.statut || "")
+    ? "Source non v\u00e9rifi\u00e9e - aucune citation litt\u00e9rale sans retour \u00e0 la source d'origine." : "";
 }
 
-function bibListe(){
-  const z = $("bib-liste");
-  const res = bibFiltre(BIB, BIB_F);
-  const nb = $("bib-nb"); if (nb) nb.textContent = res.length + " / " + BIB.length + " documents";
+function savBtnLire(chemin, titre, alerte, libelle, classe){
+  return '<button class="sav-lire ' + classe + '" data-lire="' + esc(chemin) + '" data-titre="' + esc(titre)
+    + '"' + (alerte ? ' data-alerte="' + esc(alerte) + '"' : "") + ">" + libelle + "</button>";
+}
+
+function savLigneThem(t){
+  const inf = t.fiche && SAV_IDX[t.fiche];
+  return '<div class="sav-ligne" data-ch="' + esc((t.nom + " " + t.def + " " + t.slug + " " + t.alias).toLowerCase()) + '">'
+    + '<span class="sav-nom">' + esc(t.nom || t.slug) + "</span>"
+    + '<span class="sav-droite">' + (inf
+        ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Lire", "sav-vert")
+        : '<span class="sav-aecrire">fiche \u00e0 \u00e9crire</span>') + "</span></div>";
+}
+
+function savRendreThem(){
+  const branches = SAV_THEM.filter(t => t.niveau === "1");
   let h = "";
-  for (const m of res){
-    const rel = m.chemin ? m.chemin.slice(AG_DOCT.length + 1) : m.cle;
-    const lisible = m.chemin && /\.(md|txt|tsv)$/i.test(m.chemin);
-    h += '<div class="bib-doc"><header><b>' + esc(m.doc) + "</b>"
-      + (m.statut ? doctBadge(m.statut) : "")
-      + (m.hors ? '<span class="mut">hors catalogue</span>' : "") + "</header>"
-      + '<div class="mut">' + esc(rel)
-      + (m.chemin ? " · " + esc(m.zone) + " · " + poids(m.taille) : " · <i>absent du dépôt</i>")
-      + (m.cat ? " · " + esc(m.cat) : "") + "</div>"
-      + (m.resume && m.resume !== "non lu" ? '<p class="bib-res">' + esc(m.resume) + "</p>"
-         : (m.hors ? "" : '<p class="bib-res mut">résumé à venir (« non lu »)</p>'))
-      + '<div class="doct-pied">' + m.tags.map(t => '<button class="bib-tagb" data-tag="' + esc(t) + '">' + esc(t) + "</button>").join(" ")
-      + (lisible ? ' <button class="doct-btn" data-lire="' + esc(m.chemin) + '" data-titre="' + esc(m.doc) + '">Lire</button>'
-                 : (m.chemin ? ' <span class="mut">binaire - se consulte au dépôt</span>' : ""))
-      + (m.savoir ? m.savoir.split(",").map(function(sv){
-            sv = sv.trim(); const inf = BIB_IDX[sv];
-            return inf ? ' <button class="doct-btn" data-lire="' + esc(inf.chemin) + '" data-titre="' + esc(sv) + '">Savoir : ' + esc(sv) + "</button>"
-                       : ' <span class="mut">savoir : ' + esc(sv) + "</span>";
-          }).join("") : "")
+  if (SAV_MQ){
+    const mq = SAV_MARQ.find(m => m.mq === SAV_MQ);
+    h += '<div class="sav-porte"><h2>' + esc(SAV_MQ) + (mq && mq.nom ? " - " + esc(mq.nom) : "") + "</h2>";
+    branches.forEach((b, i) => {
+      const dedans = SAV_THEM.filter(t => t.niveau === "2" && t.ratt === b.slug && mq && mq.slugs.indexOf(t.slug) >= 0);
+      if (!dedans.length) return;
+      h += '<div class="sav-grbr"><h3>' + (i + 1) + ". " + esc(b.nom) + "</h3>" + dedans.map(savLigneThem).join("") + "</div>";
+    });
+    h += "</div>";
+    return h;
+  }
+  branches.forEach((b, i) => {
+    const dedans = SAV_THEM.filter(t => t.niveau === "2" && t.ratt === b.slug);
+    const visibles = dedans.filter(t => savCorrespond(t.nom + " " + t.def + " " + t.slug + " " + t.alias, SAV_Q));
+    if (SAV_Q && !visibles.length) return;
+    const nf = dedans.filter(t => t.fiche && SAV_IDX[t.fiche]).length;
+    h += '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>'
+      + (i + 1) + ". " + esc(b.nom) + '</span><span class="sav-cpt">' + dedans.length + " th\u00e9matique" + (dedans.length > 1 ? "s" : "")
+      + " \u00b7 " + nf + " fiche" + (nf > 1 ? "s" : "") + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+      + (SAV_Q ? visibles : dedans).map(savLigneThem).join("") + "</div></div>";
+  });
+  if (!h) h = '<p class="vide">Aucune th\u00e9matique ne correspond \u00e0 la recherche.</p>';
+  /* fiches de memoire vive hors referentiel : montrer le manque, pas le masquer */
+  const citees = {}; SAV_THEM.forEach(t => { if (t.fiche) citees[t.fiche] = 1; });
+  const hors = SAV_Z3.filter(f => !citees[f.nom]);
+  if (hors.length && !SAV_Q){
+    h += '<div class="sav-hors"><h4>M\u00e9moire vive hors r\u00e9f\u00e9rentiel</h4>'
+      + hors.map(f => '<div class="sav-ligne"><span class="sav-nom">' + esc(f.nom) + '</span><span class="sav-droite">'
+          + savBtnLire(f.chemin, f.nom, "", "Lire", "sav-vert") + "</span></div>").join("") + "</div>";
+  }
+  return h;
+}
+
+function savLigneMat(m){
+  const cible = savCibleLongue(m);
+  const alerte = savAlerteDe(m);
+  const resumeOk = m.resume && m.resume.toLowerCase() !== "non lu";
+  return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
+    + '<span class="sav-nom">' + esc(m.doc) + (m.tags.length ? " " + m.tags.map(t => '<span class="sav-tg">' + esc(t) + "</span>").join(" ") : "") + "</span>"
+    + '<span class="sav-droite">'
+    + (cible ? savBtnLire(cible, m.doc, alerte, "Long", "sav-long") : "")
+    + (resumeOk ? '<button class="sav-lire sav-long" data-resume="' + esc(m.fichier) + '"' + (alerte ? ' data-alerte="' + esc(alerte) + '"' : "") + ">R\u00e9sum\u00e9</button>" : "")
+    + "</span></div>";
+}
+
+function savCibleLongue(m){
+  const svs = (m.savoir || "").split(",").map(s => s.trim()).filter(Boolean);
+  for (const sv of svs){ if (SAV_LISIBLE.test(sv) && SAV_IDX[sv]) return SAV_IDX[sv].chemin; }
+  if (m.chemin && SAV_LISIBLE.test(m.chemin)) return m.chemin;
+  return "";
+}
+
+function savRendreMat(){
+  const res = SAV_MAT.filter(m => savCorrespond(m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau + " " + m.fichier, SAV_Q));
+  const catalogues = res.filter(m => !m.hors), horsCat = res.filter(m => m.hors);
+  const parAuteur = {};
+  catalogues.forEach(m => {
+    const a = m.auteur || AUT_INCONNU;
+    (parAuteur[a] = parAuteur[a] || []).push(m);
+  });
+  let auteurs = Object.keys(parAuteur).sort((a, b) => a.localeCompare(b, "fr"));
+  auteurs = auteurs.filter(a => a !== AUT_INCONNU).concat(auteurs.indexOf(AUT_INCONNU) >= 0 ? [AUT_INCONNU] : []);
+  if (SAV_AUT) auteurs = auteurs.filter(a => a === SAV_AUT);
+  let h = "";
+  auteurs.forEach(a => {
+    const docs = parAuteur[a];
+    const parMat = {};
+    docs.forEach(m => { const t = m.materiau || MAT_INCONNU; (parMat[t] = parMat[t] || []).push(m); });
+    let types = Object.keys(parMat).sort((x, y) => x.localeCompare(y, "fr"));
+    types = types.filter(t => t !== MAT_INCONNU).concat(types.indexOf(MAT_INCONNU) >= 0 ? [MAT_INCONNU] : []);
+    h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + esc(a)
+      + '</span><span class="sav-cpt">' + docs.length + " mat\u00e9riau" + (docs.length > 1 ? "x" : "") + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+      + types.map(t => '<h4 class="sav-h4">' + esc(t) + "</h4>" + parMat[t].sort((x, y) => x.doc.localeCompare(y.doc, "fr")).map(savLigneMat).join("")).join("")
+      + "</div></div>";
+  });
+  if (horsCat.length && !SAV_AUT){
+    h += '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>Hors catalogue</span><span class="sav-cpt">'
+      + horsCat.length + " fichier" + (horsCat.length > 1 ? "s" : "") + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+      + horsCat.sort((x, y) => (x.zone + x.doc).localeCompare(y.zone + y.doc, "fr"))
+          .map(m => '<div class="sav-ligne"><span class="sav-nom">' + esc(m.doc) + ' <span class="sav-tg">' + esc(m.zone) + "</span></span>"
+            + '<span class="sav-droite">' + savBtnLire(m.chemin, m.doc, "", "Long", "sav-long") + "</span></div>").join("")
       + "</div></div>";
   }
-  z.innerHTML = h || '<div class="cadre"><p class="vide">Aucun document ne correspond aux filtres.</p></div>';
+  return h || '<p class="vide">Aucun mat\u00e9riau ne correspond.</p>';
 }
 
-function rendreBiblio(){
-  const z = $("biblio");
-  if (!BIB.length){
-    z.innerHTML = '<div class="cadre"><p class="vide">Aucun document trouvé dans le dépôt de l\'agent.</p></div>';
-    return;
+function rendreSav(){
+  const sel = $("sav-agent");
+  if (SAV_AGENTS && sel.options.length !== SAV_AGENTS.length){
+    sel.innerHTML = SAV_AGENTS.map(a => '<option value="' + esc(a.dep + "|" + a.nom) + '"'
+      + (a.nom === SAV_AG && a.dep === SAV_DEP ? " selected" : "") + ">" + esc(a.nom) + "</option>").join("");
   }
-  const tags = []; BIB.forEach(m => m.tags.forEach(t => { if (tags.indexOf(t) < 0) tags.push(t); })); tags.sort();
-  const sts = []; BIB.forEach(m => { if (m.statut && sts.indexOf(m.statut) < 0) sts.push(m.statut); }); sts.sort();
-  const cats = []; BIB.forEach(m => { if (m.cat && cats.indexOf(m.cat) < 0) cats.push(m.cat); }); cats.sort();
-  const zones = BIB_ORDRE_ZONES.filter(zn => zn && BIB.some(m => m.zone === zn));
-  z.innerHTML = '<div class="outils bib-outils">'
-    + '<input id="bib-q" type="search" placeholder="Rechercher (titre, résumé, tag, fichier...)" value="' + esc(BIB_F.q) + '">'
-    + bibSel("bib-zone", "Toutes les zones", zones, BIB_F.zone)
-    + bibSel("bib-tag", "Tous les tags", tags, BIB_F.tag)
-    + bibSel("bib-st", "Tous les statuts", sts, BIB_F.st)
-    + bibSel("bib-cat", "Toutes catégories", cats, BIB_F.cat)
-    + '<span class="mut" id="bib-nb"></span></div>'
-    + '<div id="bib-liste"></div>';
-  $("bib-q").addEventListener("input", ev => { BIB_F.q = ev.target.value; bibListe(); });
-  ["zone", "tag", "st", "cat"].forEach(k => {
-    $("bib-" + k).addEventListener("change", ev => { BIB_F[k] = ev.target.value; bibListe(); });
+  const sansref = !SAV_THEM.length;
+  if (sansref && SAV_VUE === "them") SAV_VUE = "mat";
+  $("sav-bthem").classList.toggle("actif", SAV_VUE === "them");
+  $("sav-bthem").classList.toggle("sav-off", sansref);
+  $("sav-bmat").classList.toggle("actif", SAV_VUE === "mat");
+  $("sav-mention").hidden = !sansref;
+  /* les outils propres a chaque vue */
+  const o = $("sav-outils2");
+  if (SAV_VUE === "them"){
+    o.innerHTML = SAV_MARQ.length
+      ? '<select id="sav-mq"><option value="">#</option>' + SAV_MARQ.map(m => '<option value="' + esc(m.mq) + '"'
+          + (m.mq === SAV_MQ ? " selected" : "") + ">" + esc(m.mq) + " - " + esc(m.nom) + "</option>").join("") + "</select>"
+        + (SAV_MQ ? ' <button class="doct-btn" id="sav-retour">\u2190 Retour \u00e0 l\'arbre</button>' : "")
+      : "";
+  } else {
+    const auteurs = [];
+    SAV_MAT.forEach(m => { if (!m.hors){ const a = m.auteur || AUT_INCONNU; if (auteurs.indexOf(a) < 0) auteurs.push(a); } });
+    auteurs.sort((a, b) => a.localeCompare(b, "fr"));
+    o.innerHTML = auteurs.length > 1
+      ? '<select id="sav-aut"><option value="">Tous les auteurs</option>' + auteurs.map(a => '<option value="' + esc(a) + '"'
+          + (a === SAV_AUT ? " selected" : "") + ">" + esc(a) + "</option>").join("") + "</select>" : "";
+  }
+  $("sav-corps").innerHTML = SAV_VUE === "them" ? savRendreThem() : savRendreMat();
+  if (!SAV_BRANCHE){ savBranche(); SAV_BRANCHE = true; }
+  const mq = $("sav-mq"); if (mq) mq.onchange = ev => { SAV_MQ = ev.target.value; rendreSav(); };
+  const rt = $("sav-retour"); if (rt) rt.onclick = () => { SAV_MQ = ""; rendreSav(); };
+  const au = $("sav-aut"); if (au) au.onchange = ev => { SAV_AUT = ev.target.value; rendreSav(); };
+}
+
+function savBranche(){
+  $("sav-agent").addEventListener("change", async ev => {
+    const p = ev.target.value.split("|");
+    SAV_DEP = p[0]; SAV_AG = p[1];
+    SAV_Q = ""; SAV_MQ = ""; SAV_AUT = ""; SAV_VUE = "them"; $("sav-q").value = "";
+    $("voile").hidden = false;
+    try { await collecteSav(); rendreSav(); }
+    catch(e){ etat("Lecture impossible : " + e.message, 1); }
+    finally { $("voile").hidden = true; }
   });
-  z.addEventListener("click", async ev => {
-    const tb = ev.target.closest(".bib-tagb");
-    if (tb){ BIB_F.tag = tb.dataset.tag; const sl = $("bib-tag"); if (sl) sl.value = tb.dataset.tag; bibListe(); return; }
+  $("sav-bthem").addEventListener("click", () => { if (!SAV_THEM.length) return; SAV_VUE = "them"; rendreSav(); });
+  $("sav-bmat").addEventListener("click", () => { SAV_VUE = "mat"; rendreSav(); });
+  $("sav-q").addEventListener("input", ev => { SAV_Q = ev.target.value.trim(); rendreSav(); $("sav-q").focus(); });
+  $("sav-corps").addEventListener("click", async ev => {
+    const pl = ev.target.closest("[data-plie]");
+    if (pl){ pl.parentElement.classList.toggle("ouverte"); return; }
+    const r = ev.target.closest("[data-resume]");
+    if (r){
+      const m = SAV_MAT.find(x => x.fichier === r.dataset.resume);
+      if (m) lireTexteBrut(m.doc, "R\u00e9sum\u00e9 du catalogue", m.resume, r.dataset.alerte || "");
+      return;
+    }
     const b = ev.target.closest("[data-lire]");
-    if (b){ await lireDansLecteur("bib", b.dataset.lire, b.dataset.titre); return; }
+    if (b){ await lireDansLecteur(SAV_DEP, SAV_AG, b.dataset.lire, b.dataset.titre, b.dataset.alerte || ""); return; }
   });
-  bibListe();
 }
 
 
@@ -1662,15 +1823,14 @@ $("feuille-voile").addEventListener("click", feuilleFerme);
 document.addEventListener("keydown", ev => { if (ev.key === "Escape") feuilleFerme(); });
 async function vue(nom){
   $$("#onglets .onglet").forEach(b => b.setAttribute("aria-selected", b.dataset.vue === nom ? "true" : "false"));
-  ["tunnel", "agents", "veille", "savoirs", "doctrine", "biblio"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
+  ["tunnel", "agents", "veille", "savoirs", "sav"].forEach(v => { $("vue-" + v).hidden = v !== nom; });
   if (!ETAT[nom].fait){
     $("voile").hidden = false;
     try {
       if (nom === "agents"){ await collecteAgents(); rendreAgents(); }
       else if (nom === "veille"){ await collecteVeille(); rendreVeille(); }
       else if (nom === "savoirs"){ await collecteSavoirs(); rendreSavoirs(); }
-      else if (nom === "doctrine"){ await collecteDoctrine(); rendreDoctrine(); }
-      else if (nom === "biblio"){ await collecteBiblio(); rendreBiblio(); }
+      else if (nom === "sav"){ await collecteSav(); rendreSav(); }
     } catch(e){ etat("Chargement impossible : " + e.message, 1); }
     finally { $("voile").hidden = true; }
   }
