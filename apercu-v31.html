@@ -3,19 +3,27 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aperçu avant écriture - Doctrine v31</title>
+<title>Aperçu avant écriture - onglet Savoirs (v31)</title>
 <style>
-:root{--pap:#faf6f0;--carte:#fff;--fil:#e4dcd0;--mut:#8a8177;--enc:#2b2620;--acc:#b03030}
+:root{--pap:#faf6f0;--carte:#fff;--fil:#e4dcd0;--mut:#8a8177;--enc:#2b2620;--acc:#b03030;--z2:#1c5a96;--z3:#1e7c45}
 *{box-sizing:border-box}
 body{margin:0;font:14px/1.45 system-ui,-apple-system,sans-serif;background:var(--pap);color:var(--enc);padding-bottom:40px}
 .avert{background:#fdf3e4;border-bottom:2px solid #f2ddb7;color:#9a6210;padding:8px 14px;font-size:12.5px;font-weight:600}
 h1{font-size:17px;margin:14px 14px 4px}
-.ss{color:var(--mut);font-size:12.5px;margin:0 14px 12px}
-.entrees{position:sticky;top:0;background:var(--pap);padding:10px 14px;border-bottom:1px solid var(--fil);z-index:5;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.entrees select{font:inherit;font-size:13.5px;border:1.5px solid var(--enc);border-radius:8px;padding:6px 10px;background:var(--carte);font-weight:600;max-width:60vw}
-.entrees .ou{color:var(--mut);font-size:12px}
-.btnretour{font:inherit;font-size:12.5px;border:1px solid var(--fil);background:var(--carte);border-radius:8px;padding:5px 10px;cursor:pointer}
+.ss{color:var(--mut);font-size:12.5px;margin:0 14px 10px}
+.entete{position:sticky;top:0;background:var(--pap);padding:9px 14px;border-bottom:1px solid var(--fil);z-index:5;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.entete select{font:inherit;font-size:13px;border:1.5px solid var(--enc);border-radius:8px;padding:6px 9px;background:var(--carte);font-weight:600;max-width:46vw}
+.vues{display:flex;border:1.5px solid var(--enc);border-radius:8px;overflow:hidden}
+.vues button{all:unset;font-size:13px;font-weight:600;padding:6px 12px;cursor:pointer;color:var(--enc)}
+.vues button.actif{background:var(--enc);color:var(--pap)}
+.vues button.off{opacity:.38;cursor:not-allowed}
+.mention{font-size:11.5px;color:#9a6210;background:#fdf3e4;border:1px solid #f2ddb7;border-radius:8px;padding:4px 9px;display:none}
+.entete input[type=search]{font:inherit;font-size:13px;border:1px solid var(--fil);border-radius:8px;padding:6px 10px;background:var(--carte);flex:1 1 130px;min-width:110px}
 section{padding:10px 14px}
+.souligne{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+.souligne select{font:inherit;font-size:12.5px;border:1px solid var(--fil);border-radius:8px;padding:5px 9px;background:var(--carte)}
+.souligne .lg{font-size:11.5px;color:var(--mut)}
+.btnretour{font:inherit;font-size:12.5px;border:1px solid var(--fil);background:var(--carte);border-radius:8px;padding:5px 10px;cursor:pointer;display:none}
 .branche{background:var(--carte);border:1px solid var(--fil);border-radius:10px;margin:0 0 10px;overflow:hidden}
 .branche>button{all:unset;display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;padding:11px 12px;cursor:pointer;font-weight:700;font-size:14.5px}
 .branche .cpt{font-weight:400;font-size:11.5px;color:var(--mut);text-align:right}
@@ -23,173 +31,464 @@ section{padding:10px 14px}
 .branche.ouverte .fl{transform:rotate(90deg)}
 .branche .dedans{display:none;border-top:1px solid var(--fil);padding:8px 10px}
 .branche.ouverte .dedans{display:block}
-.them{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 6px;border-bottom:1px dashed var(--fil)}
-.them:last-child{border-bottom:0}
-.them .nom{font-weight:600;flex:1 1 auto}
+.ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 6px;border-bottom:1px dashed var(--fil)}
+.ligne:last-child{border-bottom:0}
+.ligne .gauche{display:flex;gap:5px;flex-wrap:wrap;flex:0 0 auto}
+.ligne .nom{font-weight:600;flex:1 1 140px;font-size:13.5px}
+.ligne .droite{display:flex;gap:6px;flex:0 0 auto;margin-left:auto}
 .st{font-size:10.5px;font-weight:700;border-radius:9px;padding:2px 7px;white-space:nowrap}
 .st-ok{background:#e7f5ec;color:#1e7c45}.st-att{background:#fdf3e4;color:#9a6210}.st-rev{background:#fdeaea;color:#b03030}
-.mq{font-size:11px;font-weight:700;color:var(--acc);background:#fdeaea;border-radius:9px;padding:2px 7px}
+.fi-e{background:#e7f5ec;color:#1e7c45}.fi-a{background:#fdf3e4;color:#9a6210}.fi-n{background:#fdeaea;color:#b03030}
+.mq{font-size:11px;font-weight:700;color:var(--acc);background:#fdeaea;border-radius:9px;padding:2px 7px;cursor:pointer}
 .tg{font-size:11px;color:var(--mut);background:var(--pap);border:1px solid var(--fil);border-radius:9px;padding:1px 6px}
-.lirebtn{font:inherit;font-size:12px;border:1px solid var(--fil);background:var(--pap);border-radius:7px;padding:4px 10px;cursor:pointer}
+.nat{font-size:10.5px;font-weight:700;border-radius:8px;padding:2px 7px;background:#eee;color:#666;white-space:nowrap}
+.lire{font:inherit;font-size:12px;font-weight:600;border:0;border-radius:7px;padding:5px 11px;cursor:pointer;color:#fff;white-space:nowrap}
+.lire-z2{background:var(--z2)}
+.lire-z3{background:var(--z3)}
 .aecrire{font-size:11.5px;color:var(--mut);font-style:italic}
+.groupe-mat{margin:2px 0 4px}
+.groupe-mat h4{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 2px;padding:0 6px}
+.rien{color:var(--mut);font-size:13px;font-style:italic;padding:14px 6px}
 .vuemq{display:none}
 .vuemq h2{font-size:16px;margin:4px 0 2px}
 .vuemq .def{color:var(--mut);font-size:12.5px;margin:0 0 10px}
-.groupe{margin:0 0 12px}
-.groupe h3{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px}
-.docl{background:var(--carte);border:1px solid var(--fil);border-radius:9px;padding:8px 10px;margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.docl .nat{font-size:10.5px;font-weight:700;border-radius:8px;padding:2px 7px}
-.nat-s{background:#e7f0fa;color:#1c5a96}.nat-v{background:#eee;color:#666}.nat-f{background:#e7f5ec;color:#1e7c45}
-.docl .t{flex:1 1 auto;font-size:13px}
-.docl .p{font-size:11px;color:var(--mut)}
+.grbranche{margin:0 0 12px}
+.grbranche h3{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px}
 .voile{position:fixed;inset:0;background:rgba(25,18,12,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
 .voile.o{opacity:1;pointer-events:auto}
-.feuille{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--pap);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.28);max-height:88vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .25s}
+.feuille{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--pap);border-radius:14px 14px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.28);max-height:88vh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .25s;max-width:780px;margin:0 auto}
 .feuille.o{transform:translateY(0)}
 .poignee{width:38px;height:4px;border-radius:2px;background:var(--fil);margin:7px auto 3px;flex:none}
 .fbar{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:4px 14px 8px;flex:none}
 .fbar b{font-size:14.5px}
 .fbar .ch{font-size:11px;color:var(--mut)}
+.fbar .fermer{all:unset;font-size:20px;cursor:pointer;color:var(--mut);padding:0 4px}
 .statuts{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 9px;border-bottom:1px solid var(--fil);flex:none}
 .fcorps{flex:1;overflow:auto;padding:12px 16px 24px;font-size:14px}
 .fcorps h3{font-size:14.5px;margin:14px 0 5px}
 .sommaire{background:var(--carte);border:1px solid var(--fil);border-radius:9px;padding:8px 12px;margin:0 0 12px;font-size:13px}
 .sommaire b{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;margin:0 0 4px}
 .sommaire a{display:block;color:var(--enc);text-decoration:none;padding:3px 0}
-.exemple2{border-top:2px dashed var(--fil);margin-top:22px;padding-top:12px}
+.croix{background:var(--carte);border:1px solid var(--fil);border-radius:9px;padding:8px 12px;margin:14px 0 0;font-size:13px}
+.croix b{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;margin:0 0 4px}
+.croix a{color:var(--z2);text-decoration:none;display:block;padding:2px 0;cursor:pointer}
+.notefact{color:#9a6210;font-size:12px;font-style:italic}
 </style>
 </head>
 <body>
-<div class="avert">APERÇU AVANT ÉCRITURE - données factices, rien n'est branché. Sert uniquement à convenir de la cinématique.</div>
-<h1>Doctrine politique</h1>
-<p class="ss">Deux entrées permanentes : l'arbre (hiérarchie) et les # (transversal). On passe de l'une à l'autre à tout moment.</p>
+<div class="avert">APERÇU AVANT ÉCRITURE - données factices, rien n'est branché. Sert uniquement à convenir de la cinématique de l'onglet Savoirs.</div>
+<h1>Savoirs</h1>
+<p class="ss">Un seul cas d'usage : consulter les savoirs. Valable pour chaque agent. L'ancien onglet « Savoirs des agents » devient « Contenus ».</p>
 
-<div class="entrees">
-  <select id="selmq" onchange="entrerParDiese(this.value)">
-    <option value="">Entrer par un # ...</option>
-    <optgroup label="Marqueurs de doctrine">
-      <option value="#Racisme">#Racisme - Question raciale et coloniale</option>
-    </optgroup>
-    <optgroup label="Tags documentaires">
-      <option value="#sante">#sante</option>
-      <option value="#constituante">#constituante</option>
-      <option value="#kanaky">#kanaky</option>
-    </optgroup>
+<div class="entete">
+  <select id="selagent" onchange="changerAgent(this.value)">
+    <option value="mi-politique">MI-Politique</option>
+    <option value="ea">EA (sans référentiel)</option>
   </select>
-  <span class="ou" id="oulbl">ou descendez par l'arbre ↓</span>
-  <button class="btnretour" id="retour" style="display:none" onclick="retourArbre()">← Retour à l'arbre</button>
+  <div class="vues">
+    <button id="bthem" class="actif" onclick="basculeVue('them')">Thématiques</button>
+    <button id="bdocs" onclick="basculeVue('docs')">Documents</button>
+  </div>
+  <input type="search" id="chercher" placeholder="Rechercher..." oninput="filtrer(this.value)">
+  <span class="mention" id="mention">Pas encore de référentiel thématique pour cet agent - vue Documents directe.</span>
 </div>
 
-<section id="arbre">
+<!-- ============ VUE THEMATIQUES ============ -->
+<section id="vue-them">
+  <div class="souligne">
+    <select id="selmq" onchange="entrerParMarqueur(this.value)">
+      <option value="">Entrer par un marqueur...</option>
+      <option value="#Racisme">#Racisme - Question raciale et coloniale</option>
+    </select>
+    <span class="lg">La liste ne contient que les marqueurs (#Majuscule). Les tags #minuscule restent des filtres de la vue Documents.</span>
+    <button class="btnretour" id="retourarbre" onclick="retourArbre()">← Retour à l'arbre</button>
+  </div>
+
+  <div id="arbre">
+    <div class="branche ouverte">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Praxis. Théorie et stratégie</span><span class="cpt">8 thématiques · 1 fiche</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="ligne" data-ch="sujet histoire peuple classe">
+          <span class="gauche"><span class="st st-ok">Validée JL</span></span>
+          <span class="nom">Le sujet de l'histoire</span>
+          <span class="droite"><button class="lire lire-z3" onclick="ouvrirFicheThem()">Lire</button></span>
+        </div>
+        <div class="ligne" data-ch="racisme structurel theorie racisme">
+          <span class="gauche"><span class="st st-ok">Validée JL</span><span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">Le racisme structurel</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+        <div class="ligne" data-ch="question juive antisemitisme emancipation racisme">
+          <span class="gauche"><span class="st st-ok">Validée JL</span><span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">La question juive</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+        <div class="ligne" data-ch="strategie revolution citoyenne">
+          <span class="gauche"><span class="st st-ok">Validée JL</span></span>
+          <span class="nom">La stratégie</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+        <div class="ligne" data-ch="organisation mouvement federalisme">
+          <span class="gauche"><span class="st st-att">Proposée</span></span>
+          <span class="nom">L'organisation du mouvement</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="branche">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Les institutions</span><span class="cpt">5 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="ligne" data-ch="constituante 6e republique ric">
+          <span class="gauche"><span class="st st-att">Proposée</span></span>
+          <span class="nom">La Constituante et la 6e République</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+        <div class="ligne" data-ch="police justice repression racisme">
+          <span class="gauche"><span class="st st-ok">Validée JL</span><span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">La police et la justice</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+        <div class="ligne" data-ch="ecoregions territoire">
+          <span class="gauche"><span class="st st-ok">Validée JL</span></span>
+          <span class="nom">Les écorégions</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="branche">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>L'harmonie entre les humains</span><span class="cpt">12 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="ligne" data-ch="sante service public">
+          <span class="gauche"><span class="st st-att">Proposée</span></span>
+          <span class="nom">La santé</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+        <div class="ligne" data-ch="kanaky decolonisation referendum racisme">
+          <span class="gauche"><span class="st st-ok">Validée JL</span><span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">Kanaky et décolonisation</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="branche">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>L'harmonie avec la nature</span><span class="cpt">4 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="ligne" data-ch="planification ecologique bifurcation">
+          <span class="gauche"><span class="st st-att">Proposée</span></span>
+          <span class="nom">La planification écologique</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="branche">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Ordonner le monde</span><span class="cpt">6 thématiques · 0 fiche</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="ligne" data-ch="imperialisme occidental racisme">
+          <span class="gauche"><span class="st st-ok">Validée JL</span><span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">L'impérialisme occidental</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+        <div class="ligne" data-ch="israel palestine geopolitique racisme">
+          <span class="gauche"><span class="st st-ok">Validée JL</span><span class="mq" onclick="entrerParMarqueur('#Racisme')">#Racisme</span></span>
+          <span class="nom">Israël et la Palestine</span>
+          <span class="droite"><span class="aecrire">fiche à écrire</span></span>
+        </div>
+      </div>
+    </div>
+    <p class="rien" id="rien-them" style="display:none">Aucune thématique ne correspond à la recherche.</p>
+  </div>
+
+  <!-- Vue rassemblée par marqueur : une PORTE, pas un filtre -->
+  <div class="vuemq" id="vuemq">
+    <h2>#Racisme - Question raciale et coloniale</h2>
+    <p class="def">Huit thématiques, quatre branches. La distribution dans l'arbre est voulue ; le marqueur rassemble.</p>
+    <div class="grbranche"><h3>Praxis. Théorie et stratégie</h3>
+      <div class="ligne"><span class="gauche"><span class="st st-ok">Validée JL</span></span><span class="nom">Le racisme structurel</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+      <div class="ligne"><span class="gauche"><span class="st st-ok">Validée JL</span></span><span class="nom">Postcolonial et décolonial</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+      <div class="ligne"><span class="gauche"><span class="st st-ok">Validée JL</span></span><span class="nom">La question juive</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+    </div>
+    <div class="grbranche"><h3>Les institutions</h3>
+      <div class="ligne"><span class="gauche"><span class="st st-ok">Validée JL</span></span><span class="nom">La police et la justice</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+    </div>
+    <div class="grbranche"><h3>L'harmonie entre les humains</h3>
+      <div class="ligne"><span class="gauche"><span class="st st-att">Proposée</span></span><span class="nom">L'emploi et les discriminations</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+      <div class="ligne"><span class="gauche"><span class="st st-ok">Validée JL</span></span><span class="nom">Kanaky et décolonisation</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+    </div>
+    <div class="grbranche"><h3>Ordonner le monde</h3>
+      <div class="ligne"><span class="gauche"><span class="st st-ok">Validée JL</span></span><span class="nom">L'impérialisme occidental</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+      <div class="ligne"><span class="gauche"><span class="st st-ok">Validée JL</span></span><span class="nom">Israël et la Palestine</span><span class="droite"><span class="aecrire">fiche à écrire</span></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VUE DOCUMENTS ============ -->
+<section id="vue-docs" style="display:none">
+  <div class="souligne">
+    <select id="selaut" onchange="filtrerAuteur(this.value)">
+      <option value="">Tous les auteurs</option>
+      <option value="Marx et Engels">Marx et Engels</option>
+      <option value="Trotsky">Trotsky</option>
+      <option value="Jaurès">Jaurès</option>
+      <option value="Mélenchon">Mélenchon</option>
+      <option value="LFI (collectif)">LFI (collectif)</option>
+    </select>
+    <span class="lg"><b style="color:var(--z2)">Lire · long</b> = la version longue (Zone 2). <b style="color:var(--z3)">Lire · court</b> = le résumé (Zone 3, mémoire vive). L'original de Zone 1 : non tranché.</span>
+  </div>
+
+  <div id="lesauteurs">
+    <div class="branche ouverte" data-aut="Mélenchon">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Mélenchon</span><span class="cpt">3 documents</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Livre</h4>
+          <div class="ligne" data-ch="faites mieux livre melenchon">
+            <span class="gauche"><span class="nat">Fiche d'ouvrage</span><span class="st fi-e">Établi</span></span>
+            <span class="nom">Faites mieux <span class="tg">#strategie</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire · long</button><button class="lire lire-z3" onclick="ouvrirCourt()">Lire · court</button></span>
+          </div>
+        </div>
+        <div class="groupe-mat"><h4>Brochure</h4>
+          <div class="ligne" data-ch="comment faire brochure melenchon">
+            <span class="gauche"><span class="nat">Fiche d'ouvrage</span><span class="st fi-e">Établi</span></span>
+            <span class="nom">Comment faire ? <span class="tg">#strategie</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire · long</button><span class="aecrire">résumé à écrire</span></span>
+          </div>
+        </div>
+        <div class="groupe-mat"><h4>Discours et débats</h4>
+          <div class="ligne" data-ch="melenchon debat 04 04 verbatim">
+            <span class="gauche"><span class="nat">Verbatim</span><span class="st fi-n">Non vérifié</span></span>
+            <span class="nom">Mélenchon au débat du 04/04 <span class="tg">#strategie</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirVerbatim()">Lire · long</button><span class="aecrire">résumé à écrire</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="branche" data-aut="Marx et Engels">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Marx et Engels</span><span class="cpt">10 documents</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Livre</h4>
+          <div class="ligne" data-ch="capital livre marx">
+            <span class="gauche"><span class="nat">Fiche d'ouvrage</span><span class="st fi-e">Établi</span></span>
+            <span class="nom">Le Capital, livre I <span class="tg">#travail</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire · long</button><button class="lire lire-z3" onclick="ouvrirCourt()">Lire · court</button></span>
+          </div>
+          <div class="ligne" data-ch="manifeste parti communiste marx engels">
+            <span class="gauche"><span class="nat">Fiche d'ouvrage</span><span class="st fi-e">Établi</span></span>
+            <span class="nom">Le Manifeste du parti communiste <span class="tg">#classe</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire · long</button><span class="aecrire">résumé à écrire</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="branche" data-aut="Trotsky">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Trotsky</span><span class="cpt">4 documents</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Livre</h4>
+          <div class="ligne" data-ch="leur morale et la notre trotsky">
+            <span class="gauche"><span class="nat">Fiche d'ouvrage</span><span class="st fi-e">Établi</span></span>
+            <span class="nom">Leur morale et la nôtre <span class="tg">#morale</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire · long</button><span class="aecrire">résumé à écrire</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="branche" data-aut="Jaurès">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Jaurès</span><span class="cpt">1 document</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Brochure</h4>
+          <div class="ligne" data-ch="armee nouvelle jaures">
+            <span class="gauche"><span class="nat">Fiche d'ouvrage</span><span class="st fi-a">Annoncé</span></span>
+            <span class="nom">L'Armée nouvelle (brochure) <span class="tg">#strategie</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire · long</button><span class="aecrire">résumé à écrire</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="branche" data-aut="LFI (collectif)">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>LFI (collectif)</span><span class="cpt">2 documents</span><span class="fl">▶</span></button>
+      <div class="dedans">
+        <div class="groupe-mat"><h4>Programme</h4>
+          <div class="ligne" data-ch="avenir en commun 2025 programme">
+            <span class="gauche"><span class="nat">Texte intégral</span><span class="st fi-e">Établi</span></span>
+            <span class="nom">L'Avenir en commun, édition 2025 <span class="tg">#programme</span></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire · long</button><span class="aecrire">résumé à écrire</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="rien" id="rien-docs" style="display:none">Aucun document ne correspond à la recherche.</p>
+  </div>
+</section>
+
+<!-- ============ EA : AGENT SANS REFERENTIEL, VUE DOCUMENTS DIRECTE ============ -->
+<section id="vue-docs-ea" style="display:none">
+  <div class="souligne">
+    <select><option>Tous les auteurs</option><option>The Open Group</option><option>Notes internes</option></select>
+    <span class="lg"><b style="color:var(--z2)">Lire · long</b> = Zone 2. <b style="color:var(--z3)">Lire · court</b> = Zone 3.</span>
+  </div>
   <div class="branche ouverte">
-    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Praxis. Théorie et stratégie</span><span class="cpt">8 thématiques · 1 fiche<br>4 validées JL</span><span class="fl">▶</span></button>
+    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>The Open Group</span><span class="cpt">2 documents</span><span class="fl">▶</span></button>
     <div class="dedans">
-      <div class="them"><span class="nom">Le sujet de l'histoire</span><span class="st st-ok">Validée JL</span><span class="mq">#Racisme? non</span><button class="lirebtn" onclick="ouvrirFiche()">Ouvrir la fiche</button></div>
-      <div class="them"><span class="nom">La stratégie</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div>
-      <div class="them"><span class="nom">Le racisme structurel</span><span class="st st-ok">Validée JL</span><span class="mq">#Racisme</span><span class="aecrire">fiche à écrire</span></div>
-      <div class="them"><span class="nom">La question juive</span><span class="st st-ok">Validée JL</span><span class="mq">#Racisme</span><span class="aecrire">fiche à écrire</span></div>
-      <div class="them"><span class="nom">L'organisation du mouvement</span><span class="st st-att">Proposée</span><span class="aecrire">fiche à écrire</span></div>
+      <div class="groupe-mat"><h4>Référentiel</h4>
+        <div class="ligne">
+          <span class="gauche"><span class="nat">Synthèse</span><span class="st fi-e">Établi</span></span>
+          <span class="nom">TOGAF 10 - synthèse <span class="tg">#gouvernance</span></span>
+          <span class="droite"><button class="lire lire-z2">Lire · long</button><button class="lire lire-z3">Lire · court</button></span>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="branche">
-    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Les institutions</span><span class="cpt">5 thématiques · 0 fiche<br>2 validées JL</span><span class="fl">▶</span></button>
+  <div class="branche ouverte">
+    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Notes internes</span><span class="cpt">1 document</span><span class="fl">▶</span></button>
     <div class="dedans">
-      <div class="them"><span class="nom">La Constituante et la 6e République</span><span class="st st-att">Proposée</span><span class="tg">#constituante</span><span class="aecrire">fiche à écrire</span></div>
-      <div class="them"><span class="nom">La police et la justice</span><span class="st st-ok">Validée JL</span><span class="mq">#Racisme</span><span class="aecrire">fiche à écrire</span></div>
-      <div class="them"><span class="nom">Les écorégions</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div>
+      <div class="groupe-mat"><h4>Note</h4>
+        <div class="ligne">
+          <span class="gauche"><span class="nat">Note d'analyse</span><span class="st fi-a">Annoncé</span></span>
+          <span class="nom">Gouvernance Arkéa - note de cadrage <span class="tg">#arkea</span></span>
+          <span class="droite"><button class="lire lire-z2">Lire · long</button><span class="aecrire">résumé à écrire</span></span>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="branche">
-    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>L'harmonie entre les humains</span><span class="cpt">12 thématiques · 0 fiche</span><span class="fl">▶</span></button>
-    <div class="dedans">
-      <div class="them"><span class="nom">La santé</span><span class="st st-att">Proposée</span><span class="tg">#sante</span><span class="aecrire">fiche à écrire</span></div>
-      <div class="them"><span class="nom">Kanaky et décolonisation</span><span class="st st-ok">Validée JL</span><span class="mq">#Racisme</span><span class="aecrire">fiche à écrire</span></div>
-    </div>
-  </div>
-  <div class="branche">
-    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>L'harmonie avec la nature</span><span class="cpt">4 thématiques · 0 fiche</span><span class="fl">▶</span></button>
-    <div class="dedans"><div class="them"><span class="nom">La planification écologique</span><span class="st st-att">Proposée</span><span class="aecrire">fiche à écrire</span></div></div>
-  </div>
-  <div class="branche">
-    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Ordonner le monde</span><span class="cpt">6 thématiques · 0 fiche</span><span class="fl">▶</span></button>
-    <div class="dedans">
-      <div class="them"><span class="nom">L'impérialisme occidental</span><span class="st st-ok">Validée JL</span><span class="mq">#Racisme</span><span class="aecrire">fiche à écrire</span></div>
-      <div class="them"><span class="nom">Israël et la Palestine</span><span class="st st-ok">Validée JL</span><span class="mq">#Racisme</span><span class="aecrire">fiche à écrire</span></div>
-    </div>
-  </div>
+  <p class="rien" style="font-style:normal">Le jour où EA reçoit son référentiel (ses 5 branches, ses thématiques), le bouton Thématiques s'active - même mécanique que MI-Politique.</p>
 </section>
 
-<section class="vuemq" id="vuemq">
-  <h2 id="mqtitre">#Racisme - Question raciale et coloniale</h2>
-  <p class="def" id="mqdef">Tout ce qui porte ce # , rassemblé à travers les branches : d'abord les thématiques de doctrine, puis les documents du fonds.</p>
-  <div id="mqcontenu"></div>
-</section>
-
-<div class="voile" id="voile" onclick="fermerFiche()"></div>
-<div class="feuille" id="feuille">
+<!-- ============ FEUILLE DE LECTURE ============ -->
+<div class="voile" id="voile" onclick="fermer()"></div>
+<div class="feuille" id="feuille" role="dialog" aria-modal="true">
   <div class="poignee"></div>
-  <div class="fbar"><div><b>Le sujet de l'histoire</b><div class="ch">savoir/SUJET_DE_L_HISTOIRE.md · fiche doctrinale · 4,2 Ko</div></div><button class="btnretour" onclick="fermerFiche()">Fermer</button></div>
-  <div class="statuts"><span class="st st-ok">Validée JL - fait foi</span><span class="st st-rev">Sources : Non vérifié pour toute citation littérale</span><span class="mq">#Racisme? non</span></div>
-  <div class="fcorps">
-    <div class="sommaire"><b>Sommaire (affiché dès que le fichier dépasse 15 Ko)</b>
-      <a href="#">1. Position</a><a href="#">2. Arguments</a><a href="#">3. Objections et réponses</a><a href="#">4. Racines et divergences</a><a href="#">5. Sources</a>
-    </div>
-    <h3>Position</h3><p>Le sujet de l'histoire est le peuple, constitué par l'urbanisation et les réseaux collectifs, non la seule classe ouvrière organisée à la production. <i>(texte factice abrégé)</i></p>
-    <h3>Arguments</h3><p>… chaque fait daté et sourcé …</p>
-    <h3>Objections et réponses</h3><p>… l'objection la plus forte d'abord …</p>
-  </div>
+  <div class="fbar"><div><b id="ftitre"></b><div class="ch" id="fchemin"></div></div><button class="fermer" onclick="fermer()">✕</button></div>
+  <div class="statuts" id="fstatuts"></div>
+  <div class="fcorps" id="fcorps"></div>
 </div>
-
-<section class="exemple2">
-  <h1 style="margin-left:0">Et dans la Bibliothèque : la nature avant d'ouvrir</h1>
-  <p class="ss" style="margin-left:0">Chaque document annonce ce qu'il est ; le bouton s'adapte. On sait dans quoi on entre.</p>
-  <div class="docl"><span class="nat nat-f">FICHE DOCTRINALE</span><span class="t">Le sujet de l'histoire</span><span class="p">4,2 Ko</span><button class="lirebtn" onclick="ouvrirFiche()">Lire</button></div>
-  <div class="docl"><span class="nat nat-s">SYNTHÈSE</span><span class="t">Discours de Saint-Denis - synthèse doctrinale</span><span class="p">11 Ko</span><button class="lirebtn">Lire la synthèse</button></div>
-  <div class="docl"><span class="nat nat-v">VERBATIM INTÉGRAL</span><span class="t">Discours de Saint-Denis - transcription complète</span><span class="p">62 Ko · Non vérifié</span><button class="lirebtn">Ouvrir le verbatim (long)</button></div>
-</section>
 
 <script>
-function entrerParDiese(v){
-  if(!v) return;
-  document.getElementById("arbre").style.display="none";
-  document.getElementById("vuemq").style.display="block";
-  document.getElementById("retour").style.display="";
-  document.getElementById("oulbl").style.display="none";
-  var c=document.getElementById("mqcontenu");
-  if(v==="#Racisme"){
-    document.getElementById("mqtitre").textContent="#Racisme - Question raciale et coloniale";
-    c.innerHTML=
-     '<div class="groupe"><h3>Praxis. Théorie et stratégie</h3>'
-      +'<div class="them"><span class="nom">Le racisme structurel</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div>'
-      +'<div class="them"><span class="nom">Postcolonial et décolonial</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div>'
-      +'<div class="them"><span class="nom">La question juive</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div></div>'
-     +'<div class="groupe"><h3>Les institutions</h3><div class="them"><span class="nom">La police et la justice</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div></div>'
-     +'<div class="groupe"><h3>L\'harmonie entre les humains</h3>'
-      +'<div class="them"><span class="nom">L\'emploi et les discriminations</span><span class="st st-att">Proposée</span><span class="aecrire">fiche à écrire</span></div>'
-      +'<div class="them"><span class="nom">Kanaky et décolonisation</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div></div>'
-     +'<div class="groupe"><h3>Ordonner le monde</h3>'
-      +'<div class="them"><span class="nom">L\'impérialisme occidental</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div>'
-      +'<div class="them"><span class="nom">Israël et la Palestine</span><span class="st st-ok">Validée JL</span><span class="aecrire">fiche à écrire</span></div></div>'
-     +'<div class="groupe"><h3>Les documents du fonds qui portent ce #</h3>'
-      +'<div class="docl"><span class="nat nat-v">SOURCE</span><span class="t">Marx - Sur la question juive (1843)</span><span class="p">PDF · 0,4 Mo</span></div>'
-      +'<div class="docl"><span class="nat nat-s">PROGRAMME</span><span class="t">Chapitre 1 - Le pouvoir au peuple (police, justice)</span><span class="p">Établi</span><button class="lirebtn">Lire</button></div>'
-      +'<div class="docl"><span class="nat nat-s">PROGRAMME</span><span class="t">Kanaky : le référendum métropolitain préalable</span><span class="p">Établi</span><button class="lirebtn">Lire</button></div></div>';
-  } else {
-    document.getElementById("mqtitre").textContent=v+" - tag documentaire";
-    c.innerHTML='<div class="groupe"><h3>Thématiques qui portent ce tag en alias</h3><div class="them"><span class="nom">'+(v==="#sante"?"La santé":v==="#kanaky"?"Kanaky et décolonisation":"La Constituante et la 6e République")+'</span><span class="aecrire">fiche à écrire</span></div></div>'
-     +'<div class="groupe"><h3>Documents du fonds</h3><div class="docl"><span class="nat nat-s">PROGRAMME</span><span class="t">Chapitre correspondant du programme</span><button class="lirebtn">Lire</button></div><div class="docl"><span class="nat nat-s">SYNTHÈSE</span><span class="t">Passage du corpus vidéo sur ce sujet</span><span class="p">Non vérifié</span><button class="lirebtn">Lire la synthèse</button></div></div>';
+var VUE = 'them';
+var AGENT = 'mi-politique';
+var SANS_REF = {'ea': true};  /* agents sans référentiel thématique : Documents direct */
+function basculeVue(v){
+  if(v==='them' && SANS_REF[AGENT]) return;  /* bouton grisé, sans effet */
+  VUE = v;
+  afficher();
+  filtrer(document.getElementById('chercher').value);
+}
+function changerAgent(a){
+  AGENT = a;
+  if(SANS_REF[a]) VUE = 'docs';  /* ouverture directe sur la seule vue qui existe */
+  afficher();
+}
+function afficher(){
+  var sansref = !!SANS_REF[AGENT];
+  document.getElementById('bthem').classList.toggle('actif', VUE==='them');
+  document.getElementById('bthem').classList.toggle('off', sansref);
+  document.getElementById('bdocs').classList.toggle('actif', VUE==='docs');
+  document.getElementById('mention').style.display = sansref ? '' : 'none';
+  document.getElementById('vue-them').style.display = (!sansref && VUE==='them') ? '' : 'none';
+  document.getElementById('vue-docs').style.display = (!sansref && VUE==='docs') ? '' : 'none';
+  document.getElementById('vue-docs-ea').style.display = sansref ? '' : 'none';
+}
+function correspond(texteLigne, requete){
+  if(!requete) return true;
+  var t = (texteLigne||'').toLowerCase();
+  var mots = requete.toLowerCase().split(/\s+/).filter(Boolean);
+  for(var i=0;i<mots.length;i++){ if(t.indexOf(mots[i])===-1) return false; }
+  return true;
+}
+function filtrer(q){
+  var zone = (VUE==='them') ? document.getElementById('arbre') : document.getElementById('lesauteurs');
+  var lignes = zone.querySelectorAll('.ligne');
+  var visibles = 0;
+  for(var i=0;i<lignes.length;i++){
+    var l = lignes[i];
+    var ok = correspond((l.getAttribute('data-ch')||'') + ' ' + l.textContent, q);
+    l.style.display = ok ? '' : 'none';
+    if(ok) visibles++;
   }
-  window.scrollTo({top:0});
+  var conteneurs = zone.querySelectorAll('.branche');
+  for(var j=0;j<conteneurs.length;j++){
+    var c = conteneurs[j];
+    var restantes = 0, ll = c.querySelectorAll('.ligne');
+    for(var k=0;k<ll.length;k++){ if(ll[k].style.display !== 'none') restantes++; }
+    c.style.display = restantes ? '' : 'none';
+    if(q && restantes) c.classList.add('ouverte');
+  }
+  var rien = document.getElementById(VUE==='them' ? 'rien-them' : 'rien-docs');
+  if(rien) rien.style.display = visibles ? 'none' : '';
+}
+function entrerParMarqueur(mq){
+  if(!mq) return;
+  document.getElementById('selmq').value = mq;
+  document.getElementById('arbre').style.display = 'none';
+  document.getElementById('vuemq').style.display = 'block';
+  document.getElementById('retourarbre').style.display = 'inline-block';
+  if(VUE!=='them') basculeVue('them');
 }
 function retourArbre(){
-  document.getElementById("arbre").style.display="";
-  document.getElementById("vuemq").style.display="none";
-  document.getElementById("retour").style.display="none";
-  document.getElementById("oulbl").style.display="";
-  document.getElementById("selmq").value="";
+  document.getElementById('selmq').value = '';
+  document.getElementById('arbre').style.display = '';
+  document.getElementById('vuemq').style.display = 'none';
+  document.getElementById('retourarbre').style.display = 'none';
 }
-function ouvrirFiche(){document.getElementById("feuille").classList.add("o");document.getElementById("voile").classList.add("o");}
-function fermerFiche(){document.getElementById("feuille").classList.remove("o");document.getElementById("voile").classList.remove("o");}
+function filtrerAuteur(a){
+  var brs = document.querySelectorAll('#lesauteurs .branche');
+  for(var i=0;i<brs.length;i++){
+    var b = brs[i];
+    var ok = !a || b.getAttribute('data-aut')===a;
+    b.style.display = ok ? '' : 'none';
+    if(a && ok) b.classList.add('ouverte');
+  }
+}
+function ouvrirFeuille(titre, chemin, statuts, corps){
+  document.getElementById('ftitre').textContent = titre;
+  document.getElementById('fchemin').textContent = chemin;
+  document.getElementById('fstatuts').innerHTML = statuts;
+  document.getElementById('fcorps').innerHTML = corps;
+  document.getElementById('fcorps').scrollTop = 0;
+  document.getElementById('voile').classList.add('o');
+  document.getElementById('feuille').classList.add('o');
+  document.body.style.overflow = 'hidden';
+}
+function fermer(){
+  document.getElementById('voile').classList.remove('o');
+  document.getElementById('feuille').classList.remove('o');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') fermer(); });
+
+function ouvrirFicheThem(){
+  ouvrirFeuille('Le sujet de l\u2019histoire', 'savoir/SUJET_DE_L_HISTOIRE.md \u00b7 Zone 3 \u00b7 fiche th\u00e9matique \u00b7 7 Ko',
+    '<span class="st st-ok">Autorit\u00e9 : Valid\u00e9e JL</span><span class="st fi-e">Sources : \u00c9tabli</span>',
+    '<p class="notefact">Contenu factice.</p>' +
+    '<h3>Position</h3><p>Le peuple, et non la classe seule, est le sujet du changement historique dans notre \u00e9poque.</p>' +
+    '<h3>Arguments</h3><p>L\u2019urbanisation g\u00e9n\u00e9ralis\u00e9e et les r\u00e9seaux cr\u00e9ent une condition commune qui d\u00e9borde la condition salariale.</p>' +
+    '<h3>Objections et r\u00e9ponses</h3><p>Objection marxiste classique : seule la classe a une position structurelle. R\u00e9ponse : la d\u00e9pendance aux r\u00e9seaux est elle-m\u00eame une position structurelle.</p>' +
+    '<h3>Racines et divergences</h3><p>Marx (la classe), L\u00e9nine (l\u2019avant-garde), M\u00e9lenchon (le peuple urbain). C\u2019est ici que vivent les auteurs, jamais dans l\u2019arbre.</p>' +
+    '<h3>Sources</h3><p>Faites mieux, ch. 2 \u00b7 Comment faire ?, p. 41 \u00b7 L\u2019\u00c8re du peuple.</p>' +
+    '<div class="croix"><b>\u0152uvres reli\u00e9es \u00e0 cette fiche</b><a onclick="fermer();basculeVue(\'docs\')">Faites mieux (M\u00e9lenchon) \u2192</a><a onclick="fermer();basculeVue(\'docs\')">Comment faire ? (M\u00e9lenchon) \u2192</a></div>');
+}
+function ouvrirLong(){
+  ouvrirFeuille('Faites mieux \u00b7 version longue', 'zone2-fiches-longues/FICHE_Faites-mieux.md \u00b7 Zone 2 \u00b7 121 Ko',
+    '<span class="nat">Nature : fiche d\u2019ouvrage</span><span class="st fi-e">Sources : \u00c9tabli</span>',
+    '<p class="notefact">Contenu factice. Au-del\u00e0 d\u2019environ 15 Ko : sommaire et ancres obligatoires.</p>' +
+    '<div class="sommaire"><b>Sommaire</b><a href="#a1">1. La th\u00e8se centrale</a><a href="#a2">2. Chapitre par chapitre</a><a href="#a3">3. Citations rep\u00e9r\u00e9es</a></div>' +
+    '<h3 id="a1">1. La th\u00e8se centrale</h3><p>Texte factice de d\u00e9monstration : la fiche longue se lit par sections, jamais d\u2019une traite.</p>' +
+    '<h3 id="a2">2. Chapitre par chapitre</h3><p>Texte factice.</p>' +
+    '<h3 id="a3">3. Citations rep\u00e9r\u00e9es</h3><p>Texte factice.</p>' +
+    '<div class="croix"><b>Fiches th\u00e9matiques qui s\u2019appuient sur cette \u0153uvre</b><a onclick="ouvrirFicheThem()">Le sujet de l\u2019histoire \u2192</a></div>');
+}
+function ouvrirCourt(){
+  ouvrirFeuille('Faites mieux \u00b7 r\u00e9sum\u00e9', 'savoir/RESUME_Faites-mieux.md \u00b7 Zone 3 \u00b7 r\u00e9sum\u00e9 d\u2019ouvrage \u00b7 6 Ko',
+    '<span class="nat">Nature : r\u00e9sum\u00e9 d\u2019ouvrage</span><span class="st fi-e">Sources : \u00c9tabli</span>',
+    '<p class="notefact">Contenu factice. La Zone 3 porte deux formats courts : les fiches th\u00e9matiques et les petits r\u00e9sum\u00e9s de livres \u2014 c\u2019est ce qui part en m\u00e9moire vive.</p>' +
+    '<p>R\u00e9sum\u00e9 en une page : la th\u00e8se, la structure, ce que l\u2019agent doit en retenir.</p>' +
+    '<div class="croix"><b>Fiches th\u00e9matiques qui s\u2019appuient sur cette \u0153uvre</b><a onclick="ouvrirFicheThem()">Le sujet de l\u2019histoire \u2192</a></div>');
+}
+function ouvrirVerbatim(){
+  ouvrirFeuille('M\u00e9lenchon au d\u00e9bat du 04/04', 'zone2-fiches-longues/FICHE_Debat-du-04-04.md \u00b7 Zone 2 \u00b7 verbatim \u00b7 34 Ko',
+    '<span class="nat">Nature : verbatim</span><span class="st fi-n">Sources : Non v\u00e9rifi\u00e9</span>',
+    '<p class="notefact">Contenu factice. Le statut de fiabilit\u00e9 voyage avec le texte : transcription automatique, aucune citation litt\u00e9rale sans confrontation \u00e0 l\u2019audio.</p>' +
+    '<div class="sommaire"><b>Sommaire</b><a href="#b1">1. Ouverture</a><a href="#b2">2. \u00c9changes</a></div>' +
+    '<h3 id="b1">1. Ouverture</h3><p>Texte factice.</p><h3 id="b2">2. \u00c9changes</h3><p>Texte factice.</p>');
+}
 </script>
 </body>
 </html>
