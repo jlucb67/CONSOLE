@@ -79,10 +79,10 @@ section{padding:10px 14px}
   </select>
   <div class="vues">
     <button id="bthem" class="actif" onclick="basculeVue('them')">Thématiques</button>
-    <button id="bdocs" onclick="basculeVue('docs')">Documents</button>
+    <button id="bdocs" onclick="basculeVue('docs')">Matériaux</button>
   </div>
   <input type="search" id="chercher" placeholder="Rechercher..." oninput="filtrer(this.value)">
-  <span class="mention" id="mention">Pas encore de référentiel thématique pour cet agent - vue Documents directe.</span>
+  <span class="mention" id="mention">Pas encore de référentiel thématique pour cet agent - vue Matériaux directe.</span>
 </div>
 
 <!-- ============ VUE THEMATIQUES ============ -->
@@ -96,7 +96,7 @@ section{padding:10px 14px}
   </div>
 
   <div id="arbre">
-    <div class="branche ouverte">
+    <div class="branche">
       <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Praxis. Théorie et stratégie</span><span class="cpt">8 thématiques · 1 fiche</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="ligne" data-ch="sujet histoire peuple classe">
@@ -199,7 +199,7 @@ section{padding:10px 14px}
   </div>
 </section>
 
-<!-- ============ VUE DOCUMENTS ============ -->
+<!-- ============ VUE MATERIAUX ============ -->
 <section id="vue-docs" style="display:none">
   <div class="souligne">
     <select id="selaut" onchange="filtrerAuteur(this.value)">
@@ -213,104 +213,104 @@ section{padding:10px 14px}
   </div>
 
   <div id="lesauteurs">
-    <div class="branche ouverte" data-aut="Mélenchon">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Mélenchon</span><span class="cpt">3 documents</span><span class="fl">▶</span></button>
+    <div class="branche" data-aut="Mélenchon">
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Mélenchon</span><span class="cpt">3 matériaux</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="groupe-mat"><h4>Livre</h4>
           <div class="ligne" data-ch="faites mieux livre melenchon">
             <span class="nom">Faites mieux <span class="tg">#strategie</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire</button><button class="lire lire-z3" onclick="ouvrirCourt()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button><button class="lire lire-z2" onclick="ouvrirCourt()">Résumé</button></span>
           </div>
         </div>
         <div class="groupe-mat"><h4>Brochure</h4>
           <div class="ligne" data-ch="comment faire brochure melenchon">
             <span class="nom">Comment faire ? <span class="tg">#strategie</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
           </div>
         </div>
         <div class="groupe-mat"><h4>Discours et débats</h4>
           <div class="ligne" data-ch="melenchon debat 04 04 verbatim">
             <span class="nom">Mélenchon au débat du 04/04 <span class="tg">#strategie</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirVerbatim()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirVerbatim()">Long</button></span>
           </div>
         </div>
       </div>
     </div>
     <div class="branche" data-aut="Marx et Engels">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Marx et Engels</span><span class="cpt">10 documents</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Marx et Engels</span><span class="cpt">10 matériaux</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="groupe-mat"><h4>Livre</h4>
           <div class="ligne" data-ch="capital livre marx">
             <span class="nom">Le Capital, livre I <span class="tg">#travail</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire</button><button class="lire lire-z3" onclick="ouvrirCourt()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button><button class="lire lire-z2" onclick="ouvrirCourt()">Résumé</button></span>
           </div>
           <div class="ligne" data-ch="manifeste parti communiste marx engels">
             <span class="nom">Le Manifeste du parti communiste <span class="tg">#classe</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
           </div>
         </div>
       </div>
     </div>
     <div class="branche" data-aut="Trotsky">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Trotsky</span><span class="cpt">4 documents</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Trotsky</span><span class="cpt">4 matériaux</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="groupe-mat"><h4>Livre</h4>
           <div class="ligne" data-ch="leur morale et la notre trotsky">
             <span class="nom">Leur morale et la nôtre <span class="tg">#morale</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
           </div>
         </div>
       </div>
     </div>
     <div class="branche" data-aut="Jaurès">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Jaurès</span><span class="cpt">1 document</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Jaurès</span><span class="cpt">1 matériau</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="groupe-mat"><h4>Brochure</h4>
           <div class="ligne" data-ch="armee nouvelle jaures">
             <span class="nom">L'Armée nouvelle <span class="tg">#strategie</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
           </div>
         </div>
       </div>
     </div>
     <div class="branche" data-aut="LFI (collectif)">
-      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>LFI (collectif)</span><span class="cpt">2 documents</span><span class="fl">▶</span></button>
+      <button onclick="this.parentElement.classList.toggle('ouverte')"><span>LFI (collectif)</span><span class="cpt">2 matériaux</span><span class="fl">▶</span></button>
       <div class="dedans">
         <div class="groupe-mat"><h4>Programme</h4>
           <div class="ligne" data-ch="avenir en commun 2025 programme">
             <span class="nom">L'Avenir en commun, édition 2025 <span class="tg">#programme</span></span>
-            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Lire</button></span>
+            <span class="droite"><button class="lire lire-z2" onclick="ouvrirLong()">Long</button></span>
           </div>
         </div>
       </div>
     </div>
-    <p class="rien" id="rien-docs" style="display:none">Aucun document ne correspond à la recherche.</p>
+    <p class="rien" id="rien-docs" style="display:none">Aucun matériau ne correspond à la recherche.</p>
   </div>
 </section>
 
-<!-- ============ EA : AGENT SANS REFERENTIEL, VUE DOCUMENTS DIRECTE ============ -->
+<!-- ============ EA : AGENT SANS REFERENTIEL, VUE MATERIAUX DIRECTE ============ -->
 <section id="vue-docs-ea" style="display:none">
   <div class="souligne">
     <select><option>Tous les auteurs</option><option>The Open Group</option><option>Notes internes</option></select>
   </div>
-  <div class="branche ouverte">
-    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>The Open Group</span><span class="cpt">2 documents</span><span class="fl">▶</span></button>
+  <div class="branche">
+    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>The Open Group</span><span class="cpt">2 matériaux</span><span class="fl">▶</span></button>
     <div class="dedans">
       <div class="groupe-mat"><h4>Référentiel</h4>
         <div class="ligne">
           <span class="nom">TOGAF 10 - synthèse <span class="tg">#gouvernance</span></span>
-          <span class="droite"><button class="lire lire-z2">Lire</button><button class="lire lire-z3">Lire</button></span>
+          <span class="droite"><button class="lire lire-z2">Long</button><button class="lire lire-z2">Résumé</button></span>
         </div>
       </div>
     </div>
   </div>
-  <div class="branche ouverte">
-    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Notes internes</span><span class="cpt">1 document</span><span class="fl">▶</span></button>
+  <div class="branche">
+    <button onclick="this.parentElement.classList.toggle('ouverte')"><span>Notes internes</span><span class="cpt">1 matériau</span><span class="fl">▶</span></button>
     <div class="dedans">
       <div class="groupe-mat"><h4>Note</h4>
         <div class="ligne">
           <span class="nom">Gouvernance Arkéa - note de cadrage <span class="tg">#arkea</span></span>
-          <span class="droite"><button class="lire lire-z2">Lire</button></span>
+          <span class="droite"><button class="lire lire-z2">Long</button></span>
         </div>
       </div>
     </div>
@@ -430,7 +430,7 @@ function ouvrirFicheThem(){
     '<h3>Objections et r\u00e9ponses</h3><p>Objection marxiste classique : seule la classe a une position structurelle. R\u00e9ponse : la d\u00e9pendance aux r\u00e9seaux est elle-m\u00eame une position structurelle.</p>' +
     '<h3>Racines et divergences</h3><p>Marx (la classe), L\u00e9nine (l\u2019avant-garde), M\u00e9lenchon (le peuple urbain). C\u2019est ici que vivent les auteurs, jamais dans l\u2019arbre.</p>' +
     '<h3>Sources</h3><p>Faites mieux, ch. 2 \u00b7 Comment faire ?, p. 41 \u00b7 L\u2019\u00c8re du peuple.</p>' +
-    '<div class="croix"><b>\u0152uvres reli\u00e9es \u00e0 cette fiche</b><a onclick="fermer();basculeVue(\'docs\')">Faites mieux (M\u00e9lenchon) \u2192</a><a onclick="fermer();basculeVue(\'docs\')">Comment faire ? (M\u00e9lenchon) \u2192</a></div>');
+    '<div class="croix"><b>Mat\u00e9riaux reli\u00e9s \u00e0 cette fiche</b><a onclick="fermer();basculeVue(\'docs\')">Faites mieux (M\u00e9lenchon) \u2192</a><a onclick="fermer();basculeVue(\'docs\')">Comment faire ? (M\u00e9lenchon) \u2192</a></div>');
 }
 function ouvrirLong(){
   ouvrirFeuille('Faites mieux', 'Version longue \u00b7 121 Ko', '',
@@ -439,13 +439,13 @@ function ouvrirLong(){
     '<h3 id="a1">1. La th\u00e8se centrale</h3><p>Texte factice de d\u00e9monstration : la version longue se lit par sections, jamais d\u2019une traite.</p>' +
     '<h3 id="a2">2. Chapitre par chapitre</h3><p>Texte factice.</p>' +
     '<h3 id="a3">3. Citations rep\u00e9r\u00e9es</h3><p>Texte factice.</p>' +
-    '<div class="croix"><b>Fiches th\u00e9matiques qui s\u2019appuient sur cette \u0153uvre</b><a onclick="ouvrirFicheThem()">Le sujet de l\u2019histoire \u2192</a></div>');
+    '<div class="croix"><b>Fiches th\u00e9matiques qui s\u2019appuient sur ce mat\u00e9riau</b><a onclick="ouvrirFicheThem()">Le sujet de l\u2019histoire \u2192</a></div>');
 }
 function ouvrirCourt(){
   ouvrirFeuille('Faites mieux', 'R\u00e9sum\u00e9 \u00b7 6 Ko', '',
     '<p class="notefact">Contenu factice.</p>' +
     '<p>R\u00e9sum\u00e9 en une page : la th\u00e8se, la structure, ce qu\u2019il faut en retenir.</p>' +
-    '<div class="croix"><b>Fiches th\u00e9matiques qui s\u2019appuient sur cette \u0153uvre</b><a onclick="ouvrirFicheThem()">Le sujet de l\u2019histoire \u2192</a></div>');
+    '<div class="croix"><b>Fiches th\u00e9matiques qui s\u2019appuient sur ce mat\u00e9riau</b><a onclick="ouvrirFicheThem()">Le sujet de l\u2019histoire \u2192</a></div>');
 }
 function ouvrirVerbatim(){
   ouvrirFeuille('M\u00e9lenchon au d\u00e9bat du 04/04', 'Verbatim \u00b7 34 Ko',
