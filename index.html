@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 31 -->
+<!-- VERSION_CONSOLE: 32 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -244,7 +244,12 @@ background:var(--carte);border:2px solid var(--ard)}
 .feuille-titres b{font-size:14.5px}
 .feuille-titres .mut{font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-.sav-vues{display:flex;border:1.5px solid var(--enc);border-radius:8px;overflow:hidden}
+.sav-tete{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--carte);border:1px solid var(--fil);border-radius:10px;padding:10px;margin:0 0 10px}
+.sav-tete select,.sav-tete input,.sav-tete2 select{font-family:inherit;font-size:13px;color:var(--enc);border:1px solid var(--fil);border-radius:6px;padding:7px 9px;background:#fbfcfe}
+.sav-tete select{max-width:46vw}
+.sav-tete input{flex:1 1 130px;min-width:110px}
+.sav-tete2{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 10px}
+.sav-vues{display:flex;border:1.5px solid var(--enc);border-radius:8px;overflow:hidden;flex:0 0 auto}
 .sav-vues button{font:inherit;font-size:13px;font-weight:600;border:0;background:var(--carte);color:var(--enc);padding:6px 12px;cursor:pointer}
 .sav-vues button.actif{background:var(--enc);color:#fff}
 .sav-vues button.sav-off{opacity:.38;cursor:not-allowed}
@@ -347,26 +352,24 @@ background:var(--carte);border:2px solid var(--ard)}
 
 <section id="vue-agents" hidden>
   <div class="bandeau" id="bandeau-agents"></div>
-  <p class="legende">L'agent comme installation : sa conformité (protocole mémoire, veille, métadonnées, avatar), son stock de savoirs cumulatifs et sa vitalité. L'inventaire de ses documents n'est pas répété ici : il vit dans le tunnel.</p>
   <div id="agents"></div>
 </section>
 
 <section id="vue-savoirs" hidden>
   <div class="bandeau" id="bandeau-savoirs"></div>
-  <p class="legende">Ce que chaque agent SAIT, et non ce qu'il possede : le contenu de sa Zone 3 (memoire vive), et la part de son stock de Zone 2 deja digeree en savoir. Un document est dit couvert quand sa ligne de <code>META_DOCUMENTS.tsv</code> nomme, en colonne « savoir », un fichier de <code>savoir/</code> qui existe reellement - ou quand un savoir porte le meme nom que lui.</p>
   <div class="outils"><select id="fsav"><option value="">Tous les agents</option></select></div>
   <div id="savoirs"></div>
 </section>
 
 <section id="vue-sav" hidden>
   <div class="bandeau" id="bandeau-sav"></div>
-  <div class="outils sav-tete">
+  <div class="sav-tete">
     <select id="sav-agent"></select>
     <div class="sav-vues"><button id="sav-bthem" class="actif" type="button">Thématiques</button><button id="sav-bmat" type="button">Matériaux</button></div>
     <input id="sav-q" type="search" placeholder="Rechercher...">
-    <span class="sav-mention" id="sav-mention" hidden>Pas encore de référentiel thématique pour cet agent - vue Matériaux directe.</span>
+    <span class="sav-mention" id="sav-mention" hidden>pas encore de référentiel thématique</span>
   </div>
-  <div class="outils" id="sav-outils2"></div>
+  <div class="sav-tete2" id="sav-outils2"></div>
   <div id="sav-corps"></div>
 </section>
 
@@ -380,19 +383,17 @@ background:var(--carte);border:2px solid var(--ard)}
 
 <section id="vue-veille" hidden>
   <div class="bandeau" id="bandeau-veille"></div>
-  <p class="legende">La veille comme processus : son dispositif, ses passages et le rendement de ses prises. Les veilles métier viennent de <code>ADMIN/instructions/VEILLES_ACTIVES.md</code> ; la veille plateforme de l'Admin s'y ajoute. Ce qui n'est pas journalisé est signalé comme tel.</p>
   <div id="veille"></div>
 </section>
 
 </div>
-<p class="pied">Le dépôt est la vérité ; cette console n'est qu'une vue. Dépôt public : il ne contient que le code de cette page - aucun document, aucun résumé, aucune clé.</p>
 </div>
 
 <script>
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 31;
+  const ICI = 32;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1702,15 +1703,26 @@ function savRendreThem(){
   return h;
 }
 
+function savProfondeurs(m){
+  /* convention du corpus : X_01-integral.md / X_02-structure.md / X_03-synthese.md.
+     Quand le fichier catalogue EST la synthese : Long = l'integral, Resume = la synthese. */
+  const r = m.fichier && m.fichier.match(/^(.*)_03-synthese\.md$/i);
+  if (!r) return null;
+  const integ = SAV_IDX[r[1] + "_01-integral.md"], struct = SAV_IDX[r[1] + "_02-structure.md"];
+  return {longue: integ ? integ.chemin : (struct ? struct.chemin : ""), synthese: m.chemin};
+}
+
 function savLigneMat(m){
-  const cible = savCibleLongue(m);
   const alerte = savAlerteDe(m);
+  const prof = savProfondeurs(m);
+  const cible = prof ? prof.longue : savCibleLongue(m);
   const resumeOk = m.resume && m.resume.toLowerCase() !== "non lu";
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
     + '<span class="sav-nom">' + esc(m.doc) + (m.tags.length ? " " + m.tags.map(t => '<span class="sav-tg">' + esc(t) + "</span>").join(" ") : "") + "</span>"
     + '<span class="sav-droite">'
     + (cible ? savBtnLire(cible, m.doc, alerte, "Long", "sav-long") : "")
-    + (resumeOk ? '<button class="sav-lire sav-long" data-resume="' + esc(m.fichier) + '"' + (alerte ? ' data-alerte="' + esc(alerte) + '"' : "") + ">R\u00e9sum\u00e9</button>" : "")
+    + (prof && prof.synthese ? savBtnLire(prof.synthese, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long")
+       : (resumeOk ? '<button class="sav-lire sav-long" data-resume="' + esc(m.fichier) + '"' + (alerte ? ' data-alerte="' + esc(alerte) + '"' : "") + ">R\u00e9sum\u00e9</button>" : ""))
     + "</span></div>";
 }
 
