@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 28 -->
+<!-- VERSION_CONSOLE: 29 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -324,7 +324,7 @@ background:var(--carte);border:2px solid var(--ard)}
 
 <section id="vue-biblio" hidden>
   <div class="bandeau" id="bandeau-biblio"></div>
-  <p class="legende">Toutes les sources de l'agent MI-Politique, par son catalogue <code>META_DOCUMENTS.tsv</code> : recherche, filtres par tag, statut et catégorie, lecture des documents texte dans la page. Les binaires (PDF, docx) se consultent au dépôt.</p>
+  <p class="legende">Toutes les sources de l'agent MI-Politique, par son catalogue <code>META_DOCUMENTS.tsv</code> : recherche, filtres par tag, statut et catégorie, lecture en page de tout document texte - catalogué ou non, Zone 3 et Zone 2 comprises. Les binaires (PDF, docx) se consultent au dépôt.</p>
   <div id="biblio"></div>
 </section>
 
@@ -342,7 +342,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 28;
+  const ICI = 29;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1365,7 +1365,7 @@ function filtrerSavoirs(){
 /* ---------- v28 : doctrine et bibliotheque (agent MI-Politique) ---------- */
 const AG_DOCT = "MI-Politique";
 const DEP_DOCT = "jlucb67/LFI";
-let THEM = null, THEM_BRUT = null, FICHES_Z3 = [], BIB = null, BIB_IDX = {}, BIB_F = {q:"", tag:"", st:"", cat:""};
+let THEM = null, THEM_BRUT = null, FICHES_Z3 = [], BIB = [], BIB_IDX = {}, BIB_F = {q:"", tag:"", st:"", cat:"", zone:""};
 
 function mdVersHtml(txt){
   const lignes = String(txt || "").replace(/\r/g, "").split("\n");
@@ -1501,39 +1501,68 @@ async function lireDansLecteur(pref, chemin, titre){
   } catch(e){ corps.innerHTML = '<p class="vide">Lecture impossible : ' + esc(e.message) + "</p>"; }
 }
 
-async function collecteBiblio(){
-  progres("Lecture du catalogue des documents...");
-  const t = await texteOuNull(DEP_DOCT, AG_DOCT + "/META_DOCUMENTS.tsv");
-  BIB = t ? metaParse(t) : {};
-  const arb = (ARBRES[DEP_DOCT] && ARBRES[DEP_DOCT].length) ? ARBRES[DEP_DOCT] : await arbre(DEP_DOCT);
-  BIB_IDX = {};
-  arb.forEach(e => {
-    if (e.type === "blob" && e.path.indexOf(AG_DOCT + "/") === 0)
-      BIB_IDX[e.path.split("/").pop()] = {chemin: e.path, taille: e.size || 0};
-  });
-  ETAT.biblio.fait = true; ETAT.biblio.quand = new Date(); ETAT.biblio.shas = await shasDepots();
-}
-
-function bibFiltre(entrees, f){
-  return entrees.filter(function(e){
-    const fic = e[0], m = e[1];
-    if (f.tag && m.tags.indexOf(f.tag) < 0) return false;
-    if (f.st && m.statut !== f.st) return false;
-    if (f.cat && m.cat !== f.cat) return false;
-    if (f.q){
-      const q = f.q.toLowerCase();
-      if ((m.doc + " " + fic + " " + m.resume + " " + m.tags.join(" ")).toLowerCase().indexOf(q) < 0) return false;
-    }
-    return true;
-  });
-}
-
+/* ---- bibliotheque v29 : tout le fonds, catalogue ou non ---- */
 function bibZone(chemin){
   if (!chemin) return "";
   if (chemin.indexOf("/savoir/") >= 0) return "Zone 3";
   if (chemin.indexOf("/connaissances-stockees/") >= 0) return "Zone 2";
   if (chemin.indexOf("/informations-publiques/") >= 0) return "Zone 1";
+  if (chemin.indexOf("/instructions/") >= 0) return "instructions";
+  if (chemin.indexOf("/journal/") >= 0) return "journal";
+  if (chemin.indexOf("/productions/") >= 0) return "productions";
+  if (chemin.indexOf("/livrables/") >= 0) return "livrables";
+  if (chemin.indexOf("/outillage/") >= 0) return "outillage";
   return "racine";
+}
+const BIB_ORDRE_ZONES = ["Zone 3", "Zone 2", "Zone 1", "productions", "livrables", "instructions", "journal", "outillage", "racine", ""];
+
+async function collecteBiblio(){
+  progres("Lecture du catalogue et du dépôt...");
+  const t = await texteOuNull(DEP_DOCT, AG_DOCT + "/META_DOCUMENTS.tsv");
+  const meta = t ? metaParse(t) : {};
+  const arb = (ARBRES[DEP_DOCT] && ARBRES[DEP_DOCT].length) ? ARBRES[DEP_DOCT] : await arbre(DEP_DOCT);
+  BIB_IDX = {};
+  const exclus = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md)$/i;
+  const fichiers = [];
+  arb.forEach(e => {
+    if (e.type !== "blob" || e.path.indexOf(AG_DOCT + "/") !== 0) return;
+    const nom = e.path.split("/").pop();
+    if (BIB_IDX[nom] === undefined) BIB_IDX[nom] = {chemin: e.path, taille: e.size || 0};
+    if (!exclus.test(e.path)) fichiers.push({nom: nom, chemin: e.path, taille: e.size || 0});
+  });
+  BIB = [];
+  const pris = {};
+  for (const nom in meta){
+    const inf = BIB_IDX[nom] || null;
+    if (inf) pris[inf.chemin] = 1;
+    BIB.push(Object.assign({cle: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
+                            hors: false, zone: inf ? bibZone(inf.chemin) : ""}, meta[nom]));
+  }
+  for (const f of fichiers){
+    if (pris[f.chemin]) continue;
+    BIB.push({cle: f.chemin, doc: f.nom.replace(/\.(md|txt|tsv)$/i, ""), chemin: f.chemin, taille: f.taille,
+              hors: true, zone: bibZone(f.chemin), tags: [], statut: "", origine: "", resume: "", cat: "", savoir: ""});
+  }
+  BIB.sort(function(a, b){
+    const za = BIB_ORDRE_ZONES.indexOf(a.zone), zb = BIB_ORDRE_ZONES.indexOf(b.zone);
+    if (za !== zb) return za - zb;
+    return a.doc.localeCompare(b.doc, "fr");
+  });
+  ETAT.biblio.fait = true; ETAT.biblio.quand = new Date(); ETAT.biblio.shas = await shasDepots();
+}
+
+function bibFiltre(entrees, f){
+  return entrees.filter(function(m){
+    if (f.zone && m.zone !== f.zone) return false;
+    if (f.tag && m.tags.indexOf(f.tag) < 0) return false;
+    if (f.st && m.statut !== f.st) return false;
+    if (f.cat && m.cat !== f.cat) return false;
+    if (f.q){
+      const q = f.q.toLowerCase();
+      if ((m.doc + " " + m.cle + " " + m.chemin + " " + m.resume + " " + m.tags.join(" ")).toLowerCase().indexOf(q) < 0) return false;
+    }
+    return true;
+  });
 }
 
 function bibSel(id, defaut, vals, cur){
@@ -1543,22 +1572,28 @@ function bibSel(id, defaut, vals, cur){
 
 function bibListe(){
   const z = $("bib-liste");
-  const ent = Object.keys(BIB).map(k => [k, BIB[k]]);
-  const res = bibFiltre(ent, BIB_F);
-  const nb = $("bib-nb"); if (nb) nb.textContent = res.length + " / " + ent.length + " documents";
+  const res = bibFiltre(BIB, BIB_F);
+  const nb = $("bib-nb"); if (nb) nb.textContent = res.length + " / " + BIB.length + " documents";
   let h = "";
-  for (const e of res){
-    const fic = e[0], m = e[1];
-    const inf = BIB_IDX[fic], lisible = inf && /\.(md|txt|tsv)$/i.test(fic);
-    h += '<div class="bib-doc"><header><b>' + esc(m.doc) + "</b>" + (m.statut ? doctBadge(m.statut) : "") + "</header>"
-      + '<div class="mut">' + esc(fic)
-      + (inf ? " · " + bibZone(inf.chemin) + " · " + poids(inf.taille) : " · <i>absent du dépôt</i>")
+  for (const m of res){
+    const rel = m.chemin ? m.chemin.slice(AG_DOCT.length + 1) : m.cle;
+    const lisible = m.chemin && /\.(md|txt|tsv)$/i.test(m.chemin);
+    h += '<div class="bib-doc"><header><b>' + esc(m.doc) + "</b>"
+      + (m.statut ? doctBadge(m.statut) : "")
+      + (m.hors ? '<span class="mut">hors catalogue</span>' : "") + "</header>"
+      + '<div class="mut">' + esc(rel)
+      + (m.chemin ? " · " + esc(m.zone) + " · " + poids(m.taille) : " · <i>absent du dépôt</i>")
       + (m.cat ? " · " + esc(m.cat) : "") + "</div>"
       + (m.resume && m.resume !== "non lu" ? '<p class="bib-res">' + esc(m.resume) + "</p>"
-                                           : '<p class="bib-res mut">résumé à venir (« non lu »)</p>')
+         : (m.hors ? "" : '<p class="bib-res mut">résumé à venir (« non lu »)</p>'))
       + '<div class="doct-pied">' + m.tags.map(t => '<button class="bib-tagb" data-tag="' + esc(t) + '">' + esc(t) + "</button>").join(" ")
-      + (lisible ? ' <button class="doct-btn" data-lire="' + esc(inf.chemin) + '" data-titre="' + esc(m.doc) + '">Lire</button>'
-                 : (inf ? ' <span class="mut">binaire - se consulte au dépôt</span>' : ""))
+      + (lisible ? ' <button class="doct-btn" data-lire="' + esc(m.chemin) + '" data-titre="' + esc(m.doc) + '">Lire</button>'
+                 : (m.chemin ? ' <span class="mut">binaire - se consulte au dépôt</span>' : ""))
+      + (m.savoir ? m.savoir.split(",").map(function(sv){
+            sv = sv.trim(); const inf = BIB_IDX[sv];
+            return inf ? ' <button class="doct-btn" data-lire="' + esc(inf.chemin) + '" data-titre="' + esc(sv) + '">Savoir : ' + esc(sv) + "</button>"
+                       : ' <span class="mut">savoir : ' + esc(sv) + "</span>";
+          }).join("") : "")
       + "</div></div>";
   }
   z.innerHTML = h || '<div class="cadre"><p class="vide">Aucun document ne correspond aux filtres.</p></div>';
@@ -1566,17 +1601,17 @@ function bibListe(){
 
 function rendreBiblio(){
   const z = $("biblio");
-  const ent = Object.keys(BIB || {});
-  if (!ent.length){
-    z.innerHTML = '<div class="cadre"><p class="vide">Catalogue vide ou introuvable (<code>META_DOCUMENTS.tsv</code>).</p></div>';
+  if (!BIB.length){
+    z.innerHTML = '<div class="cadre"><p class="vide">Aucun document trouvé dans le dépôt de l\'agent.</p></div>';
     return;
   }
-  const tous = ent.map(k => BIB[k]);
-  const tags = []; tous.forEach(m => m.tags.forEach(t => { if (tags.indexOf(t) < 0) tags.push(t); })); tags.sort();
-  const sts = []; tous.forEach(m => { if (m.statut && sts.indexOf(m.statut) < 0) sts.push(m.statut); }); sts.sort();
-  const cats = []; tous.forEach(m => { if (m.cat && cats.indexOf(m.cat) < 0) cats.push(m.cat); }); cats.sort();
+  const tags = []; BIB.forEach(m => m.tags.forEach(t => { if (tags.indexOf(t) < 0) tags.push(t); })); tags.sort();
+  const sts = []; BIB.forEach(m => { if (m.statut && sts.indexOf(m.statut) < 0) sts.push(m.statut); }); sts.sort();
+  const cats = []; BIB.forEach(m => { if (m.cat && cats.indexOf(m.cat) < 0) cats.push(m.cat); }); cats.sort();
+  const zones = BIB_ORDRE_ZONES.filter(zn => zn && BIB.some(m => m.zone === zn));
   z.innerHTML = '<div class="outils bib-outils">'
     + '<input id="bib-q" type="search" placeholder="Rechercher (titre, résumé, tag, fichier...)" value="' + esc(BIB_F.q) + '">'
+    + bibSel("bib-zone", "Toutes les zones", zones, BIB_F.zone)
     + bibSel("bib-tag", "Tous les tags", tags, BIB_F.tag)
     + bibSel("bib-st", "Tous les statuts", sts, BIB_F.st)
     + bibSel("bib-cat", "Toutes catégories", cats, BIB_F.cat)
@@ -1585,12 +1620,12 @@ function rendreBiblio(){
     + '<div id="bib-lecteur" class="doct-lecteur" hidden><div class="doct-lect-barre"><b id="bib-lect-titre"></b>'
     + '<button id="bib-fermer" class="doct-btn">Fermer</button></div><div id="bib-lect-corps" class="doct-corps"></div></div>';
   $("bib-q").addEventListener("input", ev => { BIB_F.q = ev.target.value; bibListe(); });
-  ["tag", "st", "cat"].forEach(k => {
+  ["zone", "tag", "st", "cat"].forEach(k => {
     $("bib-" + k).addEventListener("change", ev => { BIB_F[k] = ev.target.value; bibListe(); });
   });
   z.addEventListener("click", async ev => {
     const tb = ev.target.closest(".bib-tagb");
-    if (tb){ BIB_F.tag = tb.dataset.tag; const s = $("bib-tag"); if (s) s.value = tb.dataset.tag; bibListe(); return; }
+    if (tb){ BIB_F.tag = tb.dataset.tag; const sl = $("bib-tag"); if (sl) sl.value = tb.dataset.tag; bibListe(); return; }
     const b = ev.target.closest("[data-lire]");
     if (b){ await lireDansLecteur("bib", b.dataset.lire, b.dataset.titre); return; }
     if (ev.target.id === "bib-fermer") $("bib-lecteur").hidden = true;
