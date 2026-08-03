@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 37 -->
+<!-- VERSION_CONSOLE: 38 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,6 +281,8 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-sommaire a{display:block;color:var(--enc);text-decoration:none;padding:3px 0}
 .sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
 .sav-chemin{margin-top:28px;padding-top:8px;border-top:1px solid var(--fil);font-size:10.5px;color:var(--mut);word-break:break-all}
+.sav-g{flex:1;min-width:0}
+.sav-tgs{margin-top:3px;line-height:1.9}
 .sav-acap{margin:26px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 .sav-acap-l .sav-nom{color:var(--mut)}
 @media (max-width:640px){.sav-tete{row-gap:6px}.sav-tete select{max-width:44vw;padding:6px 7px}.sav-vues button{padding:6px 9px;font-size:12px}}
@@ -397,7 +399,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 37;
+  const ICI = 38;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1724,8 +1726,7 @@ function savCorrespond(texteLigne, q){
 }
 
 function savAlerteDe(m){
-  return /non\s*v[e\u00e9]rifi/i.test(m.statut || "")
-    ? "Source non v\u00e9rifi\u00e9e - aucune citation litt\u00e9rale sans retour \u00e0 la source d'origine." : "";
+  return "";  /* verbatims assumes par JL (03/08/2026) : aucun bandeau */
 }
 
 function savBtnLire(chemin, titre, alerte, libelle, classe){
@@ -1738,8 +1739,11 @@ function savFicheDe(t){
 }
 function savLigneThem(t){
   const inf = savFicheDe(t);
+  const al = (t.alias || "").split(/\s+/).filter(Boolean);
   return '<div class="sav-ligne" data-ch="' + esc((t.nom + " " + t.def + " " + t.slug + " " + t.alias).toLowerCase()) + '">'
-    + '<span class="sav-nom">' + esc(t.nom || t.slug) + "</span>"
+    + '<div class="sav-g"><span class="sav-nom">' + esc(t.nom || t.slug) + "</span>"
+    + (al.length ? '<div class="sav-tgs">' + al.map(a => '<span class="sav-tg">' + esc(a) + "</span>").join(" ") + "</div>" : "")
+    + "</div>"
     + '<span class="sav-droite">' + (inf
         ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Lire", "sav-vert")
         : '<span class="sav-aecrire">fiche \u00e0 \u00e9crire</span>') + "</span></div>";
@@ -1829,7 +1833,9 @@ function savLigneMat(m){
     }
   }
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
-    + '<span class="sav-nom">' + esc(m.doc) + (m.tags.length ? " " + m.tags.map(t => '<span class="sav-tg">' + esc(t) + "</span>").join(" ") : "") + "</span>"
+    + '<div class="sav-g"><span class="sav-nom">' + esc(m.doc) + "</span>"
+    + (m.tags.length ? '<div class="sav-tgs">' + m.tags.map(t => '<span class="sav-tg">' + esc(t) + "</span>").join(" ") + "</div>" : "")
+    + "</div>"
     + '<span class="sav-droite">' + boutons + "</span></div>";
 }
 
