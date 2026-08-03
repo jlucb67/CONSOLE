@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 36 -->
+<!-- VERSION_CONSOLE: 37 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,6 +281,8 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-sommaire a{display:block;color:var(--enc);text-decoration:none;padding:3px 0}
 .sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
 .sav-chemin{margin-top:28px;padding-top:8px;border-top:1px solid var(--fil);font-size:10.5px;color:var(--mut);word-break:break-all}
+.sav-acap{margin:26px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.sav-acap-l .sav-nom{color:var(--mut)}
 @media (max-width:640px){.sav-tete{row-gap:6px}.sav-tete select{max-width:44vw;padding:6px 7px}.sav-vues button{padding:6px 9px;font-size:12px}}
 .feuille-alerte{background:#fdeaea;color:#b03030;font-size:12.5px;font-weight:600;padding:7px 14px;border-bottom:1px solid #f2c5c5;flex:none}
 .feuille-corps{flex:1;overflow:auto;max-height:none;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
@@ -395,7 +397,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 36;
+  const ICI = 37;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1788,6 +1790,16 @@ function savProfondeurs(m){
   return {longue: struct ? struct.chemin : (integ ? integ.chemin : ""), synthese: m.chemin};
 }
 
+function savParseAcapter(txt){
+  const res = [];
+  for (const l of txt.split("\n")){
+    const m = l.match(/^-\s+([A-Z]{3,}[A-Za-z]*)[^|]*\|\s*([^|]+?)\s*(?:\|(.*))?$/);
+    if (!m) continue;
+    if (/^ARRIVE/i.test(m[1])) continue;
+    res.push({statut: m[1].toLowerCase(), titre: m[2].trim()});
+  }
+  return res;
+}
 function savLigneMat(m){
   const alerte = savAlerteDe(m);
   const prof = savProfondeurs(m);
