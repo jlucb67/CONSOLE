@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 38 -->
+<!-- VERSION_CONSOLE: 39 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -399,7 +399,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 38;
+  const ICI = 39;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1769,8 +1769,7 @@ function savRendreThem(){
     if (SAV_Q && !visibles.length) return;
     const nf = dedans.filter(t => savFicheDe(t)).length;
     h += '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>'
-      + (i + 1) + ". " + esc(b.nom) + '</span><span class="sav-cpt">' + dedans.length + " th\u00e9matique" + (dedans.length > 1 ? "s" : "")
-      + " \u00b7 " + nf + " fiche" + (nf > 1 ? "s" : "") + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+      + (i + 1) + ". " + esc(b.nom) + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
       + (SAV_Q ? visibles : dedans).map(savLigneThem).join("") + "</div></div>";
   });
   if (!h) h = '<p class="vide">Aucune th\u00e9matique ne correspond \u00e0 la recherche.</p>';
@@ -1865,7 +1864,7 @@ function savRendreMat(){
     let types = Object.keys(parMat).sort((x, y) => x.localeCompare(y, "fr"));
     types = types.filter(t => t !== MAT_INCONNU).concat(types.indexOf(MAT_INCONNU) >= 0 ? [MAT_INCONNU] : []);
     h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + esc(a)
-      + '</span><span class="sav-cpt">' + docs.length + " mat\u00e9riau" + (docs.length > 1 ? "x" : "") + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+      + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
       + types.map(t => '<h4 class="sav-h4">' + esc(t) + "</h4>" + parMat[t].sort((x, y) => x.doc.localeCompare(y.doc, "fr")).map(savLigneMat).join("")).join("")
       + "</div></div>";
   });
