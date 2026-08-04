@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 41 -->
+<!-- VERSION_CONSOLE: 42 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -405,7 +405,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 41;
+  const ICI = 42;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1854,8 +1854,12 @@ function savCiblesTexte(){
   SAV_MAT.forEach(m => {
     const prof = savProfondeurs(m);
     if (prof){ met(prof.longue, m.doc); met(prof.synthese, m.doc); return; }
-    const svs = (m.savoir || "").split(",").map(s => s.trim()).filter(s => SAV_LISIBLE.test(s) && SAV_IDX[s]);
-    if (svs.length){ svs.forEach(s => met(SAV_IDX[s].chemin, m.doc)); return; }
+    const p = savPaire(m);
+    if (p.long || p.court){
+      if (p.long) met(SAV_IDX[p.long].chemin, m.doc);
+      if (p.court) met(SAV_IDX[p.court].chemin, m.doc);
+      return;
+    }
     if (m.chemin && SAV_LISIBLE.test(m.chemin)) met(m.chemin, m.doc);
   });
   SAV_THEM.forEach(t => { const inf = savFicheDe(t); if (inf) met(inf.chemin, t.nom || t.slug); });
@@ -1910,6 +1914,29 @@ function savParseAcapter(txt){
   }
   return res;
 }
+function savPaire(m){
+  /* Convention de l'agent (03/08 au soir) : FICHE_LONGUE_X.md = longue, FICHE_X.md = courte.
+     Ancienne convention toleree : FICHE_X.md = longue, RESUME_X.md = courte.
+     La colonne savoir peut etre partielle : l'autre moitie d'une paire se complete par le nom. */
+  const svs = (m.savoir || "").split(/[,;]+/).map(s => s.trim()).filter(s => SAV_LISIBLE.test(s) && SAV_IDX[s]);
+  let long = svs.find(s => /^FICHE_LONGUE_/i.test(s)) || "";
+  let court = svs.find(s => /^RESUME_/i.test(s)) || "";
+  const autres = svs.filter(s => !/^FICHE_LONGUE_|^RESUME_/i.test(s));
+  if (long && !court) court = autres[0] || "";
+  else if (court && !long) long = autres[0] || "";
+  else if (!long && !court && autres[0]){
+    const c1 = autres[0].replace(/^FICHE_/i, "FICHE_LONGUE_");
+    const c2 = autres[0].replace(/^FICHE_/i, "RESUME_");
+    if (c1 !== autres[0] && SAV_IDX[c1]){ long = c1; court = autres[0]; }
+    else if (c2 !== autres[0] && SAV_IDX[c2]){ long = autres[0]; court = c2; }
+    else long = autres[0];
+  }
+  if (long && !court){
+    const c3 = long.replace(/^FICHE_LONGUE_/i, "FICHE_");
+    if (c3 !== long && SAV_IDX[c3]) court = c3;
+  }
+  return {long: long, court: court};
+}
 function savLigneMat(m){
   const alerte = savAlerteDe(m);
   const prof = savProfondeurs(m);
@@ -1919,20 +1946,14 @@ function savLigneMat(m){
     boutons = (prof.longue ? savBtnLire(prof.longue, m.doc, alerte, "Long", "sav-long") : "")
       + savBtnLire(prof.synthese, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
   } else {
-    const svs = (m.savoir || "").split(",").map(s => s.trim()).filter(s => SAV_LISIBLE.test(s) && SAV_IDX[s]);
-    const longs = svs.filter(s => !/^RESUME_/i.test(s));
-    let court = svs.find(s => /^RESUME_/i.test(s)) || "";
-    if (!court && longs[0]){
-      const conv = longs[0].replace(/^FICHE_/i, "RESUME_");
-      if (conv !== longs[0] && SAV_IDX[conv]) court = conv;
-    }
-    if (longs.length && court){
-      boutons = savBtnLire(SAV_IDX[longs[0]].chemin, m.doc, alerte, "Long", "sav-long")
-        + savBtnLire(SAV_IDX[court].chemin, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
-    } else if (longs.length || court){
-      const inf = SAV_IDX[longs[0] || court];
+    const p = savPaire(m);
+    if (p.long && p.court){
+      boutons = savBtnLire(SAV_IDX[p.long].chemin, m.doc, alerte, "Long", "sav-long")
+        + savBtnLire(SAV_IDX[p.court].chemin, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
+    } else if (p.long || p.court){
+      const inf = SAV_IDX[p.long || p.court];
       const lib = m.lecture === "resume" ? "R\u00e9sum\u00e9" : m.lecture === "long" ? "Long"
-        : (court ? "R\u00e9sum\u00e9" : (inf.taille >= 40000 ? "Long" : "R\u00e9sum\u00e9"));
+        : (p.court ? "R\u00e9sum\u00e9" : (inf.taille >= 40000 ? "Long" : "R\u00e9sum\u00e9"));
       boutons = savBtnLire(inf.chemin, m.doc, alerte, lib, "sav-long");
     } else if (m.chemin && SAV_LISIBLE.test(m.chemin)){
       boutons = savBtnLire(m.chemin, m.doc, alerte, m.lecture === "resume" ? "R\u00e9sum\u00e9" : "Long", "sav-long");
