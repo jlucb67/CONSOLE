@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 46 -->
+<!-- VERSION_CONSOLE: 47 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -291,6 +291,12 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-acap{margin:26px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 .sav-acap-l .sav-nom{color:var(--mut)}
 @media (max-width:640px){.sav-tete{row-gap:6px}.sav-tete select{max-width:44vw;padding:6px 7px}.sav-vues button{padding:6px 9px;font-size:12px}}
+.voix{display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid var(--fil);flex:none;font-size:12.5px}
+.voix button{font:inherit;cursor:pointer;border:1px solid var(--fil);background:var(--pap);border-radius:8px;padding:4px 10px}
+.voix button.actif{background:#e8efe6;border-color:#9db99a}
+.voix select{font:inherit;border:1px solid var(--fil);border-radius:8px;padding:3px 6px;background:var(--pap)}
+.voix .mut{margin-left:auto}
+.voix-lu{background:#fdf3d8;border-radius:3px}
 .feuille-alerte{background:#fdeaea;color:#b03030;font-size:12.5px;font-weight:600;padding:7px 14px;border-bottom:1px solid #f2c5c5;flex:none}
 .feuille-corps{flex:1;overflow:auto;max-height:none;padding:12px 16px calc(18px + env(safe-area-inset-bottom))}
 
@@ -390,6 +396,7 @@ background:var(--carte);border:2px solid var(--ard)}
   <div class="feuille-poignee"></div>
   <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
+  <div id="voix" class="voix" hidden><button type="button" id="voix-lire">\u25b6 \u00c9couter</button><button type="button" id="voix-stop">\u25a0 Arr\u00eater</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
   <div id="feuille-corps" class="feuille-corps doct-corps"></div>
 </div>
 
@@ -405,7 +412,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 46;
+  const ICI = 47;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1542,15 +1549,89 @@ function parseMarqueurs(txt){
   return out;
 }
 
+/* ---------- lecture sonore de la feuille (v47)
+   Chrome coupe une longue enonciation au bout d une quinzaine de secondes : on decoupe
+   donc en paragraphes et on enchaine soi-meme. La voix est celle du systeme, rien ne sort
+   de l appareil. Sur iPhone, le verrouillage de l ecran arrete la lecture : c est le systeme. */
+var VOIX_MORCEAUX = [], VOIX_I = 0, VOIX_ON = false, VOIX_VIT = 1;
+function voixDispo(){ return typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined"; }
+function voixDecoupe(racine){
+  const out = [];
+  const noeuds = racine.querySelectorAll("h2,h3,h4,p,li,blockquote");
+  for (const n of noeuds){
+    if (n.closest(".sav-sommaire") || n.classList.contains("sav-chemin")) continue;
+    const t = (n.textContent || "").replace(/\s+/g, " ").trim();
+    if (!t) continue;
+    /* un paragraphe tres long se recoupe aux phrases : une enonciation courte ne se fait pas couper */
+    if (t.length <= 320){ out.push({n: n, t: t}); continue; }
+    let bout = "";
+    for (const ph of t.split(/(?<=[.!?\u2026])\s+/)){
+      if ((bout + " " + ph).length > 320 && bout){ out.push({n: n, t: bout}); bout = ph; }
+      else bout = bout ? bout + " " + ph : ph;
+    }
+    if (bout) out.push({n: n, t: bout});
+  }
+  return out;
+}
+function voixEtat(txt){ const e = $("voix-etat"); if (e) e.textContent = txt; }
+function voixSurligne(n){
+  const c = $("feuille-corps");
+  if (!c || !c.querySelectorAll) return;
+  c.querySelectorAll(".voix-lu").forEach(x => x.classList.remove("voix-lu"));
+  if (n){ n.classList.add("voix-lu"); if (n.scrollIntoView) n.scrollIntoView({block: "center", behavior: "smooth"}); }
+}
+function voixSuite(){
+  if (!VOIX_ON || VOIX_I >= VOIX_MORCEAUX.length){ voixArrete(); return; }
+  const m = VOIX_MORCEAUX[VOIX_I];
+  voixSurligne(m.n);
+  voixEtat((VOIX_I + 1) + " / " + VOIX_MORCEAUX.length);
+  const u = new SpeechSynthesisUtterance(m.t);
+  u.lang = "fr-FR"; u.rate = VOIX_VIT;
+  u.onend = () => { if (VOIX_ON){ VOIX_I++; voixSuite(); } };
+  u.onerror = () => { if (VOIX_ON){ VOIX_I++; voixSuite(); } };
+  speechSynthesis.speak(u);
+}
+function voixLance(){
+  if (!voixDispo()) return;
+  if (speechSynthesis.speaking && speechSynthesis.paused){ speechSynthesis.resume(); VOIX_ON = true; voixBoutons(); return; }
+  if (VOIX_ON){ speechSynthesis.pause(); VOIX_ON = false; voixBoutons(); return; }
+  const corps = $("feuille-corps");
+  if (!VOIX_MORCEAUX.length || VOIX_I >= VOIX_MORCEAUX.length){
+    VOIX_MORCEAUX = voixDecoupe(corps); VOIX_I = 0;
+  }
+  if (!VOIX_MORCEAUX.length){ voixEtat("rien \u00e0 lire"); return; }
+  VOIX_ON = true; voixBoutons(); voixSuite();
+}
+function voixArrete(){
+  VOIX_ON = false;
+  if (voixDispo()) speechSynthesis.cancel();
+  VOIX_MORCEAUX = []; VOIX_I = 0;
+  voixSurligne(null); voixEtat(""); voixBoutons();
+}
+function voixBoutons(){
+  const b = $("voix-lire");
+  if (!b) return;
+  b.textContent = VOIX_ON ? "\u23f8 Pause" : (VOIX_I > 0 ? "\u25b6 Reprendre" : "\u25b6 \u00c9couter");
+  b.classList.toggle("actif", VOIX_ON);
+}
+function voixPrete(){
+  const bar = $("voix");
+  if (!bar) return;
+  voixArrete();
+  bar.hidden = !voixDispo();
+}
+
 function feuilleOuvre(titre){
   $("feuille-titre").textContent = titre;
   $("feuille-info").textContent = "";
   $("feuille-alerte").hidden = true;
   $("feuille").classList.add("ouvert");
   $("feuille-voile").classList.add("ouvert");
+  voixPrete();
   document.body.style.overflow = "hidden";
 }
 function feuilleFerme(){
+  voixArrete();
   $("feuille").classList.remove("ouvert");
   $("feuille-voile").classList.remove("ouvert");
   document.body.style.overflow = "";
@@ -2119,6 +2200,12 @@ function savBranche(){
 }
 
 
+$("voix-lire").addEventListener("click", voixLance);
+$("voix-stop").addEventListener("click", voixArrete);
+$("voix-vit").addEventListener("change", ev => {
+  VOIX_VIT = parseFloat(ev.target.value) || 1;
+  if (VOIX_ON){ speechSynthesis.cancel(); voixSuite(); }   /* la vitesse ne se change pas en cours d enonciation */
+});
 $("feuille-fermer").addEventListener("click", feuilleFerme);
 $("feuille-voile").addEventListener("click", feuilleFerme);
 document.addEventListener("keydown", ev => { if (ev.key === "Escape") feuilleFerme(); });
