@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 50 -->
+<!-- VERSION_CONSOLE: 51 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -422,7 +422,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 50;
+  const ICI = 51;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -691,7 +691,7 @@ async function lireVeillesEtAvatars(){
     const bloc = pr.split("Inventaire des avatars")[1];
     if (bloc) for (const l of bloc.split("\n").slice(0, 20)){
       const m = l.match(/^-\s*(?:Agent\s+)?([A-Za-zÀ-ÿ0-9_-]+)\s*:\s*(\S+)\s*\(/);
-      if (m && !/^Agents$/i.test(m[1])) AVATARS.set(m[1], m[2]);
+      if (m && !/^Agents$/i.test(m[1])) AVATARS.set(m[1].toUpperCase(), m[2]);
     }
   }
 }
@@ -731,9 +731,12 @@ async function collecteAgents(){
       promptVeille: chemins.has(agent + "/instructions/PROMPT_VEILLE.md"),
       tableau: chemins.has(agent + "/TABLEAU_DE_BORD.md")
     };
-    const rec = await commits(depot, agent + "/", 30);
+    const REC_MAX = 100;
+    const rec = await commits(depot, agent + "/", REC_MAX);
     const limite30 = Date.now() - 30 * 86400000;
     const actifs30 = rec.filter(c => new Date(c.commit.committer.date).getTime() > limite30).length;
+    /* si la page est pleine ET que tout y est dans les 30 jours, le vrai nombre est plus grand */
+    const actifsSature = (rec.length >= REC_MAX && actifs30 >= REC_MAX);
     const v = await texteOuNull(depot, agent + "/savoir/VERSION.md");
     const num = v && v.match(/VERSION\s*:\s*(\d+)/);
     const quoi = v && v.match(/^- v\d+.*$/m);
@@ -766,7 +769,7 @@ async function collecteAgents(){
     const retenues = aJour === true ? [] : contras;
     AGENTS.push({copie, vCopie, vDepot, aJour, contras: retenues, agent, depot, version: num ? num[1] : null,
                  evolution: quoi ? quoi[0].replace(/^- /, "") : "",
-                 maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30, stock});
+                 maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30, actifsSature, stock});
   }
 
   ETAT.agents.fait = true; ETAT.agents.quand = new Date(); ETAT.agents.shas = await shasDepots();
@@ -1145,12 +1148,12 @@ function rendreAgents(){
         + coche(a.conf.memoire, "protocole mémoire")
         + coche(!!v, "veille branchée")
         + (admin ? coche(true, "tunnel sans objet", true) : coche(a.conf.meta, "métadonnées"))
-        + (AVATARS.has(a.agent) ? coche(true, "avatar " + AVATARS.get(a.agent)) : coche(false, "avatar à attribuer"))
+        + (AVATARS.has(a.agent.toUpperCase()) ? coche(true, "avatar " + AVATARS.get(a.agent.toUpperCase())) : coche(false, "avatar à attribuer"))
       + "</div>"
       + '<div class="mesures">'
         + mesure(a.version != null ? "v" + a.version : "-", age != null ? "version, " + age + " j" : "version")
         + mesure(fmtPct(a.stock.total), "de la fenêtre", partFenetre(a.stock.total) > 10)
-        + mesure(a.actifs30, "gravures sur 30 j", a.actifs30 === 0)
+        + mesure(a.actifsSature ? a.actifs30 + " +" : a.actifs30, "gravures sur 30 j", a.actifs30 === 0)
         + (admin ? "" : mesure(attente, "en attente de toi", attente > 0))
         + (admin ? "" : mesure(dette, "résumés dus", dette > 0))
       + "</div>"
