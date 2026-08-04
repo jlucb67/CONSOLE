@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 49 -->
+<!-- VERSION_CONSOLE: 50 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -291,6 +291,14 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-acap{margin:26px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 .sav-acap-l .sav-nom{color:var(--mut)}
 @media (max-width:640px){.sav-tete{row-gap:6px}.sav-tete select{max-width:44vw;padding:6px 7px}.sav-vues button{padding:6px 9px;font-size:12px}}
+.video{flex:none;border-bottom:1px solid var(--fil);background:#000}
+.video-cadre{position:relative;width:100%;padding-top:56.25%}
+.video-cadre iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.video-pied{display:flex;align-items:center;gap:10px;padding:5px 14px;background:var(--pap);border-bottom:1px solid var(--fil);font-size:12px}
+.video-pied a{color:inherit}
+.video-pied .mut{margin-left:auto}
+.tc{cursor:pointer;font-variant-numeric:tabular-nums;color:#2b5d8a;border-bottom:1px dotted #2b5d8a}
+.tc:hover{background:#e6eef6}
 .voix{display:flex;align-items:center;gap:8px;padding:6px 14px;border-bottom:1px solid var(--fil);flex:none;font-size:12.5px}
 .voix button{font:inherit;cursor:pointer;border:1px solid var(--fil);background:var(--pap);border-radius:8px;padding:4px 10px}
 .voix button.actif{background:#e8efe6;border-color:#9db99a}
@@ -396,6 +404,8 @@ background:var(--carte);border:2px solid var(--ard)}
   <div class="feuille-poignee"></div>
   <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
+  <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
+  <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
   <div id="voix" class="voix" hidden><button type="button" id="voix-lire">▶ Écouter</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
   <div id="feuille-corps" class="feuille-corps doct-corps"></div>
 </div>
@@ -412,7 +422,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 49;
+  const ICI = 50;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1549,6 +1559,70 @@ function parseMarqueurs(txt){
   return out;
 }
 
+/* ---------- lecteur video de la feuille (v50)
+   Le corpus video porte l adresse de sa source et des horodatages entre crochets, un par
+   replique. On coud les deux : le lecteur en tete de feuille, chaque horodatage cliquable.
+   L adresse est cherchee dans le texte BRUT : l epure retire justement les lignes de source.
+   Le saut passe par postMessage (enablejsapi) : recharger l iframe redemarrerait tout. */
+var VID_ID = "";
+function videoId(txt){
+  const m = String(txt || "").match(/(?:youtube\.com\/(?:watch\?(?:[^"\s]*&)?v=|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : "";
+}
+function tcSecondes(tc){
+  const p = String(tc).split(":").map(x => parseInt(x, 10));
+  if (p.some(isNaN)) return -1;
+  if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
+  if (p.length === 2) return p[0] * 60 + p[1];
+  return -1;
+}
+function videoMonte(id){
+  VID_ID = id || "";
+  const bloc = $("video"), pied = $("video-pied"), cadre = $("video-cadre"), lien = $("video-lien");
+  if (!bloc) return;
+  if (!VID_ID){ if (cadre) cadre.src = "about:blank"; bloc.hidden = true; pied.hidden = true; return; }
+  cadre.src = "https://www.youtube-nocookie.com/embed/" + VID_ID + "?enablejsapi=1&rel=0";
+  lien.href = "https://www.youtube.com/watch?v=" + VID_ID;
+  bloc.hidden = false; pied.hidden = false;
+}
+function videoSaut(sec){
+  if (!VID_ID || sec < 0) return;
+  voixArrete();                          /* une seule voix a la fois */
+  const c = $("video-cadre");
+  const l = $("video-lien");
+  if (l) l.href = "https://www.youtube.com/watch?v=" + VID_ID + "&t=" + sec + "s";
+  try {
+    c.contentWindow.postMessage(JSON.stringify({event: "command", func: "seekTo", args: [sec, true]}), "*");
+    c.contentWindow.postMessage(JSON.stringify({event: "command", func: "playVideo", args: []}), "*");
+  } catch(e){ /* si la fenetre refuse le message, le lien du pied reste la porte de sortie */ }
+  const e = $("video-etat");
+  if (e) e.textContent = "\u2192 " + Math.floor(sec / 60) + " min " + ("0" + (sec % 60)).slice(-2);
+}
+function tcRendCliquables(racine){
+  /* On travaille sur les NOEUDS DE TEXTE : remplacer dans le HTML casserait les balises. */
+  if (!VID_ID || !racine || !racine.ownerDocument) return;
+  const marche = racine.ownerDocument.createTreeWalker(racine, 4 /* NodeFilter.SHOW_TEXT */);
+  const cibles = [];
+  let n;
+  while ((n = marche.nextNode())) if (/\[\d{1,2}:\d{2}(:\d{2})?\]/.test(n.nodeValue)) cibles.push(n);
+  for (const t of cibles){
+    const frag = racine.ownerDocument.createDocumentFragment();
+    let reste = t.nodeValue, m;
+    const re = /\[(\d{1,2}:\d{2}(?::\d{2})?)\]/g;
+    let dernier = 0;
+    while ((m = re.exec(t.nodeValue))){
+      if (m.index > dernier) frag.appendChild(racine.ownerDocument.createTextNode(t.nodeValue.slice(dernier, m.index)));
+      const b = racine.ownerDocument.createElement("span");
+      b.className = "tc"; b.textContent = m[1]; b.setAttribute("data-sec", tcSecondes(m[1]));
+      b.setAttribute("role", "button"); b.setAttribute("tabindex", "0");
+      frag.appendChild(b);
+      dernier = m.index + m[0].length;
+    }
+    if (dernier < t.nodeValue.length) frag.appendChild(racine.ownerDocument.createTextNode(t.nodeValue.slice(dernier)));
+    t.parentNode.replaceChild(frag, t);
+  }
+}
+
 /* ---------- lecture sonore de la feuille (v47)
    Chrome coupe une longue enonciation au bout d une quinzaine de secondes : on decoupe
    donc en paragraphes et on enchaine soi-meme. La voix est celle du systeme, rien ne sort
@@ -1628,10 +1702,12 @@ function feuilleOuvre(titre){
   $("feuille").classList.add("ouvert");
   $("feuille-voile").classList.add("ouvert");
   voixPrete();
+  videoMonte("");
   document.body.style.overflow = "hidden";
 }
 function feuilleFerme(){
   voixArrete();
+  videoMonte("");
   $("feuille").classList.remove("ouvert");
   $("feuille-voile").classList.remove("ouvert");
   document.body.style.overflow = "";
@@ -1700,6 +1776,8 @@ async function lireDansLecteur(depot, agent, chemin, titre, alerte){
     const rel = (agent && chemin.indexOf(agent + "/") === 0) ? chemin.slice(agent.length + 1) : chemin;
     corps.innerHTML = (/\.md$/i.test(chemin) ? avecSommaire(mdVersHtml(savEpureMd(t))) : "<pre>" + esc(t) + "</pre>")
       + '<p class="sav-chemin">' + esc(rel) + "</p>";
+    videoMonte(videoId(t));               /* le texte BRUT : l epure a retire la ligne de source */
+    tcRendCliquables(corps);
   } catch(e){ corps.innerHTML = '<p class="vide">Lecture impossible : ' + esc(e.message) + "</p>"; }
 }
 
@@ -2221,6 +2299,10 @@ function savBranche(){
 }
 
 
+$("feuille-corps").addEventListener("click", ev => {
+  const b = ev.target.closest ? ev.target.closest(".tc") : null;
+  if (b) videoSaut(parseInt(b.getAttribute("data-sec"), 10));
+});
 $("voix-lire").addEventListener("click", voixLance);
 $("voix-vit").addEventListener("change", ev => {
   VOIX_VIT = parseFloat(ev.target.value) || 1;
