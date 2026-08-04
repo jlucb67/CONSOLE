@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 44 -->
+<!-- VERSION_CONSOLE: 45 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -405,7 +405,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 44;
+  const ICI = 45;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -810,7 +810,7 @@ async function collecteVeille(){
    « quelque chose a change dans ce depot », pas « ce que cet onglet affiche a change ». */
 async function majBandeaux(){
   const shas = await shasDepots();
-  for (const nom of ["tunnel", "agents", "veille", "savoirs", "doctrine", "biblio"]){
+  for (const nom of ["tunnel", "agents", "veille", "savoirs", "sav"]){
     const e = ETAT[nom], b = $("bandeau-" + nom);
     if (!b) continue;
     if (!e.fait){ b.innerHTML = ""; continue; }
@@ -832,7 +832,11 @@ async function recharger(nom){
       for (const k in memo){ if ($(k)) $(k).value = memo[k]; } filtrer(); }
     else if (nom === "agents"){ ETAT.agents.fait = false; await collecteAgents(); rendreAgents(); }
     else if (nom === "savoirs"){ ETAT.savoirs.fait = false; await collecteSavoirs(); rendreSavoirs(); }
-    else if (nom === "sav"){ ETAT.sav.fait = false; await collecteSav(); rendreSav(); }
+    else if (nom === "sav"){
+      ETAT.sav.fait = false; SAV_TXT = {};
+      if ($("sav-restxt")) $("sav-restxt").innerHTML = "";
+      await collecteSav(); rendreSav();
+    }
     else { ETAT.veille.fait = false; await collecteVeille(); rendreVeille(); }
     await majBandeaux();
     window.scrollTo(0, y);
