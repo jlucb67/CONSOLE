@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 51 -->
+<!-- VERSION_CONSOLE: 52 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -422,7 +422,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 51;
+  const ICI = 52;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -2173,7 +2173,9 @@ function savLigneMat(m){
         : (p.court ? "R\u00e9sum\u00e9" : (inf.taille >= 40000 ? "Long" : "R\u00e9sum\u00e9"));
       boutons = savBtnLire(inf.chemin, m.doc, alerte, lib, "sav-long");
     } else if (m.chemin && SAV_LISIBLE.test(m.chemin)){
-      boutons = savBtnLire(m.chemin, m.doc, alerte, m.lecture === "resume" ? "R\u00e9sum\u00e9" : "Long", "sav-long");
+      /* aucune fiche : ce bouton ouvre le DOCUMENT lui-meme, il ne faut pas l'appeler « Long ».
+         Sauf si le catalogue declare que ce document EST deja un resume (colonne lecture). */
+      boutons = savBtnLire(m.chemin, m.doc, alerte, m.lecture === "resume" ? "R\u00e9sum\u00e9" : "Texte", "sav-long");
     }
   }
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
@@ -2219,7 +2221,7 @@ function savRendreMat(){
     h += '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>Hors catalogue</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
       + horsCat.sort((x, y) => (x.zone + x.doc).localeCompare(y.zone + y.doc, "fr"))
           .map(m => '<div class="sav-ligne"><span class="sav-nom">' + esc(m.doc) + ' <span class="sav-tg">' + esc(m.zone) + "</span></span>"
-            + '<span class="sav-droite">' + savBtnLire(m.chemin, m.doc, "", "Long", "sav-long") + "</span></div>").join("")
+            + '<span class="sav-droite">' + savBtnLire(m.chemin, m.doc, "", "Texte", "sav-long") + "</span></div>").join("")
       + "</div></div>";
   }
   if (SAV_ACAP.length){
