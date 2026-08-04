@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 47 -->
+<!-- VERSION_CONSOLE: 48 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -412,7 +412,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 47;
+  const ICI = 48;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1789,6 +1789,28 @@ function autOrdonne(liste){
   });
 }
 const MAT_INCONNU = "\u00c0 classer";
+/* Ordre des natures de materiau voulu par JL (v48) : le Livre d'abord, puis les autres
+   ecrits, puis la parole, puis les ensembles. On classe par FORMAT DE CONTENU et non par
+   support : l'extraction d'une conference filmee est une Conference, pas une Video. */
+const MAT_ORDRE = ["livre", "brochure", "article", "programme", "rapport",
+                   "conference", "discours", "entretien", "debat", "corpus"];
+function matRang(t){
+  const c = (t || "").toLowerCase()
+    .replace(/[\u00e0\u00e2\u00e4]/g, "a").replace(/[\u00e9\u00e8\u00ea\u00eb]/g, "e")
+    .replace(/[\u00ee\u00ef]/g, "i").replace(/[\u00f4\u00f6]/g, "o")
+    .replace(/[\u00f9\u00fb\u00fc]/g, "u").replace(/\u00e7/g, "c");
+  if (t === MAT_INCONNU) return 99;
+  for (let i = 0; i < MAT_ORDRE.length; i++){
+    if (new RegExp("(^|[^a-z])" + MAT_ORDRE[i]).test(c)) return i;
+  }
+  return MAT_ORDRE.length;
+}
+function matOrdonne(liste){
+  return liste.slice().sort((x, y) => {
+    const rx = matRang(x), ry = matRang(y);
+    return rx !== ry ? rx - ry : x.localeCompare(y, "fr");
+  });
+}
 
 async function savDecouvreAgents(){
   const vus = {};
@@ -2106,8 +2128,7 @@ function savRendreMat(){
     const docs = parAuteur[a];
     const parMat = {};
     docs.forEach(m => { const t = m.materiau || MAT_INCONNU; (parMat[t] = parMat[t] || []).push(m); });
-    let types = Object.keys(parMat).sort((x, y) => x.localeCompare(y, "fr"));
-    types = types.filter(t => t !== MAT_INCONNU).concat(types.indexOf(MAT_INCONNU) >= 0 ? [MAT_INCONNU] : []);
+    const types = matOrdonne(Object.keys(parMat));
     h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + (numero[a] ? numero[a] + ". " : "") + esc(a)
       + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
       + types.map(t => '<h4 class="sav-h4">' + esc(t) + "</h4>" + parMat[t].sort((x, y) => x.doc.localeCompare(y.doc, "fr")).map(savLigneMat).join("")).join("")
