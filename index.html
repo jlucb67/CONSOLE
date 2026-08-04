@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 52 -->
+<!-- VERSION_CONSOLE: 53 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -422,7 +422,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 52;
+  const ICI = 53;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -2161,21 +2161,21 @@ function savLigneMat(m){
   if (prof){
     /* corpus : les deux profondeurs explicites */
     boutons = (prof.longue ? savBtnLire(prof.longue, m.doc, alerte, "Long", "sav-long") : "")
-      + savBtnLire(prof.synthese, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
+      + savBtnLire(prof.synthese, m.doc, alerte, "Court", "sav-long");
   } else {
     const p = savPaire(m);
     if (p.long && p.court){
       boutons = savBtnLire(SAV_IDX[p.long].chemin, m.doc, alerte, "Long", "sav-long")
-        + savBtnLire(SAV_IDX[p.court].chemin, m.doc, alerte, "R\u00e9sum\u00e9", "sav-long");
+        + savBtnLire(SAV_IDX[p.court].chemin, m.doc, alerte, "Court", "sav-long");
     } else if (p.long || p.court){
       const inf = SAV_IDX[p.long || p.court];
-      const lib = m.lecture === "resume" ? "R\u00e9sum\u00e9" : m.lecture === "long" ? "Long"
-        : (p.court ? "R\u00e9sum\u00e9" : (inf.taille >= 40000 ? "Long" : "R\u00e9sum\u00e9"));
+      const lib = m.lecture === "resume" ? "Court" : m.lecture === "long" ? "Long"
+        : (p.court ? "Court" : (inf.taille >= 40000 ? "Long" : "Court"));
       boutons = savBtnLire(inf.chemin, m.doc, alerte, lib, "sav-long");
     } else if (m.chemin && SAV_LISIBLE.test(m.chemin)){
       /* aucune fiche : ce bouton ouvre le DOCUMENT lui-meme, il ne faut pas l'appeler « Long ».
          Sauf si le catalogue declare que ce document EST deja un resume (colonne lecture). */
-      boutons = savBtnLire(m.chemin, m.doc, alerte, m.lecture === "resume" ? "R\u00e9sum\u00e9" : "Texte", "sav-long");
+      boutons = savBtnLire(m.chemin, m.doc, alerte, m.lecture === "resume" ? "Court" : "Texte", "sav-long");
     }
   }
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
