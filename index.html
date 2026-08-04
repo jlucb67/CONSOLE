@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 48 -->
+<!-- VERSION_CONSOLE: 49 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -396,7 +396,7 @@ background:var(--carte);border:2px solid var(--ard)}
   <div class="feuille-poignee"></div>
   <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
-  <div id="voix" class="voix" hidden><button type="button" id="voix-lire">\u25b6 \u00c9couter</button><button type="button" id="voix-stop">\u25a0 Arr\u00eater</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
+  <div id="voix" class="voix" hidden><button type="button" id="voix-lire">▶ Écouter</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
   <div id="feuille-corps" class="feuille-corps doct-corps"></div>
 </div>
 
@@ -412,7 +412,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 48;
+  const ICI = 49;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -2222,7 +2222,6 @@ function savBranche(){
 
 
 $("voix-lire").addEventListener("click", voixLance);
-$("voix-stop").addEventListener("click", voixArrete);
 $("voix-vit").addEventListener("change", ev => {
   VOIX_VIT = parseFloat(ev.target.value) || 1;
   if (VOIX_ON){ speechSynthesis.cancel(); voixSuite(); }   /* la vitesse ne se change pas en cours d enonciation */
