@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 54 -->
+<!-- VERSION_CONSOLE: 55 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -408,7 +408,7 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
   <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
   <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
-  <div id="voix" class="voix" hidden><button type="button" id="voix-lire">▶ Écouter</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
+  <div id="voix" class="voix" hidden><button type="button" id="voix-prec" title="Paragraphe précédent" aria-label="Paragraphe précédent">◀◀</button><button type="button" id="voix-lire">▶ Écouter</button><button type="button" id="voix-suiv" title="Paragraphe suivant" aria-label="Paragraphe suivant">▶▶</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
   <div id="feuille-corps" class="feuille-corps doct-corps"></div>
 </div>
 
@@ -424,7 +424,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 54;
+  const ICI = 55;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1632,7 +1632,7 @@ function tcRendCliquables(racine){
    Chrome coupe une longue enonciation au bout d une quinzaine de secondes : on decoupe
    donc en paragraphes et on enchaine soi-meme. La voix est celle du systeme, rien ne sort
    de l appareil. Sur iPhone, le verrouillage de l ecran arrete la lecture : c est le systeme. */
-var VOIX_MORCEAUX = [], VOIX_I = 0, VOIX_ON = false, VOIX_VIT = 1;
+var VOIX_MORCEAUX = [], VOIX_I = 0, VOIX_ON = false, VOIX_VIT = 1, VOIX_JETON = 0;
 function voixDispo(){ return typeof speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance !== "undefined"; }
 function voixDecoupe(racine){
   const out = [];
@@ -1666,8 +1666,9 @@ function voixSuite(){
   voixEtat((VOIX_I + 1) + " / " + VOIX_MORCEAUX.length);
   const u = new SpeechSynthesisUtterance(m.t);
   u.lang = "fr-FR"; u.rate = VOIX_VIT;
-  u.onend = () => { if (VOIX_ON){ VOIX_I++; voixSuite(); } };
-  u.onerror = () => { if (VOIX_ON){ VOIX_I++; voixSuite(); } };
+  const jeton = ++VOIX_JETON;             /* seule la derniere enonciation lancee a le droit d'avancer */
+  const apres = () => { if (VOIX_ON && jeton === VOIX_JETON){ VOIX_I++; voixSuite(); } };
+  u.onend = apres; u.onerror = apres;
   speechSynthesis.speak(u);
 }
 function voixLance(){
@@ -1681,8 +1682,23 @@ function voixLance(){
   if (!VOIX_MORCEAUX.length){ voixEtat("rien \u00e0 lire"); return; }
   VOIX_ON = true; voixBoutons(); voixSuite();
 }
+function voixBouge(pas){
+  if (!voixDispo()) return;
+  if (!VOIX_MORCEAUX.length){ VOIX_MORCEAUX = voixDecoupe($("feuille-corps")); VOIX_I = 0; }
+  if (!VOIX_MORCEAUX.length) return;
+  VOIX_I = Math.max(0, Math.min(VOIX_MORCEAUX.length - 1, VOIX_I + pas));
+  VOIX_JETON++;                            /* l'enonciation en cours perd le droit d'avancer */
+  speechSynthesis.cancel();
+  if (VOIX_ON){ voixSuite(); }
+  else {                                   /* a l'arret : on se deplace sans parler */
+    voixSurligne(VOIX_MORCEAUX[VOIX_I].n);
+    voixEtat((VOIX_I + 1) + " / " + VOIX_MORCEAUX.length);
+    voixBoutons();
+  }
+}
 function voixArrete(){
   VOIX_ON = false;
+  VOIX_JETON++;
   if (voixDispo()) speechSynthesis.cancel();
   VOIX_MORCEAUX = []; VOIX_I = 0;
   voixSurligne(null); voixEtat(""); voixBoutons();
@@ -2330,10 +2346,12 @@ $("feuille-corps").addEventListener("click", ev => {
   const b = ev.target.closest ? ev.target.closest(".tc") : null;
   if (b) videoSaut(parseInt(b.getAttribute("data-sec"), 10));
 });
+$("voix-prec").addEventListener("click", () => voixBouge(-1));
+$("voix-suiv").addEventListener("click", () => voixBouge(1));
 $("voix-lire").addEventListener("click", voixLance);
 $("voix-vit").addEventListener("change", ev => {
   VOIX_VIT = parseFloat(ev.target.value) || 1;
-  if (VOIX_ON){ speechSynthesis.cancel(); voixSuite(); }   /* la vitesse ne se change pas en cours d enonciation */
+  if (VOIX_ON){ VOIX_JETON++; speechSynthesis.cancel(); voixSuite(); }   /* la vitesse ne se change pas en cours d enonciation */
 });
 $("feuille-fermer").addEventListener("click", feuilleFerme);
 $("feuille-voile").addEventListener("click", feuilleFerme);
