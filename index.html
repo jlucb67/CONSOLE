@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 45 -->
+<!-- VERSION_CONSOLE: 46 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -405,7 +405,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 45;
+  const ICI = 46;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1678,6 +1678,35 @@ function savMateriauDe(m){
   return "";
 }
 const AUT_INCONNU = "Auteur \u00e0 renseigner";
+/* Ordre des auteurs voulu par JL : six tetes fixes, puis les autres par ordre
+   alphabetique du NOM (dernier mot du libelle). L'auteur non renseigne ferme la marche. */
+const AUT_TETE = ["marx", "lenine", "trotsky", "jaures", "melenchon", "lfi"];
+function autCle(a){
+  return (a || "").toLowerCase()
+    .replace(/[\u00e0\u00e2\u00e4]/g, "a").replace(/[\u00e9\u00e8\u00ea\u00eb]/g, "e")
+    .replace(/[\u00ee\u00ef]/g, "i").replace(/[\u00f4\u00f6]/g, "o")
+    .replace(/[\u00f9\u00fb\u00fc]/g, "u").replace(/\u00e7/g, "c");
+}
+function autNom(a){
+  const mots = autCle(a).replace(/[^a-z0-9 ]/g, " ").trim().split(/\s+/);
+  return mots.length ? mots[mots.length - 1] : "";
+}
+function autRang(a){
+  if (a === AUT_INCONNU) return 99;
+  const c = autCle(a);
+  for (let i = 0; i < AUT_TETE.length; i++){
+    if (new RegExp("(^|[^a-z])" + AUT_TETE[i] + "([^a-z]|$)").test(c)) return i;
+  }
+  return AUT_TETE.length;
+}
+function autOrdonne(liste){
+  return liste.slice().sort((x, y) => {
+    const rx = autRang(x), ry = autRang(y);
+    if (rx !== ry) return rx - ry;
+    if (rx === AUT_TETE.length) return autNom(x).localeCompare(autNom(y), "fr") || x.localeCompare(y, "fr");
+    return x.localeCompare(y, "fr");
+  });
+}
 const MAT_INCONNU = "\u00c0 classer";
 
 async function savDecouvreAgents(){
@@ -1985,8 +2014,11 @@ function savRendreMat(){
     const a = m.auteur || AUT_INCONNU;
     (parAuteur[a] = parAuteur[a] || []).push(m);
   });
-  let auteurs = Object.keys(parAuteur).sort((a, b) => a.localeCompare(b, "fr"));
-  auteurs = auteurs.filter(a => a !== AUT_INCONNU).concat(auteurs.indexOf(AUT_INCONNU) >= 0 ? [AUT_INCONNU] : []);
+  const tousAuteurs = autOrdonne(Object.keys(parAuteur));
+  const numero = {};
+  let rang = 0;
+  tousAuteurs.forEach(a => { if (a !== AUT_INCONNU) numero[a] = ++rang; });
+  let auteurs = tousAuteurs;
   if (SAV_AUT) auteurs = auteurs.filter(a => a === SAV_AUT);
   let h = "";
   auteurs.forEach(a => {
@@ -1995,7 +2027,7 @@ function savRendreMat(){
     docs.forEach(m => { const t = m.materiau || MAT_INCONNU; (parMat[t] = parMat[t] || []).push(m); });
     let types = Object.keys(parMat).sort((x, y) => x.localeCompare(y, "fr"));
     types = types.filter(t => t !== MAT_INCONNU).concat(types.indexOf(MAT_INCONNU) >= 0 ? [MAT_INCONNU] : []);
-    h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + esc(a)
+    h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + (numero[a] ? numero[a] + ". " : "") + esc(a)
       + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
       + types.map(t => '<h4 class="sav-h4">' + esc(t) + "</h4>" + parMat[t].sort((x, y) => x.doc.localeCompare(y.doc, "fr")).map(savLigneMat).join("")).join("")
       + "</div></div>";
@@ -2038,10 +2070,13 @@ function rendreSav(){
   } else {
     const auteurs = [];
     SAV_MAT.forEach(m => { if (!m.hors){ const a = m.auteur || AUT_INCONNU; if (auteurs.indexOf(a) < 0) auteurs.push(a); } });
-    auteurs.sort((a, b) => a.localeCompare(b, "fr"));
-    o.innerHTML = auteurs.length > 1
-      ? '<select id="sav-aut"><option value="">Tous les auteurs</option>' + auteurs.map(a => '<option value="' + esc(a) + '"'
-          + (a === SAV_AUT ? " selected" : "") + ">" + esc(a) + "</option>").join("") + "</select>" : "";
+    const ord = autOrdonne(auteurs);
+    let r = 0;
+    const num = {};
+    ord.forEach(a => { if (a !== AUT_INCONNU) num[a] = ++r; });
+    o.innerHTML = ord.length > 1
+      ? '<select id="sav-aut"><option value="">Tous les auteurs</option>' + ord.map(a => '<option value="' + esc(a) + '"'
+          + (a === SAV_AUT ? " selected" : "") + ">" + (num[a] ? num[a] + ". " : "") + esc(a) + "</option>").join("") + "</select>" : "";
   }
   $("sav-corps").innerHTML = SAV_VUE === "them" ? savRendreThem() : savRendreMat();
   if (!SAV_BRANCHE){ savBranche(); SAV_BRANCHE = true; }
