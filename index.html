@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 61 -->
+<!-- VERSION_CONSOLE: 62 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -424,7 +424,7 @@ background:var(--carte);border:2px solid var(--ard)}
 <div id="feuille-voile" class="feuille-voile"></div>
 <div id="feuille" class="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
   <div class="feuille-poignee"></div>
-  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-crayon" class="crayon" type="button" title="Corriger cette fiche" aria-label="Corriger cette fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/></svg></button><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
+  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-recharge" class="crayon" type="button" title="Recharger la fiche" aria-label="Recharger la fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg></button><button id="feuille-crayon" class="crayon" type="button" title="Corriger cette fiche" aria-label="Corriger cette fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/></svg></button><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
   <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
   <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
@@ -444,7 +444,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 61;
+  const ICI = 62;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -504,6 +504,11 @@ async function texte(depot, chemin){
 }
 async function texteBlob(depot, sha){
   const d = await api("/repos/" + depot + "/git/blobs/" + sha);
+  return decode(d.content || "");
+}
+async function texteFrais(depot, chemin){
+  /* contourne le cache du navigateur : la fiche vient d etre corrigee */
+  const d = await api("/repos/" + depot + "/contents/" + chemin + "?t=" + Date.now());
   return decode(d.content || "");
 }
 async function texteRobuste(depot, chemin){
@@ -1827,15 +1832,16 @@ function estFicheThematique(chemin){
 }
 let LU = null;   /* {depot, chemin, titre} du document ouvert dans la feuille */
 
-async function lireDansLecteur(depot, agent, chemin, titre, alerte){
+async function lireDansLecteur(depot, agent, chemin, titre, alerte, frais){
   const corps = $("feuille-corps");
   LU = {depot: depot, chemin: chemin, titre: titre || chemin.split("/").pop()};
   $("feuille-crayon").hidden = !estFicheThematique(chemin);
+  $("feuille-recharge").hidden = !estFicheThematique(chemin);
   feuilleOuvre(titre || chemin.split("/").pop());
   feuilleAlerte(alerte || "");
   corps.innerHTML = '<p class="mut">Chargement...</p>'; corps.scrollTop = 0;
   try {
-    const t = await texteRobuste(depot, chemin);
+    const t = frais ? await texteFrais(depot, chemin) : await texteRobuste(depot, chemin);
     const rel = (agent && chemin.indexOf(agent + "/") === 0) ? chemin.slice(agent.length + 1) : chemin;
     corps.innerHTML = (/\.md$/i.test(chemin) ? avecSommaire(mdVersHtml(savEpureMd(t))) : "<pre>" + esc(t) + "</pre>")
       + '<p class="sav-chemin">' + esc(rel) + "</p>";
@@ -1846,7 +1852,7 @@ async function lireDansLecteur(depot, agent, chemin, titre, alerte){
 }
 
 function lireTexteBrut(titre, sousTitre, contenu, alerte){
-  LU = null; $("feuille-crayon").hidden = true;
+  LU = null; $("feuille-crayon").hidden = true; $("feuille-recharge").hidden = true;
   feuilleOuvre(titre);
   feuilleAlerte(alerte || "");
   $("feuille-info").textContent = sousTitre || "";
@@ -2473,6 +2479,7 @@ async function corrEnregistre(){
     });
     CORR.sha = d.content.sha;
     $("corr-etat").textContent = "Enregistre.";
+    if (LU && LU.chemin === CORR.chemin) relisFiche();   /* la lecture derriere se met a jour seule */
   } catch(e){
     CORR.parties[CORR.i].corps = avant;
     $("corr-etat").textContent = (e.code === 409 || e.code === 422)
@@ -2480,7 +2487,12 @@ async function corrEnregistre(){
       : (e.code === 403 ? "La cle n a pas le droit d ecrire les contenus." : "Enregistrement impossible (" + (e.code || "") + ").");
   }
 }
+async function relisFiche(){
+  if (!LU) return;
+  await lireDansLecteur(LU.depot, SAV_AG, LU.chemin, LU.titre, "", true);
+}
 $("feuille-crayon").addEventListener("click", () => { if (LU) corrOuvre(LU.chemin, LU.titre); });
+$("feuille-recharge").addEventListener("click", relisFiche);
 $("corr-fermer").addEventListener("click", () => { $("corr").hidden = true; CORR = null; });
 $("corr-annul").addEventListener("click", corrListe);
 $("corr-enr").addEventListener("click", corrEnregistre);
