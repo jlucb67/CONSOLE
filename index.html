@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 59 -->
+<!-- VERSION_CONSOLE: 60 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -271,7 +271,11 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-mat{padding:4px 9px;display:inline-flex;align-items:center}
 .sav-mat svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sav-vert{background:#1e7c45}
-.sav-corr{background:#8a4f1d}
+.crayon{border:0;background:none;padding:4px 6px;cursor:pointer;color:#6b7280;line-height:0}
+.crayon:hover{color:#1c5a96}
+.crayon-rub{margin-left:8px;vertical-align:middle;opacity:.45}
+.crayon-rub:hover{opacity:1}
+.crayon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sav-aecrire{font-size:11.5px;color:var(--mut);font-style:italic;white-space:nowrap}
 .sav-h4{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 2px;padding:0 6px}
 .sav-porte h2{font-size:16px;margin:4px 0 10px}
@@ -420,7 +424,7 @@ background:var(--carte);border:2px solid var(--ard)}
 <div id="feuille-voile" class="feuille-voile"></div>
 <div id="feuille" class="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
   <div class="feuille-poignee"></div>
-  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
+  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-crayon" class="crayon" type="button" title="Corriger cette fiche" aria-label="Corriger cette fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/></svg></button><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
   <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
   <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
@@ -440,7 +444,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 59;
+  const ICI = 60;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1803,8 +1807,30 @@ function savEpureMd(txt){
   return out.join("\n").replace(/\n{3,}/g, "\n\n");
 }
 
+const CRAYON_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/></svg>';
+
+function crayonsDeRubrique(corps, brut){
+  /* un crayon par rubrique, a condition que les titres affiches correspondent un pour un
+     aux lignes "## " du texte : sinon on ne pose rien plutot que de viser a cote. */
+  const rubs = (brut || "").split("\n").filter(l => /^##\s+/.test(l));
+  const h2 = corps.querySelectorAll("h2");
+  if (!rubs.length || h2.length !== rubs.length) return;
+  h2.forEach((h, i) => {
+    h.insertAdjacentHTML("beforeend",
+      '<button class="crayon crayon-rub" type="button" data-rub="' + (i + 1)
+      + '" title="Corriger cette rubrique" aria-label="Corriger cette rubrique">' + CRAYON_SVG + "</button>");
+  });
+}
+
+function estFicheThematique(chemin){
+  return /\/savoir\/[^\/]+\.md$/i.test(chemin || "") && !/\/(VERSION|CATALOGUE)\.md$/i.test(chemin || "");
+}
+let LU = null;   /* {depot, chemin, titre} du document ouvert dans la feuille */
+
 async function lireDansLecteur(depot, agent, chemin, titre, alerte){
   const corps = $("feuille-corps");
+  LU = {depot: depot, chemin: chemin, titre: titre || chemin.split("/").pop()};
+  $("feuille-crayon").hidden = !estFicheThematique(chemin);
   feuilleOuvre(titre || chemin.split("/").pop());
   feuilleAlerte(alerte || "");
   corps.innerHTML = '<p class="mut">Chargement...</p>'; corps.scrollTop = 0;
@@ -1815,10 +1841,12 @@ async function lireDansLecteur(depot, agent, chemin, titre, alerte){
       + '<p class="sav-chemin">' + esc(rel) + "</p>";
     videoMonte(videoId(t));               /* le texte BRUT : l epure a retire la ligne de source */
     tcRendCliquables(corps);
+    if (estFicheThematique(chemin)) crayonsDeRubrique(corps, t);
   } catch(e){ corps.innerHTML = '<p class="vide">Lecture impossible : ' + esc(e.message) + "</p>"; }
 }
 
 function lireTexteBrut(titre, sousTitre, contenu, alerte){
+  LU = null; $("feuille-crayon").hidden = true;
   feuilleOuvre(titre);
   feuilleAlerte(alerte || "");
   $("feuille-info").textContent = sousTitre || "";
@@ -2060,7 +2088,7 @@ function savLigneThem(t){
     + "</div>"
     + '<span class="sav-droite">' + (inf
         ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Lire", "sav-vert")
-          + '<button class="sav-lire sav-corr" data-corr="' + esc(inf.chemin) + '" data-titre="' + esc(t.nom || t.slug) + '">Modifier</button>'
+
         : '<span class="sav-aecrire">fiche \u00e0 \u00e9crire</span>') + "</span></div>";
 }
 
@@ -2391,15 +2419,13 @@ function savBranche(){
       if (m) lireTexteBrut(m.doc, "R\u00e9sum\u00e9 du catalogue", m.resume, r.dataset.alerte || "");
       return;
     }
-    const c = ev.target.closest("[data-corr]");
-    if (c){ await corrOuvre(c.dataset.corr, c.dataset.titre); return; }
     const b = ev.target.closest("[data-lire]");
     if (b){ await lireDansLecteur(SAV_DEP, SAV_AG, b.dataset.lire, b.dataset.titre, b.dataset.alerte || ""); return; }
   });
 }
 
 
-async function corrOuvre(chemin, titre){
+async function corrOuvre(chemin, titre, rubrique){
   $("corr-titre").textContent = titre;
   $("corr").hidden = false;
   $("corr-zone").hidden = true;
@@ -2408,7 +2434,7 @@ async function corrOuvre(chemin, titre){
   try {
     const d = await api("/repos/" + SAV_DEP + "/contents/" + chemin.split("/").map(encodeURIComponent).join("/"));
     CORR = {chemin: chemin, sha: d.sha, parties: corrDecoupe(decode(d.content)), i: -1};
-    corrListe();
+    if (rubrique >= 0 && rubrique < CORR.parties.length) corrEdite(rubrique); else corrListe();
     $("corr-etat").textContent = "";
   } catch(e){
     $("corr-etat").textContent = e.code === 404 ? "Fiche introuvable." : "Lecture impossible (" + (e.code || "") + ").";
@@ -2454,6 +2480,7 @@ async function corrEnregistre(){
       : (e.code === 403 ? "La cle n a pas le droit d ecrire les contenus." : "Enregistrement impossible (" + (e.code || "") + ").");
   }
 }
+$("feuille-crayon").addEventListener("click", () => { if (LU) corrOuvre(LU.chemin, LU.titre); });
 $("corr-fermer").addEventListener("click", () => { $("corr").hidden = true; CORR = null; });
 $("corr-annul").addEventListener("click", corrListe);
 $("corr-enr").addEventListener("click", corrEnregistre);
@@ -2462,6 +2489,10 @@ $("corr-parties").addEventListener("click", ev => {
   if (b) corrEdite(parseInt(b.dataset.part, 10));
 });
 
+$("feuille-corps").addEventListener("click", ev => {
+  const cr = ev.target.closest ? ev.target.closest("[data-rub]") : null;
+  if (cr && LU){ corrOuvre(LU.chemin, LU.titre, parseInt(cr.dataset.rub, 10)); return; }
+});
 $("feuille-corps").addEventListener("click", ev => {
   const b = ev.target.closest ? ev.target.closest(".tc") : null;
   if (b) videoSaut(parseInt(b.getAttribute("data-sec"), 10));
