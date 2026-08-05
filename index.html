@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 56 -->
+<!-- VERSION_CONSOLE: 57 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -284,6 +284,12 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
 .sav-chemin{margin-top:28px;padding-top:8px;border-top:1px solid var(--fil);font-size:10.5px;color:var(--mut);word-break:break-all}
 #sav-txtbloc{margin:-2px 0 10px}
+.corr{position:fixed;inset:0;z-index:60;background:var(--fond,#fff);overflow:auto;padding:12px}
+.corr-barre{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.corr-etat{font-size:.9rem;margin:6px 0;min-height:1.2em}
+.corr-parties button{display:block;width:100%;text-align:left;margin:4px 0;padding:10px;border:1px solid #ccc;border-radius:6px;background:#fafafa;font:inherit}
+#corr-texte{width:100%;min-height:52vh;font:inherit;line-height:1.5;padding:8px;border:1px solid #ccc;border-radius:6px}
+.corr-pied{display:flex;gap:8px;margin-top:8px}
 #sav-btntxt,#sav-btnoeu{font-family:inherit;font-size:12px;color:var(--mut);background:none;border:1px dashed var(--fil);border-radius:6px;padding:5px 10px;cursor:pointer}
 #sav-btntxt:hover,#sav-btnoeu:hover{color:var(--enc)}
 .sav-extrait{margin-top:3px;font-size:12px;color:var(--mut);line-height:1.5}
@@ -406,6 +412,15 @@ background:var(--carte);border:2px solid var(--ard)}
   <div class="feuille-poignee"></div>
   <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
+<div id="corr" class="corr" hidden role="dialog" aria-modal="true" aria-labelledby="corr-titre">
+  <div class="corr-barre"><b id="corr-titre"></b><button id="corr-fermer" class="doct-btn">Fermer</button></div>
+  <div id="corr-etat" class="corr-etat"></div>
+  <div id="corr-parties" class="corr-parties"></div>
+  <div id="corr-zone" hidden>
+    <textarea id="corr-texte" spellcheck="true"></textarea>
+    <div class="corr-pied"><button id="corr-enr" class="doct-btn">Enregistrer</button><button id="corr-annul" class="doct-btn">Revenir aux parties</button></div>
+  </div>
+</div>
   <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
   <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
   <div id="voix" class="voix" hidden><button type="button" id="voix-prec" title="Paragraphe précédent" aria-label="Paragraphe précédent">◀◀</button><button type="button" id="voix-lire">▶ Écouter</button><button type="button" id="voix-suiv" title="Paragraphe suivant" aria-label="Paragraphe suivant">▶▶</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
@@ -424,7 +439,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 56;
+  const ICI = 57;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -2044,6 +2059,7 @@ function savLigneThem(t){
     + "</div>"
     + '<span class="sav-droite">' + (inf
         ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Lire", "sav-vert")
+          + '<button class="sav-lire sav-corr" data-corr="' + esc(inf.chemin) + '" data-titre="' + esc(t.nom || t.slug) + '">Modifier</button>'
         : '<span class="sav-aecrire">fiche \u00e0 \u00e9crire</span>') + "</span></div>";
 }
 
@@ -2080,6 +2096,34 @@ function savRendreThem(){
           + savBtnLire(f.chemin, f.nom, "", "Lire", "sav-vert") + "</span></div>").join("") + "</div>";
   }
   return h;
+}
+
+/* ----- correction d une fiche thematique, partie par partie (v57) ----- */
+let CORR = null;   /* {chemin, sha, parties: [{titre, corps}], i} */
+
+function corrDecoupe(txt){
+  /* une partie commence a une ligne "## ". Ce qui precede la premiere est l en-tete. */
+  const lignes = (txt || "").split("\n"), parties = [];
+  let cour = {titre: "En-tete", corps: []};
+  lignes.forEach(l => {
+    if (/^##\s+/.test(l)){
+      parties.push({titre: cour.titre, corps: cour.corps.join("\n")});
+      cour = {titre: l.replace(/^##\s+/, ""), corps: [l]};
+    } else cour.corps.push(l);
+  });
+  parties.push({titre: cour.titre, corps: cour.corps.join("\n")});
+  return parties.filter((p, i) => i > 0 || p.corps.trim() !== "");
+}
+function corrRecolle(parties){ return parties.map(p => p.corps).join("\n"); }
+function corrCadratins(txt){
+  const n = ((txt || "").match(/[\u2013\u2014]/g) || []).length;
+  return n;
+}
+function encode64(s){
+  const oct = new TextEncoder().encode(s);
+  let bin = "";
+  for (let i = 0; i < oct.length; i++) bin += String.fromCharCode(oct[i]);
+  return btoa(bin);
 }
 
 function savProfondeurs(m){
@@ -2346,11 +2390,76 @@ function savBranche(){
       if (m) lireTexteBrut(m.doc, "R\u00e9sum\u00e9 du catalogue", m.resume, r.dataset.alerte || "");
       return;
     }
+    const c = ev.target.closest("[data-corr]");
+    if (c){ await corrOuvre(c.dataset.corr, c.dataset.titre); return; }
     const b = ev.target.closest("[data-lire]");
     if (b){ await lireDansLecteur(SAV_DEP, SAV_AG, b.dataset.lire, b.dataset.titre, b.dataset.alerte || ""); return; }
   });
 }
 
+
+async function corrOuvre(chemin, titre){
+  $("corr-titre").textContent = titre;
+  $("corr").hidden = false;
+  $("corr-zone").hidden = true;
+  $("corr-parties").innerHTML = "";
+  $("corr-etat").textContent = "Lecture de la fiche...";
+  try {
+    const d = await api("/repos/" + SAV_DEP + "/contents/" + chemin.split("/").map(encodeURIComponent).join("/"));
+    CORR = {chemin: chemin, sha: d.sha, parties: corrDecoupe(decode(d.content)), i: -1};
+    corrListe();
+    $("corr-etat").textContent = "";
+  } catch(e){
+    $("corr-etat").textContent = e.code === 404 ? "Fiche introuvable." : "Lecture impossible (" + (e.code || "") + ").";
+  }
+}
+function corrListe(){
+  $("corr-zone").hidden = true;
+  $("corr-parties").hidden = false;
+  $("corr-parties").innerHTML = CORR.parties.map((p, i) =>
+    '<button type="button" data-part="' + i + '">' + esc(p.titre) + "</button>").join("");
+}
+function corrEdite(i){
+  CORR.i = i;
+  $("corr-parties").hidden = true;
+  $("corr-zone").hidden = false;
+  $("corr-texte").value = CORR.parties[i].corps;
+  $("corr-etat").textContent = "";
+  $("corr-texte").focus();
+}
+async function corrEnregistre(){
+  if (!CORR || CORR.i < 0) return;
+  const neuf = $("corr-texte").value;
+  const n = corrCadratins(neuf);
+  if (n){ $("corr-etat").textContent = "Refuse : " + n + " tiret(s) cadratin(s). Remplace-les par un tiret simple."; return; }
+  const avant = CORR.parties[CORR.i].corps;
+  CORR.parties[CORR.i].corps = neuf;
+  $("corr-etat").textContent = "Enregistrement...";
+  try {
+    const d = await api("/repos/" + SAV_DEP + "/contents/" + CORR.chemin.split("/").map(encodeURIComponent).join("/"), {
+      method: "PUT",
+      body: JSON.stringify({
+        message: "Fiche corrigee depuis la console : " + CORR.parties[CORR.i].titre,
+        content: encode64(corrRecolle(CORR.parties)),
+        sha: CORR.sha
+      })
+    });
+    CORR.sha = d.content.sha;
+    $("corr-etat").textContent = "Enregistre.";
+  } catch(e){
+    CORR.parties[CORR.i].corps = avant;
+    $("corr-etat").textContent = (e.code === 409 || e.code === 422)
+      ? "Quelqu un a ecrit dans cette fiche depuis que tu l as ouverte. Rien n est enregistre : ferme et rouvre la fiche."
+      : (e.code === 403 ? "La cle n a pas le droit d ecrire les contenus." : "Enregistrement impossible (" + (e.code || "") + ").");
+  }
+}
+$("corr-fermer").addEventListener("click", () => { $("corr").hidden = true; CORR = null; });
+$("corr-annul").addEventListener("click", corrListe);
+$("corr-enr").addEventListener("click", corrEnregistre);
+$("corr-parties").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-part]");
+  if (b) corrEdite(parseInt(b.dataset.part, 10));
+});
 
 $("feuille-corps").addEventListener("click", ev => {
   const b = ev.target.closest ? ev.target.closest(".tc") : null;
