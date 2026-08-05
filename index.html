@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 60 -->
+<!-- VERSION_CONSOLE: 61 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -289,7 +289,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-sommaire a.sav-somm2{padding-left:14px;font-size:12.5px}
 .sav-chemin{margin-top:28px;padding-top:8px;border-top:1px solid var(--fil);font-size:10.5px;color:var(--mut);word-break:break-all}
 #sav-txtbloc{margin:-2px 0 10px}
-.corr{position:fixed;inset:0;z-index:60;background:var(--fond,#fff);overflow:auto;padding:12px}
+.corr{position:fixed;inset:0;z-index:70;background:var(--fond,#fff);overflow:auto;padding:12px}
 .corr-barre{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .corr-etat{font-size:.9rem;margin:6px 0;min-height:1.2em}
 .corr-parties button{display:block;width:100%;text-align:left;margin:4px 0;padding:10px;border:1px solid #ccc;border-radius:6px;background:#fafafa;font:inherit}
@@ -444,7 +444,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 60;
+  const ICI = 61;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -1813,9 +1813,9 @@ function crayonsDeRubrique(corps, brut){
   /* un crayon par rubrique, a condition que les titres affiches correspondent un pour un
      aux lignes "## " du texte : sinon on ne pose rien plutot que de viser a cote. */
   const rubs = (brut || "").split("\n").filter(l => /^##\s+/.test(l));
-  const h2 = corps.querySelectorAll("h2");
-  if (!rubs.length || h2.length !== rubs.length) return;
-  h2.forEach((h, i) => {
+  const titres = corps.querySelectorAll("h3");   /* mdVersHtml rend "##" en h3 : "#" vaut h2 */
+  if (!rubs.length || titres.length !== rubs.length) return;
+  titres.forEach((h, i) => {
     h.insertAdjacentHTML("beforeend",
       '<button class="crayon crayon-rub" type="button" data-rub="' + (i + 1)
       + '" title="Corriger cette rubrique" aria-label="Corriger cette rubrique">' + CRAYON_SVG + "</button>");
