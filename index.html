@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 58 -->
+<!-- VERSION_CONSOLE: 59 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -408,11 +408,6 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="sav-corps"></div>
 </section>
 
-<div id="feuille-voile" class="feuille-voile"></div>
-<div id="feuille" class="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
-  <div class="feuille-poignee"></div>
-  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
-  <div id="feuille-alerte" class="feuille-alerte" hidden></div>
 <div id="corr" class="corr" hidden role="dialog" aria-modal="true" aria-labelledby="corr-titre">
   <div class="corr-barre"><b id="corr-titre"></b><button id="corr-fermer" class="doct-btn">Fermer</button></div>
   <div id="corr-etat" class="corr-etat"></div>
@@ -422,6 +417,11 @@ background:var(--carte);border:2px solid var(--ard)}
     <div class="corr-pied"><button id="corr-enr" class="doct-btn">Enregistrer</button><button id="corr-annul" class="doct-btn">Revenir aux parties</button></div>
   </div>
 </div>
+<div id="feuille-voile" class="feuille-voile"></div>
+<div id="feuille" class="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
+  <div class="feuille-poignee"></div>
+  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
+  <div id="feuille-alerte" class="feuille-alerte" hidden></div>
   <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
   <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
   <div id="voix" class="voix" hidden><button type="button" id="voix-prec" title="Paragraphe précédent" aria-label="Paragraphe précédent">◀◀</button><button type="button" id="voix-lire">▶ Écouter</button><button type="button" id="voix-suiv" title="Paragraphe suivant" aria-label="Paragraphe suivant">▶▶</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
@@ -440,7 +440,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 58;
+  const ICI = 59;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
