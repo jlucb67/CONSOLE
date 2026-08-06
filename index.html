@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 62 -->
+<!-- VERSION_CONSOLE: 63 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -295,8 +295,8 @@ background:var(--carte);border:2px solid var(--ard)}
 .corr-parties button{display:block;width:100%;text-align:left;margin:4px 0;padding:10px;border:1px solid #ccc;border-radius:6px;background:#fafafa;font:inherit}
 #corr-texte{width:100%;min-height:52vh;font:inherit;line-height:1.5;padding:8px;border:1px solid #ccc;border-radius:6px}
 .corr-pied{display:flex;gap:8px;margin-top:8px}
-#sav-btntxt,#sav-btnoeu{font-family:inherit;font-size:12px;color:var(--mut);background:none;border:1px dashed var(--fil);border-radius:6px;padding:5px 10px;cursor:pointer}
-#sav-btntxt:hover,#sav-btnoeu:hover{color:var(--enc)}
+#sav-btnthem,#sav-btntxt,#sav-btnoeu{font-family:inherit;font-size:12px;color:var(--mut);background:none;border:1px dashed var(--fil);border-radius:6px;padding:5px 10px;cursor:pointer}
+#sav-btnthem:hover,#sav-btntxt:hover,#sav-btnoeu:hover{color:var(--enc)}
 .sav-extrait{margin-top:3px;font-size:12px;color:var(--mut);line-height:1.5}
 .sav-extrait b{color:var(--enc)}
 .sav-g{flex:1;min-width:0}
@@ -408,7 +408,7 @@ background:var(--carte);border:2px solid var(--ard)}
     <span class="sav-mention" id="sav-mention" hidden>pas encore de référentiel thématique</span>
   </div>
   <div class="sav-tete2" id="sav-outils2"></div>
-  <div id="sav-txtbloc" hidden><button id="sav-btntxt" type="button">Chercher dans nos fiches</button><button id="sav-btnoeu" type="button">Chercher dans les oeuvres</button><div id="sav-restxt"></div></div>
+  <div id="sav-txtbloc" hidden><button id="sav-btnthem" type="button" hidden>Chercher dans les fiches thématiques</button><button id="sav-btntxt" type="button">Chercher dans nos fiches de lecture</button><button id="sav-btnoeu" type="button">Chercher dans les oeuvres</button><div id="sav-restxt"></div></div>
   <div id="sav-corps"></div>
 </section>
 
@@ -444,7 +444,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 62;
+  const ICI = 63;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -2194,6 +2194,9 @@ function savCiblesTexte(){
   SAV_THEM.forEach(t => { const inf = savFicheDe(t); if (inf) met(inf.chemin, t.nom || t.slug); });
   return out;
 }
+function savCiblesThem(){
+  return SAV_Z3.filter(f => estFicheThematique(f.chemin)).map(f => ({chemin: f.chemin, titre: f.nom.replace(/\.md$/i, "")}));
+}
 function savCiblesOeuvres(){
   const vus = {}, out = [];
   SAV_MAT.forEach(m => {
@@ -2203,13 +2206,14 @@ function savCiblesOeuvres(){
 }
 async function savChercheTextes(quoi){
   if (SAV_TXT_OCC) return;
-  const oeuvres = (quoi === "oeuvres");
+  const oeuvres = (quoi === "oeuvres"), them = (quoi === "them");
   const q = normStable(SAV_Q.trim());
-  const btn = $(oeuvres ? "sav-btnoeu" : "sav-btntxt"), zone = $("sav-restxt");
-  const libelle = oeuvres ? "Chercher dans les oeuvres" : "Chercher dans nos fiches";
+  const btn = $(them ? "sav-btnthem" : (oeuvres ? "sav-btnoeu" : "sav-btntxt")), zone = $("sav-restxt");
+  const libelle = them ? "Chercher dans les fiches th\u00e9matiques"
+    : (oeuvres ? "Chercher dans les oeuvres" : "Chercher dans nos fiches de lecture");
   if (q.length < 3){ zone.innerHTML = ""; return; }
   SAV_TXT_OCC = true;
-  const cibles = oeuvres ? savCiblesOeuvres() : savCiblesTexte();
+  const cibles = them ? savCiblesThem() : (oeuvres ? savCiblesOeuvres() : savCiblesTexte());
   let n = 0;
   for (const c of cibles){
     n++;
@@ -2235,11 +2239,12 @@ async function savChercheTextes(quoi){
   }
   btn.textContent = libelle;
   zone.innerHTML = res.length
-    ? '<div class="sav-acap">' + (oeuvres ? "Dans les oeuvres" : "Dans nos fiches") + '</div>' + res.map(r =>
+    ? '<div class="sav-acap">' + (them ? "Dans les fiches th\u00e9matiques" : (oeuvres ? "Dans les oeuvres" : "Dans nos fiches de lecture")) + '</div>' + res.map(r =>
         '<div class="sav-ligne"><div class="sav-g"><span class="sav-nom">' + esc(r.titre) + '</span>'
         + '<div class="sav-extrait">' + r.extrait + "</div></div>"
         + '<span class="sav-droite">' + savBtnLire(r.chemin, r.titre, "", "Ouvrir", "sav-long") + "</span></div>").join("")
-    : '<p class="sav-vide">' + (oeuvres ? "Rien dans les oeuvres pour cette recherche." : "Rien dans nos fiches pour cette recherche.") + '</p>';
+    : '<p class="sav-vide">' + (them ? "Rien dans les fiches th\u00e9matiques pour cette recherche."
+      : (oeuvres ? "Rien dans les oeuvres pour cette recherche." : "Rien dans nos fiches de lecture pour cette recherche.")) + '</p>';
   SAV_TXT_OCC = false;
 }
 function savParseAcapter(txt){
@@ -2389,6 +2394,9 @@ function rendreSav(){
       ? '<select id="sav-aut"><option value="">Tous les auteurs</option>' + ord.map(a => '<option value="' + esc(a) + '"'
           + (a === SAV_AUT ? " selected" : "") + ">" + (num[a] ? num[a] + ". " : "") + esc(a) + "</option>").join("") + "</select>" : "";
   }
+  $("sav-btnthem").hidden = SAV_VUE !== "them";
+  $("sav-btntxt").hidden = SAV_VUE === "them";
+  $("sav-btnoeu").hidden = SAV_VUE === "them";
   $("sav-corps").innerHTML = SAV_VUE === "them" ? savRendreThem() : savRendreMat();
   if (!SAV_BRANCHE){ savBranche(); SAV_BRANCHE = true; }
   const mq = $("sav-mq"); if (mq) mq.onchange = ev => { SAV_MQ = ev.target.value; rendreSav(); };
@@ -2407,13 +2415,14 @@ function savBranche(){
     catch(e){ etat("Lecture impossible : " + e.message, 1); }
     finally { $("voile").hidden = true; }
   });
-  $("sav-bthem").addEventListener("click", () => { if (!SAV_THEM.length) return; SAV_VUE = "them"; rendreSav(); });
-  $("sav-bmat").addEventListener("click", () => { SAV_VUE = "mat"; rendreSav(); });
+  $("sav-bthem").addEventListener("click", () => { if (!SAV_THEM.length) return; SAV_VUE = "them"; $("sav-restxt").innerHTML = ""; rendreSav(); });
+  $("sav-bmat").addEventListener("click", () => { SAV_VUE = "mat"; $("sav-restxt").innerHTML = ""; rendreSav(); });
   $("sav-q").addEventListener("input", ev => {
     SAV_Q = ev.target.value.trim();
     $("sav-restxt").innerHTML = ""; $("sav-txtbloc").hidden = SAV_Q.length < 3;
     rendreSav(); $("sav-q").focus();
   });
+  $("sav-btnthem").addEventListener("click", () => savChercheTextes("them"));
   $("sav-btntxt").addEventListener("click", () => savChercheTextes("fiches"));
   $("sav-btnoeu").addEventListener("click", () => savChercheTextes("oeuvres"));
   $("sav-corps").addEventListener("click", async ev => {
