@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 65 -->
+<!-- VERSION_CONSOLE: 66 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -444,7 +444,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 65;
+  const ICI = 66;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -2083,7 +2083,11 @@ function savBtnLire(chemin, titre, alerte, libelle, classe){
 }
 
 function savFicheDe(t){
-  return (t.fiche && SAV_IDX[t.fiche]) || SAV_IDX[t.slug + ".md"] || null;
+  /* Une fiche thematique vit dans savoir/ de l'agent, et NULLE PART AILLEURS.
+     Sans cette condition, un livret nomme sante.md ou europe.md se faisait passer pour
+     une fiche de Zone 3 et faussait l'etat d'avancement du travail. */
+  const enZone3 = f => (f && /\/savoir\//.test(f.chemin || "")) ? f : null;
+  return enZone3(t.fiche && SAV_IDX[t.fiche]) || enZone3(SAV_IDX[t.slug + ".md"]) || null;
 }
 function savLigneThem(t){
   const inf = savFicheDe(t);
@@ -2093,7 +2097,7 @@ function savLigneThem(t){
     + (al.length ? '<div class="sav-tgs">' + al.map(a => '<span class="sav-tg">' + esc(a) + "</span>").join(" ") + "</div>" : "")
     + "</div>"
     + '<span class="sav-droite">' + (inf
-        ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Notre fiche", "sav-vert")
+        ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Lire", "sav-vert")
 
         : '<span class="sav-aecrire">fiche \u00e0 \u00e9crire</span>') + "</span></div>";
 }
