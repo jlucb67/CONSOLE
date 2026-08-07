@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 64 -->
+<!-- VERSION_CONSOLE: 65 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -444,7 +444,7 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 64;
+  const ICI = 65;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
@@ -2093,7 +2093,7 @@ function savLigneThem(t){
     + (al.length ? '<div class="sav-tgs">' + al.map(a => '<span class="sav-tg">' + esc(a) + "</span>").join(" ") + "</div>" : "")
     + "</div>"
     + '<span class="sav-droite">' + (inf
-        ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Lire", "sav-vert")
+        ? savBtnLire(inf.chemin, t.nom || t.slug, "", "Notre fiche", "sav-vert")
 
         : '<span class="sav-aecrire">fiche \u00e0 \u00e9crire</span>') + "</span></div>";
 }
@@ -2323,6 +2323,11 @@ function savCibleLongue(m){
   return "";
 }
 
+function matLibelle(mat){
+  /* un livret ou un plan du programme est une SOURCE, pas une de nos fiches thematiques :
+     l'intitule doit le dire, sans rien renommer au depot. */
+  return /^programme$/i.test(mat || "") ? "Mat\u00e9riaux programmatiques" : mat;
+}
 function savRendreMat(){
   const res = SAV_MAT.filter(m => savCorrespond(m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau + " " + m.fichier, SAV_Q));
   const catalogues = res.filter(m => !m.hors), horsCat = res.filter(m => m.hors);
@@ -2345,7 +2350,7 @@ function savRendreMat(){
     const types = matOrdonne(Object.keys(parMat));
     h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + (numero[a] ? numero[a] + ". " : "") + esc(a)
       + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
-      + types.map(t => '<h4 class="sav-h4">' + esc(t) + "</h4>" + parMat[t].sort((x, y) => x.doc.localeCompare(y.doc, "fr")).map(savLigneMat).join("")).join("")
+      + types.map(t => '<h4 class="sav-h4">' + esc(matLibelle(t)) + "</h4>" + parMat[t].sort((x, y) => x.doc.localeCompare(y.doc, "fr")).map(savLigneMat).join("")).join("")
       + "</div></div>";
   });
   if (horsCat.length && !SAV_AUT){
