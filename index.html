@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 67 -->
+<!-- VERSION_CONSOLE: 68 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -1684,6 +1684,25 @@ function voixSurligne(n){
   c.querySelectorAll(".voix-lu").forEach(x => x.classList.remove("voix-lu"));
   if (n){ n.classList.add("voix-lu"); if (n.scrollIntoView) n.scrollIntoView({block: "center", behavior: "smooth"}); }
 }
+/* Verrou d ecran (Screen Wake Lock). Empeche le telephone de s endormir PENDANT la lecture.
+   Le seul type existant est "screen" : le verrou systeme qui aurait laisse tourner le processeur
+   ecran eteint a ete abandonne par la specification. Une page web ne peut donc pas parler en veille.
+   Le verrou tombe des que l onglet devient invisible : on le redemande au retour. */
+let VOIX_VERROU = null;
+async function voixVerrouPrend(){
+  if (VOIX_VERROU || !("wakeLock" in navigator)) return;
+  try { VOIX_VERROU = await navigator.wakeLock.request("screen");
+        VOIX_VERROU.addEventListener("release", () => { VOIX_VERROU = null; }); }
+  catch (e) { VOIX_VERROU = null; }      /* refus possible : batterie faible, economie d energie */
+}
+function voixVerrouRend(){
+  if (!VOIX_VERROU) return;
+  const v = VOIX_VERROU; VOIX_VERROU = null;
+  try { v.release(); } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && VOIX_ON) voixVerrouPrend();
+});
 function voixSuite(){
   if (!VOIX_ON || VOIX_I >= VOIX_MORCEAUX.length){ voixArrete(); return; }
   const m = VOIX_MORCEAUX[VOIX_I];
@@ -1698,14 +1717,14 @@ function voixSuite(){
 }
 function voixLance(){
   if (!voixDispo()) return;
-  if (speechSynthesis.speaking && speechSynthesis.paused){ speechSynthesis.resume(); VOIX_ON = true; voixBoutons(); return; }
-  if (VOIX_ON){ speechSynthesis.pause(); VOIX_ON = false; voixBoutons(); return; }
+  if (speechSynthesis.speaking && speechSynthesis.paused){ speechSynthesis.resume(); VOIX_ON = true; voixVerrouPrend(); voixBoutons(); return; }
+  if (VOIX_ON){ speechSynthesis.pause(); VOIX_ON = false; voixVerrouRend(); voixBoutons(); return; }
   const corps = $("feuille-corps");
   if (!VOIX_MORCEAUX.length || VOIX_I >= VOIX_MORCEAUX.length){
     VOIX_MORCEAUX = voixDecoupe(corps); VOIX_I = 0;
   }
   if (!VOIX_MORCEAUX.length){ voixEtat("rien \u00e0 lire"); return; }
-  VOIX_ON = true; voixBoutons(); voixSuite();
+  VOIX_ON = true; voixVerrouPrend(); voixBoutons(); voixSuite();
 }
 function voixBouge(pas){
   if (!voixDispo()) return;
@@ -1724,6 +1743,7 @@ function voixBouge(pas){
 function voixArrete(){
   VOIX_ON = false;
   VOIX_JETON++;
+  voixVerrouRend();
   if (voixDispo()) speechSynthesis.cancel();
   VOIX_MORCEAUX = []; VOIX_I = 0;
   voixSurligne(null); voixEtat(""); voixBoutons();
