@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 69 -->
+<!-- VERSION_CONSOLE: 70 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -342,7 +342,14 @@ background:var(--carte);border:2px solid var(--ard)}
 @media print{
   @page{ margin:18mm 16mm; }
   html,body{ background:#fff !important; color:#111 !important; }
-  body>*:not(.feuille){ display:none !important; }
+  /* La feuille est enfouie sous plusieurs conteneurs (body > .page > .corps > .feuille). Masquer
+     les enfants directs de body masquait donc la feuille avec eux : document vide. On ne suppose
+     plus aucune profondeur : feuilleImprime marque le CHEMIN de la feuille jusqu au body, et on
+     masque uniquement les FRERES de ce chemin. Si la structure change un jour, cela tient encore. */
+  .impr-chemin>*:not(.impr-chemin):not(.feuille){ display:none !important; }
+  .impr-chemin{ display:block !important; position:static !important; max-width:none !important;
+                width:auto !important; margin:0 !important; padding:0 !important;
+                overflow:visible !important; height:auto !important; background:#fff !important; }
   .feuille-voile, .feuille-poignee, .feuille-barre, .feuille-alerte,
   #voix, #video, #video-pied{ display:none !important; }
   .feuille{ position:static !important; transform:none !important; box-shadow:none !important;
@@ -1809,6 +1816,7 @@ function feuilleOuvre(titre){
   videoMonte("");
   document.body.style.overflow = "hidden";
 }
+let IMPR_TITRE = "";
 function feuilleImprime(){
   const t = $("feuille-titre"), i = $("feuille-info"), tete = $("impr-tete");
   if (!tete) return;
@@ -1817,6 +1825,10 @@ function feuilleImprime(){
   const jour = String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear();
   $("impr-sous").textContent = ((i && i.textContent) ? i.textContent + ", " : "") + "\u00c9dit\u00e9 le " + jour;
   tete.hidden = false;                 /* la regle d impression le montre, l ecran ne le voit pas */
+  for (let n = $("feuille").parentElement; n && n !== document.documentElement; n = n.parentElement)
+    n.classList.add("impr-chemin");    /* le chemin de la feuille jusqu au body, quelle qu en soit la profondeur */
+  IMPR_TITRE = document.title;         /* le navigateur nomme le PDF d apres le titre du document */
+  document.title = ($("impr-titre").textContent || "Fiche") + " - " + jour.replace(/\//g, "-");
   if (typeof voixArrete === "function") voixArrete();   /* on n imprime pas en parlant */
   window.print();
 }
@@ -2609,7 +2621,11 @@ $("voix-vit").addEventListener("change", ev => {
 });
 $("feuille-fermer").addEventListener("click", feuilleFerme);
 $("feuille-pdf").addEventListener("click", feuilleImprime);
-window.addEventListener("afterprint", () => { const t = $("impr-tete"); if (t) t.hidden = true; });
+window.addEventListener("afterprint", () => {
+  const t = $("impr-tete"); if (t) t.hidden = true;
+  document.querySelectorAll(".impr-chemin").forEach(n => n.classList.remove("impr-chemin"));
+  if (IMPR_TITRE) { document.title = IMPR_TITRE; IMPR_TITRE = ""; }
+});
 $("feuille-voile").addEventListener("click", feuilleFerme);
 document.addEventListener("keydown", ev => { if (ev.key === "Escape") feuilleFerme(); });
 async function vue(nom){
