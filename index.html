@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 68 -->
+<!-- VERSION_CONSOLE: 69 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -333,6 +333,43 @@ background:var(--carte);border:2px solid var(--ard)}
 .bib-res{margin:4px 0 6px;font-size:13.5px}
 .bib-tagb{font:inherit;font-size:11.5px;border:1px solid var(--fil);background:var(--pap);border-radius:10px;padding:1px 8px;cursor:pointer;color:var(--mut)}
 .bib-tagb:hover{color:var(--enc);border-color:var(--enc)}
+
+/* ---------- mise en page du document imprime (v69)
+   Le PDF n est pas fabrique ni stocke : le navigateur l imprime depuis la page, donc il ne peut
+   jamais etre perime. Difficulte propre a la feuille : elle est en position fixe, limitee a 88vh,
+   et son corps defile. A l impression cela ne sort qu un ecran. On la remet donc en flux normal,
+   hauteur libre, defilement supprime, sinon le document est tronque sans prevenir. */
+@media print{
+  @page{ margin:18mm 16mm; }
+  html,body{ background:#fff !important; color:#111 !important; }
+  body>*:not(.feuille){ display:none !important; }
+  .feuille-voile, .feuille-poignee, .feuille-barre, .feuille-alerte,
+  #voix, #video, #video-pied{ display:none !important; }
+  .feuille{ position:static !important; transform:none !important; box-shadow:none !important;
+            border-radius:0 !important; max-height:none !important; width:auto !important;
+            left:auto !important; right:auto !important; bottom:auto !important; display:block !important;
+            background:#fff !important; }
+  .feuille-corps{ overflow:visible !important; max-height:none !important; padding:0 !important;
+                  font-family:"Iowan Old Style",Palatino,Georgia,serif; font-size:11.5pt; line-height:1.5;
+                  color:#111 !important; }
+  #impr-tete{ display:block !important; border-bottom:1.5pt solid #111; margin:0 0 14pt; padding:0 0 8pt; }
+  #impr-tete h1{ font-family:"Iowan Old Style",Palatino,Georgia,serif; font-size:20pt; line-height:1.2;
+                 margin:0 0 4pt; border:0; padding:0; color:#111; }
+  #impr-tete p{ margin:0; font-size:9pt; color:#555; }
+  .feuille-corps h2{ font-size:13.5pt; margin:16pt 0 5pt; border:0; padding:0;
+                     break-after:avoid; page-break-after:avoid; }
+  .feuille-corps h3{ font-size:11.5pt; margin:11pt 0 3pt; break-after:avoid; page-break-after:avoid; }
+  .feuille-corps p, .feuille-corps li{ orphans:3; widows:3; }
+  .feuille-corps li{ break-inside:avoid; page-break-inside:avoid; margin:0 0 3pt; }
+  .feuille-corps a{ color:#111 !important; text-decoration:none; }
+  .feuille-corps blockquote{ border-left:2pt solid #999; margin:8pt 0; padding-left:10pt; font-style:italic; }
+  /* le sommaire est conserve, demande de JL : il sert de table des matieres sur papier */
+  .sav-sommaire{ background:#fff !important; border:0 !important; border-bottom:.5pt solid #bbb !important;
+                 border-radius:0 !important; padding:0 0 10pt !important; margin:0 0 14pt !important;
+                 break-after:avoid; page-break-after:avoid; font-size:10pt; }
+  .sav-sommaire a{ color:#111 !important; padding:1pt 0 !important; }
+  .marq, .sav-etiq, .doct-btn, .crayon, button{ display:none !important; }
+}
 </style></head>
 <body><div class="page">
 <h1>Console d'administration</h1>
@@ -424,11 +461,12 @@ background:var(--carte);border:2px solid var(--ard)}
 <div id="feuille-voile" class="feuille-voile"></div>
 <div id="feuille" class="feuille" role="dialog" aria-modal="true" aria-labelledby="feuille-titre">
   <div class="feuille-poignee"></div>
-  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-recharge" class="crayon" type="button" title="Recharger la fiche" aria-label="Recharger la fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg></button><button id="feuille-crayon" class="crayon" type="button" title="Corriger cette fiche" aria-label="Corriger cette fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/></svg></button><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
+  <div class="feuille-barre"><div class="feuille-titres"><b id="feuille-titre"></b><span class="mut" id="feuille-info"></span></div><button id="feuille-recharge" class="crayon" type="button" title="Recharger la fiche" aria-label="Recharger la fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg></button><button id="feuille-crayon" class="crayon" type="button" title="Corriger cette fiche" aria-label="Corriger cette fiche" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M14.5 6.5l3 3"/></svg></button><button id="feuille-pdf" class="crayon" type="button" title="Enregistrer en PDF" aria-label="Enregistrer en PDF"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/></svg></button><button id="feuille-fermer" class="doct-btn">Fermer</button></div>
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
   <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
   <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
   <div id="voix" class="voix" hidden><button type="button" id="voix-prec" title="Paragraphe précédent" aria-label="Paragraphe précédent">◀◀</button><button type="button" id="voix-lire">▶ Écouter</button><button type="button" id="voix-suiv" title="Paragraphe suivant" aria-label="Paragraphe suivant">▶▶</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
+  <div id="impr-tete" hidden><h1 id="impr-titre"></h1><p id="impr-sous"></p></div>
   <div id="feuille-corps" class="feuille-corps doct-corps"></div>
 </div>
 
@@ -1771,6 +1809,17 @@ function feuilleOuvre(titre){
   videoMonte("");
   document.body.style.overflow = "hidden";
 }
+function feuilleImprime(){
+  const t = $("feuille-titre"), i = $("feuille-info"), tete = $("impr-tete");
+  if (!tete) return;
+  $("impr-titre").textContent = t ? t.textContent : "";
+  const d = new Date();
+  const jour = String(d.getDate()).padStart(2,"0") + "/" + String(d.getMonth()+1).padStart(2,"0") + "/" + d.getFullYear();
+  $("impr-sous").textContent = ((i && i.textContent) ? i.textContent + ", " : "") + "\u00c9dit\u00e9 le " + jour;
+  tete.hidden = false;                 /* la regle d impression le montre, l ecran ne le voit pas */
+  if (typeof voixArrete === "function") voixArrete();   /* on n imprime pas en parlant */
+  window.print();
+}
 function feuilleFerme(){
   voixArrete();
   videoMonte("");
@@ -2559,6 +2608,8 @@ $("voix-vit").addEventListener("change", ev => {
   if (VOIX_ON){ VOIX_JETON++; speechSynthesis.cancel(); voixSuite(); }   /* la vitesse ne se change pas en cours d enonciation */
 });
 $("feuille-fermer").addEventListener("click", feuilleFerme);
+$("feuille-pdf").addEventListener("click", feuilleImprime);
+window.addEventListener("afterprint", () => { const t = $("impr-tete"); if (t) t.hidden = true; });
 $("feuille-voile").addEventListener("click", feuilleFerme);
 document.addEventListener("keydown", ev => { if (ev.key === "Escape") feuilleFerme(); });
 async function vue(nom){
