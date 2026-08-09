@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 70 -->
+<!-- VERSION_CONSOLE: 71 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -340,7 +340,11 @@ background:var(--carte);border:2px solid var(--ard)}
    et son corps defile. A l impression cela ne sort qu un ecran. On la remet donc en flux normal,
    hauteur libre, defilement supprime, sinon le document est tronque sans prevenir. */
 @media print{
-  @page{ margin:18mm 16mm; }
+  /* Numero de page. Les boites de marge de @page sont supportees par Chromium et par Safari 18.2,
+     pas par Firefox : la page y sortira sans numero, le reste est identique. Effet de bord voulu :
+     definir une boite de marge supprime l en-tete et le pied par defaut du navigateur (titre, URL,
+     date), ce qui donne un document propre au lieu d une page web imprimee. */
+  @page{ margin:18mm 16mm; @bottom-center{ content:counter(page); font-size:9pt; color:#666; } }
   html,body{ background:#fff !important; color:#111 !important; }
   /* La feuille est enfouie sous plusieurs conteneurs (body > .page > .corps > .feuille). Masquer
      les enfants directs de body masquait donc la feuille avec eux : document vide. On ne suppose
@@ -367,6 +371,11 @@ background:var(--carte);border:2px solid var(--ard)}
                      break-after:avoid; page-break-after:avoid; }
   .feuille-corps h3{ font-size:11.5pt; margin:11pt 0 3pt; break-after:avoid; page-break-after:avoid; }
   .feuille-corps p, .feuille-corps li{ orphans:3; widows:3; }
+  /* Justification. Sans cesure, le francais justifie creuse des rivieres de blanc entre les mots :
+     hyphens depend de la langue declaree, et le document porte bien lang="fr". */
+  .feuille-corps p{ text-align:justify; hyphens:auto; -webkit-hyphens:auto; }
+  .feuille-corps li{ text-align:justify; hyphens:auto; -webkit-hyphens:auto; }
+  .sav-sommaire a, #impr-tete p{ text-align:left; hyphens:none; }
   .feuille-corps li{ break-inside:avoid; page-break-inside:avoid; margin:0 0 3pt; }
   .feuille-corps a{ color:#111 !important; text-decoration:none; }
   .feuille-corps blockquote{ border-left:2pt solid #999; margin:8pt 0; padding-left:10pt; font-style:italic; }
