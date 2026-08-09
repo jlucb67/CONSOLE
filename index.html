@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 71 -->
+<!-- VERSION_CONSOLE: 72 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -277,6 +277,11 @@ background:var(--carte);border:2px solid var(--ard)}
 .crayon-rub:hover{opacity:1}
 .crayon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sav-aecrire{font-size:11.5px;color:var(--mut);font-style:italic;white-space:nowrap}
+.sav-br .sav-br{background:transparent;border:0;border-top:1px solid var(--fil);border-radius:0;margin:0}
+.sav-br .sav-br>button{font-size:13px;font-weight:600;padding:8px 6px;color:var(--mut)}
+.sav-br .sav-br.ouverte>button{color:var(--enc)}
+.sav-br .sav-dedans{border-top:0;padding:2px 0 8px 10px}
+.sav-cpt{font-weight:400;color:var(--mut);font-size:12px;margin-left:6px}
 .sav-h4{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 2px;padding:0 6px}
 .sav-porte h2{font-size:16px;margin:4px 0 10px}
 .sav-grbr{margin:0 0 12px}
@@ -2426,6 +2431,29 @@ function matLibelle(mat){
      l'intitule doit le dire, sans rien renommer au depot. */
   return /^programme$/i.test(mat || "") ? "Mat\u00e9riaux programmatiques" : mat;
 }
+/* Sous-rubriques par annee. Le corpus du blog apporte 2 695 fichiers chez un seul auteur : affiches
+   d un bloc, ils rendent la branche inutilisable. Au-dela du seuil, on redecoupe par annee en
+   sous-rubriques depliables. Le depliage n a rien demande de plus : le gestionnaire de #sav-corps
+   ouvre le parent du bouton clique, quelle que soit la profondeur. */
+const SAV_SEUIL_ANNEE = 40;
+function savAnnee(m){
+  let x = /^(\d{4})-\d{2}-\d{2}/.exec(m.fichier || "");
+  if (x) return x[1];
+  x = /\/(\d{4})\//.exec(m.chemin || "");
+  return x ? x[1] : "";
+}
+function savParAnnee(liste, rendLigne){
+  const tri = (x, y) => x.doc.localeCompare(y.doc, "fr");
+  if (liste.length <= SAV_SEUIL_ANNEE) return liste.slice().sort(tri).map(rendLigne).join("");
+  const par = {};
+  liste.forEach(m => { const a = savAnnee(m) || "Sans date"; (par[a] = par[a] || []).push(m); });
+  const cles = Object.keys(par).sort((x, y) => (x === "Sans date") - (y === "Sans date") || y.localeCompare(x, "fr"));
+  if (cles.length < 2) return liste.slice().sort(tri).map(rendLigne).join("");
+  return cles.map(a => '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1">'
+    + '<span>' + esc(a) + '<span class="sav-cpt">' + par[a].length + '</span></span>'
+    + '<span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+    + par[a].sort(tri).map(rendLigne).join("") + "</div></div>").join("");
+}
 function savRendreMat(){
   const res = SAV_MAT.filter(m => savCorrespond(m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau + " " + m.fichier, SAV_Q));
   const catalogues = res.filter(m => !m.hors), horsCat = res.filter(m => m.hors);
@@ -2447,15 +2475,14 @@ function savRendreMat(){
     docs.forEach(m => { const t = m.materiau || MAT_INCONNU; (parMat[t] = parMat[t] || []).push(m); });
     const types = matOrdonne(Object.keys(parMat));
     h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + (numero[a] ? numero[a] + ". " : "") + esc(a)
-      + '</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
-      + types.map(t => '<h4 class="sav-h4">' + esc(matLibelle(t)) + "</h4>" + parMat[t].sort((x, y) => x.doc.localeCompare(y.doc, "fr")).map(savLigneMat).join("")).join("")
+      + '<span class="sav-cpt">' + docs.length + '</span></span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+      + types.map(t => '<h4 class="sav-h4">' + esc(matLibelle(t)) + "</h4>" + savParAnnee(parMat[t], savLigneMat)).join("")
       + "</div></div>";
   });
   if (horsCat.length && !SAV_AUT){
-    h += '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>Hors catalogue</span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
-      + horsCat.sort((x, y) => (x.zone + x.doc).localeCompare(y.zone + y.doc, "fr"))
-          .map(m => '<div class="sav-ligne"><span class="sav-nom">' + esc(m.doc) + ' <span class="sav-tg">' + esc(m.zone) + "</span></span>"
-            + '<span class="sav-droite">' + savBtnMat(m.chemin, m.doc, "", m) + "</span></div>").join("")
+    h += '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>Hors catalogue<span class="sav-cpt">' + horsCat.length + '</span></span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+      + savParAnnee(horsCat, m => '<div class="sav-ligne"><span class="sav-nom">' + esc(m.doc) + ' <span class="sav-tg">' + esc(m.zone) + "</span></span>"
+            + '<span class="sav-droite">' + savBtnMat(m.chemin, m.doc, "", m) + "</span></div>")
       + "</div></div>";
   }
   if (SAV_ACAP.length){
