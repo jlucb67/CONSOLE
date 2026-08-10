@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 76 -->
+<!-- VERSION_CONSOLE: 77 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -1641,6 +1641,22 @@ function parseReferentiel(txt){
   return out;
 }
 
+/* Les marqueurs ne sont plus declares : ils se deduisent. Decision de JL du 08/08/2026, apres
+   constat qu un seul marqueur avait ete arrete en plusieurs semaines pendant que quatre tags
+   jouaient deja le meme role. UN TAG PORTE PAR DEUX THEMATIQUES OU PLUS EST TRANSVERSAL PAR CE
+   SEUL FAIT. Plus de second referentiel a tenir, plus de convention de majuscule a retenir.
+   parseMarqueurs est conserve juste en dessous pour les agents qui auraient encore un MARQUEURS.md. */
+function marqueursDeduits(them){
+  const par = {};
+  them.filter(t => t.niveau === "2").forEach(t => {
+    (t.alias || "").split(/\s+/).filter(x => x.charAt(0) === "#").forEach(m => {
+      const c = m.toLowerCase();
+      (par[c] = par[c] || []).push(t.slug);
+    });
+  });
+  return Object.keys(par).filter(m => par[m].length > 1).sort()
+    .map(m => ({mq: m, nom: "", slugs: par[m]}));
+}
 function parseMarqueurs(txt){
   /* MARQUEURS.md, tableau : Marqueur | Nom (JL) | Ce qu'il relie | Thematiques portees | Statut.
      Les slugs relies sont les valeurs entre accents graves de la 4e colonne. */
@@ -2096,7 +2112,7 @@ async function collecteSav(){
   progres("Lecture des savoirs de " + SAV_AG + "...");
   const refBrut = await texteOuNull(SAV_DEP, SAV_AG + "/THEMATIQUES.md");
   SAV_THEM = parseReferentiel(refBrut);
-  SAV_MARQ = SAV_THEM.length ? parseMarqueurs(await texteOuNull(SAV_DEP, SAV_AG + "/MARQUEURS.md")) : [];
+  SAV_MARQ = marqueursDeduits(SAV_THEM);
   const meta = metaParse(await texteOuNull(SAV_DEP, SAV_AG + "/META_DOCUMENTS.tsv"));
   const arb = (ARBRES[SAV_DEP] && ARBRES[SAV_DEP].length) ? ARBRES[SAV_DEP] : (ARBRES[SAV_DEP] = await arbre(SAV_DEP));
   SAV_IDX = {};
