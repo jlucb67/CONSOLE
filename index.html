@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 73 -->
+<!-- VERSION_CONSOLE: 74 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -391,8 +391,10 @@ background:var(--carte);border:2px solid var(--ard)}
   .sav-sommaire a{ color:#111 !important; padding:1pt 0 !important; }
   .marq, .sav-etiq, .doct-btn, .crayon, button{ display:none !important; }
 }
+#temoin-version{position:fixed;left:6px;bottom:6px;z-index:60;font:600 10px Consolas,"SF Mono",monospace;color:var(--mut);background:var(--carte);border:1px solid var(--fil);border-radius:6px;padding:2px 6px;opacity:.75}
+@media print{ #temoin-version{ display:none !important; } }
 </style></head>
-<body><div class="page">
+<body><div class="page"><div id="temoin-version" title="Version de la console reellement chargee"></div>
 <h1>Console d'administration</h1>
 <p class="sous" id="sous">Système d'agents spécialisés - état réel des dépôts, lu à l'ouverture. Cette page ne contient aucune donnée : tout est lu en direct avec ta clé.</p>
 
@@ -511,6 +513,7 @@ background:var(--carte);border:2px solid var(--ard)}
         la page se rechargeait donc depuis le cache, identique. Et comme le drapeau de session etait
         deja pose, elle ne reessayait jamais. On change l adresse, ce qui oblige a un vrai telechargement. */
   const ici = Number((document.head.innerHTML.match(/VERSION_CONSOLE:\s*(\d+)/) || [])[1] || 0);
+  const tv = document.getElementById("temoin-version"); if (tv) tv.textContent = "console v" + ici;
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
