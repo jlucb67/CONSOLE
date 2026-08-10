@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 72 -->
+<!-- VERSION_CONSOLE: 73 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -503,14 +503,21 @@ background:var(--carte);border:2px solid var(--ard)}
 /* Rafraichissement automatique : si une version plus recente est publiee, la page se recharge
    seule, une seule fois, sans que JL ait a toucher l'adresse. */
 (async function verifieVersion(){
-  const ICI = 66;
+  /* DEUX DEFAUTS CORRIGES EN v73, ils rendaient toute publication invisible a l utilisateur.
+     1. ICI etait un nombre ecrit a la main, reste a 66 pendant que le marqueur passait a 72 : la
+        page se croyait perpetuellement en retard. On lit maintenant le marqueur du document lui-meme,
+        il n y a plus qu une seule source de verite et elle ne peut plus deriver.
+     2. location.reload(true) ne force plus rien : l argument est ignore par les navigateurs modernes,
+        la page se rechargeait donc depuis le cache, identique. Et comme le drapeau de session etait
+        deja pose, elle ne reessayait jamais. On change l adresse, ce qui oblige a un vrai telechargement. */
+  const ici = Number((document.head.innerHTML.match(/VERSION_CONSOLE:\s*(\d+)/) || [])[1] || 0);
   try {
     const r = await fetch("https://jlucb67.github.io/CONSOLE/index.html?t=" + Date.now(), {cache: "no-store"});
     const t = await r.text();
     const m = t.match(/VERSION_CONSOLE:\s*(\d+)/);
-    if (m && Number(m[1]) > ICI && !sessionStorage.getItem("rechargee-" + m[1])){
+    if (m && ici && Number(m[1]) > ici && !sessionStorage.getItem("rechargee-" + m[1])){
       sessionStorage.setItem("rechargee-" + m[1], "1");
-      location.reload(true);
+      location.replace(location.pathname + "?v=" + m[1]);
     }
   } catch(e){ /* hors ligne : on garde la version en cache */ }
 })();
