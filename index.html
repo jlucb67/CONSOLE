@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 77 -->
+<!-- VERSION_CONSOLE: 78 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -2016,15 +2016,27 @@ function savProgrammatique(seg){
 function savAuteurDe(m){
   if (m.auteur) return m.auteur;
   if ((m.chemin || "").indexOf("/corpus-melenchon/") >= 0) return "M\u00e9lenchon";
+  if (savNature(m)) return "LFI";                 /* livrets, plans et programmes : documents du mouvement */
   const seg = savSegment(m);
   if (!seg) return "";
   if (savProgrammatique(seg)) return "LFI";
   if (/^m[e\u00e9]lenchon/i.test(seg)) return "M\u00e9lenchon";
   return /^[A-Z]/.test(seg) ? seg.replace(/-/g, " ") : "";
 }
+/* Nature d un document programmatique, lue sur son chemin. Sert a la fois d auteur (LFI) et de
+   rubrique d affichage, pour que les livrets et les plans cessent de tomber en hors catalogue. */
+function savNature(m){
+  const c = m.chemin || "", n = m.fichier || "";
+  if (/\/plans\//i.test(c)) return "Plans";
+  if (/\/livrets/i.test(c) || /_livret_/i.test(n)) return "Livrets";
+  if (/\/programme-\d{4}\//i.test(c) || /programme/i.test(n)) return "Programmes";
+  return "";
+}
 function savMateriauDe(m){
   if (m.materiau) return m.materiau;
+  if (/\/corpus-melenchon\/blog\//.test(m.chemin || "")) return "Blogs";
   if ((m.chemin || "").indexOf("/corpus-melenchon/") >= 0) return "Corpus vid\u00e9o";
+  const nat = savNature(m); if (nat) return nat;
   if (savProgrammatique(savSegment(m))) return "Programme";
   return "";
 }
@@ -2153,8 +2165,11 @@ async function collecteSav(){
     if (pris[f.chemin] || SAV_EXCLUS.test(f.chemin) || !SAV_LISIBLE.test(f.nom)) continue;
     const z = bibZone(f.chemin);
     if (z !== "Zone 1" && z !== "Zone 2") continue;
-    SAV_MAT.push({doc: f.nom.replace(SAV_LISIBLE, ""), fichier: f.nom, chemin: f.chemin, taille: f.taille,
-                  zone: z, tags: [], statut: "", resume: "", savoir: "", lecture: "", auteur: "", materiau: "", hors: true});
+    const brut = {doc: f.nom.replace(SAV_LISIBLE, ""), fichier: f.nom, chemin: f.chemin, taille: f.taille,
+                  zone: z, tags: [], statut: "", resume: "", savoir: "", lecture: "", auteur: "", materiau: ""};
+    brut.auteur = savAuteurDe(brut); brut.materiau = savMateriauDe(brut);
+    brut.hors = !brut.auteur;                    /* hors catalogue seulement si on ne sait rien en dire */
+    SAV_MAT.push(brut);
   }
   /* la memoire vive : les fiches de savoir/ */
   SAV_Z3 = fichiers.filter(f => bibZone(f.chemin) === "Zone 3" && SAV_LISIBLE.test(f.nom) && !SAV_EXCLUS.test(f.chemin));
@@ -2479,6 +2494,7 @@ function savRubrique(m){
 }
 function savParAnnee(liste, rendLigne){
   const tri = (x, y) => x.doc.localeCompare(y.doc, "fr");
+  const triDate = (x, y) => y.doc.localeCompare(x.doc, "fr");   /* dans une annee : du plus recent au plus ancien */
   if (liste.length <= SAV_SEUIL_ANNEE) return liste.slice().sort(tri).map(rendLigne).join("");
   const par = {};
   liste.forEach(m => { const a = savAnnee(m) || savRubrique(m); (par[a] = par[a] || []).push(m); });
@@ -2489,7 +2505,7 @@ function savParAnnee(liste, rendLigne){
   return cles.map(a => '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1">'
     + '<span>' + esc(a) + '<span class="sav-cpt">' + par[a].length + '</span></span>'
     + '<span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
-    + par[a].sort(tri).map(rendLigne).join("") + "</div></div>").join("");
+    + par[a].sort(/^\d{4}$/.test(a) ? triDate : tri).map(rendLigne).join("") + "</div></div>").join("");
 }
 function savRendreMat(){
   const res = SAV_MAT.filter(m => savCorrespond(m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau + " " + m.fichier, SAV_Q));
