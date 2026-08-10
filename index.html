@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 75 -->
+<!-- VERSION_CONSOLE: 76 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -2452,12 +2452,23 @@ function savAnnee(m){
   x = /\/(\d{4})\//.exec(m.chemin || "");
   return x ? x[1] : "";
 }
+/* Les documents sans date ne sont pas un fourre-tout : chez LFI ce sont les programmes, les livrets
+   et les plans. On les regroupe par NATURE, lue dans le chemin, au lieu de les laisser en tas. */
+function savRubrique(m){
+  const c = m.chemin || "", n = m.fichier || "";
+  if (/\/plans\//i.test(c)) return "Plans";
+  if (/\/livrets\//i.test(c) || /_livret_/i.test(n) || /livrets-\d{4}/i.test(c)) return "Livrets";
+  if (/programme/i.test(c) || /programme/i.test(n)) return "Programmes";
+  return "Autres";
+}
 function savParAnnee(liste, rendLigne){
   const tri = (x, y) => x.doc.localeCompare(y.doc, "fr");
   if (liste.length <= SAV_SEUIL_ANNEE) return liste.slice().sort(tri).map(rendLigne).join("");
   const par = {};
-  liste.forEach(m => { const a = savAnnee(m) || "Sans date"; (par[a] = par[a] || []).push(m); });
-  const cles = Object.keys(par).sort((x, y) => (x === "Sans date") - (y === "Sans date") || y.localeCompare(x, "fr"));
+  liste.forEach(m => { const a = savAnnee(m) || savRubrique(m); (par[a] = par[a] || []).push(m); });
+  const an = k => /^\d{4}$/.test(k);                       /* les annees d abord, de la plus recente a la plus ancienne,
+                                                             puis les natures de document, par ordre alphabetique */
+  const cles = Object.keys(par).sort((x, y) => (an(y) - an(x)) || (an(x) ? y.localeCompare(x, "fr") : x.localeCompare(y, "fr")));
   if (cles.length < 2) return liste.slice().sort(tri).map(rendLigne).join("");
   return cles.map(a => '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1">'
     + '<span>' + esc(a) + '<span class="sav-cpt">' + par[a].length + '</span></span>'
