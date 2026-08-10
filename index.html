@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 78 -->
+<!-- VERSION_CONSOLE: 79 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -281,6 +281,8 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-br .sav-br>button{font-size:13px;font-weight:700;padding:9px 6px;color:var(--enc);opacity:.75}
 .sav-br .sav-br.ouverte>button{color:var(--enc)}
 .sav-br .sav-dedans{border-top:0;padding:2px 0 8px 10px}
+.sav-br .sav-br .sav-br>button{font-size:12px;font-weight:600;opacity:.7}
+.sav-br .sav-br .sav-dedans{padding-left:8px}
 .sav-cpt{font-weight:400;color:var(--mut);font-size:12px;margin-left:6px}
 .sav-h4{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;margin:8px 0 2px;padding:0 6px}
 .sav-porte h2{font-size:16px;margin:4px 0 10px}
@@ -2529,7 +2531,15 @@ function savRendreMat(){
     const types = matOrdonne(Object.keys(parMat));
     h += '<div class="sav-br' + ((SAV_Q || SAV_AUT) ? " ouverte" : "") + '"><button type="button" data-plie="1"><span>' + (numero[a] ? numero[a] + ". " : "") + esc(a)
       + '<span class="sav-cpt">' + docs.length + '</span></span><span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
-      + types.map(t => '<h4 class="sav-h4">' + esc(matLibelle(t)) + "</h4>" + savParAnnee(parMat[t], savLigneMat)).join("")
+      /* Trois niveaux chez un auteur volumineux : nature du materiau, puis annee, puis documents.
+         Chez un auteur leger on reste a plat : deplier trois fois pour trouver quatre livres serait
+         une gene, pas un service. Le seuil est le meme que pour les annees. */
+      + (docs.length > SAV_SEUIL_ANNEE
+          ? types.map(t => '<div class="sav-br' + (SAV_Q ? " ouverte" : "") + '"><button type="button" data-plie="1">'
+              + '<span>' + esc(matLibelle(t)) + '<span class="sav-cpt">' + parMat[t].length + '</span></span>'
+              + '<span class="sav-fl">\u25b6</span></button><div class="sav-dedans">'
+              + savParAnnee(parMat[t], savLigneMat) + "</div></div>").join("")
+          : types.map(t => '<h4 class="sav-h4">' + esc(matLibelle(t)) + "</h4>" + savParAnnee(parMat[t], savLigneMat)).join(""))
       + "</div></div>";
   });
   if (horsCat.length && !SAV_AUT){
