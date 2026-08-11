@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 79 -->
+<!-- VERSION_CONSOLE: 80 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -395,6 +395,8 @@ background:var(--carte);border:2px solid var(--ard)}
 }
 #temoin-version{position:fixed;left:6px;bottom:6px;z-index:60;font:600 10px Consolas,"SF Mono",monospace;color:var(--mut);background:var(--carte);border:1px solid var(--fil);border-radius:6px;padding:2px 6px;opacity:.75}
 @media print{ #temoin-version{ display:none !important; } }
+.voix-sect{max-width:150px;font-size:12px;padding:3px 4px;border:1px solid var(--fil);border-radius:6px;background:var(--carte);color:var(--enc)}
+@media print{ .voix-sect{display:none !important} }
 </style></head>
 <body><div class="page"><div id="temoin-version" title="Version de la console reellement chargee"></div>
 <h1>Console d'administration</h1>
@@ -490,7 +492,7 @@ background:var(--carte);border:2px solid var(--ard)}
   <div id="feuille-alerte" class="feuille-alerte" hidden></div>
   <div id="video" class="video" hidden><div class="video-cadre"><iframe id="video-cadre" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowfullscreen title="Vidéo de l’événement"></iframe></div></div>
   <div id="video-pied" class="video-pied" hidden><a id="video-lien" href="#" target="_blank" rel="noopener">Ouvrir sur YouTube</a><span class="mut" id="video-etat">Les horodatages du texte sont cliquables</span></div>
-  <div id="voix" class="voix" hidden><button type="button" id="voix-prec" title="Paragraphe précédent" aria-label="Paragraphe précédent">◀◀</button><button type="button" id="voix-lire">▶ Écouter</button><button type="button" id="voix-suiv" title="Paragraphe suivant" aria-label="Paragraphe suivant">▶▶</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><span class="mut" id="voix-etat"></span></div>
+  <div id="voix" class="voix" hidden><button type="button" id="voix-prec" title="Paragraphe précédent" aria-label="Paragraphe précédent">◀◀</button><button type="button" id="voix-lire">▶ Écouter</button><button type="button" id="voix-suiv" title="Paragraphe suivant" aria-label="Paragraphe suivant">▶▶</button><select id="voix-vit"><option value="0.8">0,8&#215;</option><option value="1" selected>1&#215;</option><option value="1.25">1,25&#215;</option><option value="1.5">1,5&#215;</option><option value="1.75">1,75&#215;</option></select><select id="voix-sect" class="voix-sect" title="Reprendre a une section" aria-label="Reprendre a une section" hidden></select><span class="mut" id="voix-etat"></span></div>
   <div id="impr-tete" hidden><h1 id="impr-titre"></h1><p id="impr-sous"></p></div>
   <div id="feuille-corps" class="feuille-corps doct-corps"></div>
 </div>
@@ -1765,6 +1767,35 @@ function voixDecoupe(racine){
   return out;
 }
 function voixEtat(txt){ const e = $("voix-etat"); if (e) e.textContent = txt; }
+/* Choix de la section. Deux besoins distincts, signales par JL le 10/08/2026 : reprendre une lecture
+   interrompue sans repartir du debut, et sauter directement a une rubrique. Les sections sont les
+   titres deja presents dans le texte ; le decoupage vocal les contient, il suffit de les retrouver. */
+function voixSections(){
+  const out = [];
+  VOIX_MORCEAUX.forEach((m, i) => {
+    const t = (m.n.tagName || "").toLowerCase();
+    if (t === "h2" || t === "h3") out.push({i: i, titre: m.t, rang: t});
+  });
+  return out;
+}
+function voixRemplitSections(){
+  const sel = $("voix-sect"); if (!sel) return;
+  const sec = voixSections();
+  if (!sec.length){ sel.hidden = true; sel.innerHTML = ""; return; }
+  sel.hidden = false;
+  sel.innerHTML = '<option value="">Aller a\u2026</option>'
+    + sec.map(x => '<option value="' + x.i + '">' + (x.rang === "h3" ? "\u00a0\u00a0" : "")
+        + esc(x.titre.length > 46 ? x.titre.slice(0, 44) + "\u2026" : x.titre) + "</option>").join("");
+}
+function voixVaA(i){
+  if (!voixDispo()) return;
+  if (!VOIX_MORCEAUX.length){ VOIX_MORCEAUX = voixDecoupe($("feuille-corps")); voixRemplitSections(); }
+  if (!VOIX_MORCEAUX.length) return;
+  VOIX_I = Math.max(0, Math.min(VOIX_MORCEAUX.length - 1, i));
+  VOIX_JETON++;
+  speechSynthesis.cancel();
+  VOIX_ON = true; voixVerrouPrend(); voixBoutons(); voixSuite();
+}
 function voixSurligne(n){
   const c = $("feuille-corps");
   if (!c || !c.querySelectorAll) return;
@@ -1807,9 +1838,8 @@ function voixLance(){
   if (speechSynthesis.speaking && speechSynthesis.paused){ speechSynthesis.resume(); VOIX_ON = true; voixVerrouPrend(); voixBoutons(); return; }
   if (VOIX_ON){ speechSynthesis.pause(); VOIX_ON = false; voixVerrouRend(); voixBoutons(); return; }
   const corps = $("feuille-corps");
-  if (!VOIX_MORCEAUX.length || VOIX_I >= VOIX_MORCEAUX.length){
-    VOIX_MORCEAUX = voixDecoupe(corps); VOIX_I = 0;
-  }
+  if (!VOIX_MORCEAUX.length){ VOIX_MORCEAUX = voixDecoupe(corps); VOIX_I = 0; voixRemplitSections(); }
+  if (VOIX_I >= VOIX_MORCEAUX.length) VOIX_I = 0;      /* seulement en fin de texte : sinon on REPREND */
   if (!VOIX_MORCEAUX.length){ voixEtat("rien \u00e0 lire"); return; }
   VOIX_ON = true; voixVerrouPrend(); voixBoutons(); voixSuite();
 }
@@ -1833,6 +1863,7 @@ function voixArrete(){
   voixVerrouRend();
   if (voixDispo()) speechSynthesis.cancel();
   VOIX_MORCEAUX = []; VOIX_I = 0;
+  const sel = $("voix-sect"); if (sel){ sel.innerHTML = ""; sel.hidden = true; }
   voixSurligne(null); voixEtat(""); voixBoutons();
 }
 function voixBoutons(){
@@ -2720,6 +2751,7 @@ $("voix-vit").addEventListener("change", ev => {
 });
 $("feuille-fermer").addEventListener("click", feuilleFerme);
 $("feuille-pdf").addEventListener("click", feuilleImprime);
+$("voix-sect").addEventListener("change", ev => { const v = ev.target.value; ev.target.value = ""; if (v !== "") voixVaA(Number(v)); });
 window.addEventListener("afterprint", () => {
   const t = $("impr-tete"); if (t) t.hidden = true;
   document.querySelectorAll(".impr-chemin").forEach(n => n.classList.remove("impr-chemin"));
