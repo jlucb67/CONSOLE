@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 80 -->
+<!-- VERSION_CONSOLE: 81 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -1841,6 +1841,12 @@ function voixLance(){
   if (!VOIX_MORCEAUX.length){ VOIX_MORCEAUX = voixDecoupe(corps); VOIX_I = 0; voixRemplitSections(); }
   if (VOIX_I >= VOIX_MORCEAUX.length) VOIX_I = 0;      /* seulement en fin de texte : sinon on REPREND */
   if (!VOIX_MORCEAUX.length){ voixEtat("rien \u00e0 lire"); return; }
+  /* REGRESSION v80 corrigee ici. Apres une pause, le moteur reste en etat PAUSE meme quand il
+     declare ne plus parler : un speak() lui est alors mis en file et n est jamais prononce. Avant,
+     le defaut ne se voyait pas parce qu on repartait du debut par un autre chemin. On sort donc
+     explicitement de l etat pause avant de reprendre. cancel puis resume, dans cet ordre : sur
+     certains moteurs cancel seul laisse la pause active. */
+  try { speechSynthesis.cancel(); speechSynthesis.resume(); } catch (e) {}
   VOIX_ON = true; voixVerrouPrend(); voixBoutons(); voixSuite();
 }
 function voixBouge(pas){
