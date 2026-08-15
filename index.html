@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 82 -->
+<!-- VERSION_CONSOLE: 83 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -805,7 +805,10 @@ async function lireVeillesEtAvatars(){
     if (m) VEILLES_NOMS.add(m[1].trim());
   }
   AVATARS = new Map();
-  const pr = await texteOuNull("jlucb67/SOCLE", "ADMIN/instructions/PROCEDURES.md");
+  /* 14/08/2026 : l'inventaire des avatars est sorti du manuel vers ADMIN/instructions/AVATARS.md.
+     On lit le nouvel emplacement, et l'ancien en secours tant que le parc n'est pas tout aligne. */
+  let pr = await texteOuNull("jlucb67/SOCLE", "ADMIN/instructions/AVATARS.md");
+  if (!pr) pr = await texteOuNull("jlucb67/SOCLE", "ADMIN/instructions/PROCEDURES.md");
   if (pr){
     const bloc = pr.split("Inventaire des avatars")[1];
     if (bloc) for (const l of bloc.split("\n").slice(0, 20)){
