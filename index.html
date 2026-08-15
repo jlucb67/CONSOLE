@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 81 -->
+<!-- VERSION_CONSOLE: 82 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -659,7 +659,9 @@ const REGISTRES = [
   ["Langage",              "#c8862f", /^(REDACTION|CONSIGNES_LANGAGE|REGLES_EDITORIALES)\.md$/i],
   ["Identité et mission",  "#2f6f9f", /^(INSTRUCTIONS_PROJET|CHAMP_PROJET|MISSION|START_HERE)\.md$/i],
   ["Mécanique de mémoire", "#7a8b3f", /^(PROTOCOLE_MEMOIRE|VERSION|CATALOGUE)\.md$/i],
-  ["Normes de production", "#a5673f", /^(GABARITS.*|CARTE_GENERATEURS)\.md$/i],
+  ["Normes de production", "#a5673f", /^(GABARITS.*|CARTE_GENERATEURS|STRUCTURE_DES_RESUMES|CONSIGNES_REDACTION|CONSIGNES_ADMIN|PROTOCOLES_DE_SEANCE)\.md$/i],
+  ["Manuels et méthodes",  "#8a5a8a", /^(METHODE_.*|PROCEDURES|PROMPT_SONDE)\.md$/i],
+  ["Comptabilité",         "#9a9a5a", /^(TABLEAU_DU_FONDS|TABLEAU_DE_BORD|VEILLE)\.md$/i],
   ["Jamais mobilisés",     "#a33b3b", /^(DEMARRAGE_SESSION|PROMPT_VEILLE|SOURCES_VEILLE)\.md$/i]
 ];
 const REG_FOND = ["Fond métier", "#5c6670"];
@@ -674,8 +676,22 @@ function fmtTokens(o){ return enTokens(o).toLocaleString("fr-FR"); }
 function fmtPct(o){ const p = partFenetre(o); return (p < 1 ? p.toFixed(2) : p.toFixed(1)).replace(".", ",") + " %"; }
 
 /* Le stock d'un agent : chaque fichier copie, son registre, son poids. */
-function calculeStock(arbre, agent, socle){
+function calculeStock(arbre, agent, socle, copie){
   const fics = [];
+  /* MESURE. L'agent a declare dans ETAT_COPIE.json les fichiers que son champ Contexte a
+     reellement recus : [{nom, zone, octets}]. C'est la seule verite sur l'occupation, parce que
+     rien au depot ne dit ce qui est coche (consigne C9). */
+  const dec = copie && Array.isArray(copie.fichiers) ? copie.fichiers : null;
+  if (dec){
+    for (const f of dec){
+      const o = Number(f.octets != null ? f.octets : f.o);
+      if (!f.nom || !isFinite(o)) continue;
+      fics.push({nom: String(f.nom).split("/").pop(), zone: f.zone || "declare", o});
+    }
+    return finStock(fics, true);
+  }
+  /* ESTIMATION. Faute de declaration, on compte ce que le depot porte : tout ce qui POURRAIT
+     etre coche. Ce nombre est un plafond, jamais l'occupation reelle. */
   for (const n of arbre){
     const q = n.path.split("/");
     if (n.type !== "blob" || n.size == null) continue;
@@ -683,6 +699,9 @@ function calculeStock(arbre, agent, socle){
       fics.push({nom: q[2], zone: q[1], o: n.size});
   }
   for (const s of socle) fics.push({nom: s.nom, zone: "socle-commun", o: s.o});
+  return finStock(fics, false);
+}
+function finStock(fics, mesure){
   const parReg = new Map();
   for (const f of fics){
     const r = registreDe(f.nom);
@@ -692,7 +711,7 @@ function calculeStock(arbre, agent, socle){
   const ordre = REGISTRES.map(r => r[0]).concat([REG_FOND[0]]);
   const reg = ordre.filter(n => parReg.has(n)).map(n => parReg.get(n));
   for (const e of reg) e.fics.sort((a, b) => b.o - a.o);
-  return {reg, total: fics.reduce((s, f) => s + f.o, 0), nb: fics.length};
+  return {reg, total: fics.reduce((s, f) => s + f.o, 0), nb: fics.length, mesure};
 }
 
 /* ─── CHARGEMENT PAR ONGLET ────────────────────────────────────────────────
@@ -824,7 +843,10 @@ async function collecteAgents(){
     const act = await dernierCommit(depot, agent + "/");
     const chemins = new Set(arbres[depot].filter(n => n.path.startsWith(agent + "/")).map(n => n.path));
     const conf = {
-      memoire: chemins.has(agent + "/savoir/VERSION.md") && chemins.has(agent + "/savoir/CATALOGUE.md")
+      /* C8 (07/08/2026) a fait descendre VERSION.md et CATALOGUE.md de savoir/ vers journal/.
+         Les deux emplacements valent : l'agent qui a applique la consigne n'est pas en faute. */
+      memoire: (chemins.has(agent + "/savoir/VERSION.md") || chemins.has(agent + "/journal/VERSION.md"))
+               && (chemins.has(agent + "/savoir/CATALOGUE.md") || chemins.has(agent + "/journal/CATALOGUE.md"))
                && chemins.has(agent + "/instructions/PROTOCOLE_MEMOIRE.md"),
       meta: chemins.has(agent + "/META_DOCUMENTS.tsv"),
       sources: chemins.has(agent + "/instructions/SOURCES_VEILLE.md"),
@@ -837,12 +859,17 @@ async function collecteAgents(){
     const actifs30 = rec.filter(c => new Date(c.commit.committer.date).getTime() > limite30).length;
     /* si la page est pleine ET que tout y est dans les 30 jours, le vrai nombre est plus grand */
     const actifsSature = (rec.length >= REC_MAX && actifs30 >= REC_MAX);
-    const v = await texteOuNull(depot, agent + "/savoir/VERSION.md");
+    let v = await texteOuNull(depot, agent + "/journal/VERSION.md");
+    if (!v) v = await texteOuNull(depot, agent + "/savoir/VERSION.md");
     const num = v && v.match(/VERSION\s*:\s*(\d+)/);
     const quoi = v && v.match(/^- v\d+.*$/m);
     const socle = arbres[depot].filter(n => n.type === "blob" && n.path.startsWith("socle-commun/")
                     && !/README/i.test(n.path)).map(n => ({nom: n.path.split("/").pop(), o: n.size || 0}));
-    const stock = calculeStock(arbres[depot], agent, socle);
+    /* Etat de la copie, declare par l'agent : seul lui voit ce que son champ Contexte a recu.
+       S'il declare la liste de ses fichiers, on MESURE. Sinon on ESTIME depuis le depot. */
+    let copie = null;
+    try { const t = await texteOuNull(depot, agent + "/ETAT_COPIE.json"); if (t) copie = JSON.parse(t); } catch(e){}
+    const stock = calculeStock(arbres[depot], agent, socle, copie);
     /* CONTRADICTIONS : un fichier COPIE modifie ou supprime au depot contredit la copie du champ Contexte.
        Un AJOUT ne contredit jamais (la copie n'en dit rien). Detail lu sur les commits recents. */
     const contras = [];
@@ -860,9 +887,6 @@ async function collecteAgents(){
         }
       } catch (e) { /* commit illisible : on ne devine pas */ }
     }
-    /* etat de la copie declare par l'agent */
-    let copie = null;
-    try { const t = await texteOuNull(depot, agent + "/ETAT_COPIE.json"); if (t) copie = JSON.parse(t); } catch(e){}
     const vCopie = copie && copie.version != null ? Number(copie.version) : null;
     const vDepot = num ? Number(num[1]) : null;
     const aJour = (vCopie != null && vDepot != null) ? vCopie >= vDepot : null;
@@ -1171,8 +1195,10 @@ function pileStock(a, maxTotal){
   const segs = s.reg.filter(r => r.o > 0);
   return '<div class="pile-bloc">'
     + '<div class="pile-tete"><b>' + poids(s.total) + '</b>'
-    + '<span class="unites">~' + fmtTokens(s.total) + ' tokens estimés &middot; '
-    + fmtPct(s.total) + ' de la fenêtre &middot; ' + s.nb + ' fichiers</span></div>'
+    + '<span class="unites">~' + fmtTokens(s.total) + ' tokens &middot; '
+    + fmtPct(s.total) + ' de la fenêtre &middot; ' + s.nb + ' fichiers &middot; '
+    + (s.mesure ? 'mesuré sur la copie déclarée par l\'agent' : 'plafond estimé depuis le dépôt, l\'agent n\'a pas déclaré sa copie')
+    + '</span></div>'
     + '<div class="piste"><div class="pile" style="width:' + remplissage.toFixed(2) + '%">'
     + segs.map(r => '<span class="seg" style="width:' + (100 * r.o / s.total).toFixed(2)
         + '%;background:' + r.c + '" title="' + esc(r.n) + ' - ' + poids(r.o) + '"></span>').join("")
@@ -1224,6 +1250,7 @@ function rendreAgents(){
     + '<div class="cadre" style="margin-bottom:12px"><p class="legende" style="margin:0">'
     + '<b>Stock de savoirs cumulatifs</b> - ce que notre système ajoute au fonctionnement nominal, présent à chaque échange : '
     + 'la copie des dossiers cochés (instructions, savoir, socle commun). Ce n\'est pas la mémoire vive, qui est toute la fenêtre de contexte. '
+    + 'Rien au dépôt ne dit ce qui est coché : tant qu\'un agent n\'a pas déclaré sa copie dans son ETAT_COPIE.json, son chiffre est un PLAFOND, pas une occupation. '
     + 'Total du parc : <b>' + poids(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + '</b> &middot; ~'
     + fmtTokens(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + ' tokens estimés. '
     + 'Estimation au ratio de 3,3 caractères par token ; part calculée sur une fenêtre d\'un million. '
