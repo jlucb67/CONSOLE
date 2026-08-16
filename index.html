@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 87 -->
+<!-- VERSION_CONSOLE: 88 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -309,6 +309,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-g{flex:1;min-width:0}
 .sav-tgs{margin-top:3px;line-height:1.9}
 .sav-tg-actif{color:#fff;background:var(--ard);border-color:var(--ard)}
+.sav-tg-maj{font-weight:800;color:var(--enc);border-color:var(--ard)}
 .sav-acap{margin:26px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 .sav-acap-l .sav-nom{color:var(--mut)}
 @media (max-width:640px){.sav-tete{row-gap:6px}.sav-tete select{max-width:44vw;padding:6px 7px}.sav-vues button{padding:6px 9px;font-size:12px}}
@@ -627,7 +628,8 @@ function metaParse(txt){
       statut: (c[3]||"").trim(), origine: (c[4]||"").trim(),
       resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase(),
       savoir: (c[7]||"").trim(),
-      auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim(), lecture: normStable((c[10]||"").trim())
+      auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim(), lecture: normStable((c[10]||"").trim()),
+      majeurs: (c[12]||"").trim().split(/\s+/).filter(Boolean)
     };
   }
   return m;
@@ -2233,7 +2235,8 @@ async function collecteSav(){
         && inf && inf.taille < 4000) { continue; }  /* chapeaux de partie quasi vides : pas des documents */
     const ent = {doc: m.doc || nom, fichier: nom, chemin: inf ? inf.chemin : "", taille: inf ? inf.taille : 0,
                  zone: inf ? bibZone(inf.chemin) : "", tags: m.tags, statut: m.statut, resume: m.resume,
-                 savoir: m.savoir, lecture: m.lecture || "", auteur: "", materiau: "", hors: false};
+                 savoir: m.savoir, lecture: m.lecture || "", majeurs: m.majeurs || [],
+                 auteur: "", materiau: "", hors: false};
     ent.auteur = savAuteurDe(Object.assign({}, ent, {auteur: m.auteur}));
     ent.materiau = savMateriauDe(Object.assign({}, ent, {materiau: m.materiau}));
     SAV_MAT.push(ent);
@@ -2260,7 +2263,7 @@ async function collecteSav(){
     if (pris[f.chemin] || SAV_EXCLUS.test(f.chemin) || !SAV_LISIBLE.test(f.nom)) continue;
     const z = bibZone(f.chemin);
     if (z !== "Zone 1" && z !== "Zone 2") continue;
-    const brut = {doc: savDocCorpus(f.nom), fichier: f.nom, chemin: f.chemin, taille: f.taille,
+    const brut = {majeurs: [], doc: savDocCorpus(f.nom), fichier: f.nom, chemin: f.chemin, taille: f.taille,
                   zone: z, tags: [], statut: "", resume: "", savoir: "", lecture: "", auteur: "", materiau: ""};
     brut.auteur = savAuteurDe(brut); brut.materiau = savMateriauDe(brut);
     brut.hors = !brut.auteur;                    /* hors catalogue seulement si on ne sait rien en dire */
@@ -2550,8 +2553,15 @@ function savLigneMat(m){
   }
   /* Les themes ne s'affichent que si JL a appuye sur le bouton (v87). Le theme sur lequel il filtre
      est mis en evidence : c'est lui qui explique pourquoi la ligne est la. */
+  /* Les majeurs (trois au plus) sortent en gras : ce sont les sujets DU texte, les autres themes
+     ne sont que des pointeurs. Le theme filtre reste en evidence par la couleur - les deux marques
+     se cumulent, et leur croisement se lit d'un coup : gras ET colore = le filtre porte sur un
+     sujet central de ce texte. */
+  const maj = m.majeurs || [];
+  const rangs = m.tags.slice().sort((x, y) => (maj.indexOf(y) >= 0) - (maj.indexOf(x) >= 0));
   const tgs = (SAV_TAGVU && m.tags.length)
-    ? '<div class="sav-tgs">' + m.tags.map(t => '<span class="sav-tg' + (t === SAV_TAG ? " sav-tg-actif" : "") + '">'
+    ? '<div class="sav-tgs">' + rangs.map(t => '<span class="sav-tg'
+        + (maj.indexOf(t) >= 0 ? " sav-tg-maj" : "") + (t === SAV_TAG ? " sav-tg-actif" : "") + '">'
         + esc(t) + "</span>").join(" ") + "</div>" : "";
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
     + '<div class="sav-g"><span class="sav-nom">' + esc(m.doc) + "</span>"
@@ -2694,12 +2704,20 @@ function rendreSav(){
     /* Les themes du fonds de l'agent, du plus porteur au moins porteur : le nombre de materiaux
        qu'un theme ramene est ce qui aide a choisir. Ils ne s'affichent plus sur les lignes (v84),
        cette liste est donc le seul endroit ou ils se voient. */
-    const cpt = {};
-    SAV_MAT.forEach(m => m.tags.forEach(t => { cpt[t] = (cpt[t] || 0) + 1; }));
-    const tags = Object.keys(cpt).sort((x, y) => (cpt[y] - cpt[x]) || x.localeCompare(y, "fr"));
+    /* Deux nombres par theme : ce qu'il ramene en MAJEUR, et ce qu'il ramene en tout. Le premier
+       est celui qui compte pour batir une fiche ; le second dit l'ampleur du pointeur. Le tri se
+       fait sur les majeurs, pour que les themes reellement porteurs remontent. */
+    const cpt = {}, cmaj = {};
+    SAV_MAT.forEach(m => {
+      m.tags.forEach(t => { cpt[t] = (cpt[t] || 0) + 1; });
+      (m.majeurs || []).forEach(t => { cmaj[t] = (cmaj[t] || 0) + 1; });
+    });
+    const tags = Object.keys(cpt).sort((x, y) =>
+      ((cmaj[y] || 0) - (cmaj[x] || 0)) || (cpt[y] - cpt[x]) || x.localeCompare(y, "fr"));
     if (tags.length) o.innerHTML += ' <select id="sav-tag"><option value="">Tous les th\u00e8mes</option>'
       + tags.map(t => '<option value="' + esc(t) + '"' + (t === SAV_TAG ? " selected" : "") + ">"
-        + esc(t) + " (" + cpt[t] + ")</option>").join("") + "</select>";
+        + esc(t) + (cmaj[t] ? " (" + cmaj[t] + " majeurs \u00b7 " + cpt[t] + ")" : " (" + cpt[t] + ")")
+        + "</option>").join("") + "</select>";
     if (tags.length) o.innerHTML += ' <button class="doct-btn" id="sav-tagvu">'
       + (SAV_TAGVU ? "Masquer les th\u00e8mes" : "Voir les th\u00e8mes") + "</button>";
   }
