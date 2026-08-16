@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 84 -->
+<!-- VERSION_CONSOLE: 85 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -2072,6 +2072,13 @@ let SAV_THEM = [], SAV_MARQ = [], SAV_MAT = [], SAV_Z3 = [], SAV_IDX = {}, SAV_Z
 let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_BRANCHE = false;
 let SAV_ACAP = [];
 const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
+/* suffixes du corpus video : ils nomment une PROFONDEUR de lecture, pas un document distinct. */
+const SAV_CORPUS_SUF = /^(.*)_(00-brut-youtube|01-integral|02-structure|03-synthese)\.(?:md|txt)$/i;
+const SAV_CORPUS_RANG = {"03-synthese": 4, "02-structure": 3, "01-integral": 2, "00-brut-youtube": 1};
+function savDocCorpus(nom){
+  const r = nom.match(SAV_CORPUS_SUF);
+  return r ? r[1] : nom.replace(SAV_LISIBLE, "");
+}
 const SAV_EXCLUS = /(^|\/)(\.gitkeep|A_TELECHARGER\.txt|ETAT_COPIE\.json|VERSION\.md|CATALOGUE\.md|META_DOCUMENTS\.tsv|THEMATIQUES\.md|MARQUEURS\.md|VEILLE\.md|README\.md|INDEX\.md|SOURCES_A_CAPTER\.md|SOURCES_VEILLE\.md)$/i;
 
 function savSegment(m){
@@ -2230,11 +2237,29 @@ async function collecteSav(){
     ent.materiau = savMateriauDe(Object.assign({}, ent, {materiau: m.materiau}));
     SAV_MAT.push(ent);
   }
+  /* Corpus video : QUATRE fichiers decrivent un seul evenement (00-brut-youtube, 01-integral,
+     02-structure, 03-synthese). Le regroupement n'existait que pour les evenements inscrits au
+     catalogue ; hors catalogue, l'evenement sortait en quatre lignes, dont trois ne portant qu'une
+     icone. On ne garde qu'UNE entree par evenement, portee par la synthese quand elle existe :
+     savProfondeurs y retrouve l'integrale et la structure par le nom. */
+  const chefCorpus = {};
+  for (const f of fichiers){
+    if (pris[f.chemin] || f.chemin.indexOf("/corpus-melenchon/") < 0) continue;
+    const r = f.nom.match(SAV_CORPUS_SUF);
+    if (!r) continue;
+    const rang = SAV_CORPUS_RANG[r[2].toLowerCase()] || 0;
+    const c = chefCorpus[r[1]];
+    if (!c || rang > c.rang) chefCorpus[r[1]] = {chemin: f.chemin, rang: rang};
+  }
+  for (const f of fichiers){
+    const r = f.nom.match(SAV_CORPUS_SUF);
+    if (r && chefCorpus[r[1]] && chefCorpus[r[1]].chemin !== f.chemin) pris[f.chemin] = 1;
+  }
   for (const f of fichiers){
     if (pris[f.chemin] || SAV_EXCLUS.test(f.chemin) || !SAV_LISIBLE.test(f.nom)) continue;
     const z = bibZone(f.chemin);
     if (z !== "Zone 1" && z !== "Zone 2") continue;
-    const brut = {doc: f.nom.replace(SAV_LISIBLE, ""), fichier: f.nom, chemin: f.chemin, taille: f.taille,
+    const brut = {doc: savDocCorpus(f.nom), fichier: f.nom, chemin: f.chemin, taille: f.taille,
                   zone: z, tags: [], statut: "", resume: "", savoir: "", lecture: "", auteur: "", materiau: ""};
     brut.auteur = savAuteurDe(brut); brut.materiau = savMateriauDe(brut);
     brut.hors = !brut.auteur;                    /* hors catalogue seulement si on ne sait rien en dire */
