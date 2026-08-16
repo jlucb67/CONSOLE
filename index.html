@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 83 -->
+<!-- VERSION_CONSOLE: 84 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -2524,7 +2524,6 @@ function savLigneMat(m){
   }
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
     + '<div class="sav-g"><span class="sav-nom">' + esc(m.doc) + "</span>"
-    + (m.tags.length ? '<div class="sav-tgs">' + m.tags.map(t => '<span class="sav-tg">' + esc(t) + "</span>").join(" ") + "</div>" : "")
     + "</div>"
     + '<span class="sav-droite">' + boutons + "</span></div>";
 }
