@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 85 -->
+<!-- VERSION_CONSOLE: 86 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -2069,7 +2069,7 @@ let SAV_AGENTS = null;           /* [{nom, dep}] decouverts une fois */
 let SAV_AG = "", SAV_DEP = "";   /* agent courant */
 let SAV_VUE = "them";            /* them | mat */
 let SAV_THEM = [], SAV_MARQ = [], SAV_MAT = [], SAV_Z3 = [], SAV_IDX = {}, SAV_Z3IDX = {};
-let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_BRANCHE = false;
+let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_TAG = "", SAV_BRANCHE = false;
 let SAV_ACAP = [];
 const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
 /* suffixes du corpus video : ils nomment une PROFONDEUR de lecture, pas un document distinct. */
@@ -2602,16 +2602,23 @@ function savParAnnee(liste, rendLigne){
 }
 function savRendreMat(){
   const res = SAV_MAT.filter(m => savCorrespond(m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau + " " + m.fichier, SAV_Q));
-  const catalogues = res.filter(m => !m.hors), horsCat = res.filter(m => m.hors);
+    /* Le theme choisi RESTREINT la liste : il ne trie pas. Un materiau porte vingt themes, un tri
+       par theme n'aurait aucun sens ; ce qu'on veut, c'est ne voir que ce qui parle du sujet. */
+  const vus = SAV_TAG ? res.filter(m => m.tags.indexOf(SAV_TAG) >= 0) : res;
+  const catalogues = vus.filter(m => !m.hors), horsCat = vus.filter(m => m.hors);
   const parAuteur = {};
   catalogues.forEach(m => {
     const a = m.auteur || AUT_INCONNU;
     (parAuteur[a] = parAuteur[a] || []).push(m);
   });
   const tousAuteurs = autOrdonne(Object.keys(parAuteur));
+  /* Le numero d'un auteur vient de l'ordre impose par JL sur le fonds ENTIER : il ne bouge pas
+     quand un filtre restreint la liste. Melenchon reste 5 meme s'il est seul a l'ecran. */
   const numero = {};
   let rang = 0;
-  tousAuteurs.forEach(a => { if (a !== AUT_INCONNU) numero[a] = ++rang; });
+  const nomsTous = [];
+  SAV_MAT.forEach(m => { if (!m.hors){ const a = m.auteur || AUT_INCONNU; if (nomsTous.indexOf(a) < 0) nomsTous.push(a); } });
+  autOrdonne(nomsTous).forEach(a => { if (a !== AUT_INCONNU) numero[a] = ++rang; });
   let auteurs = tousAuteurs;
   if (SAV_AUT) auteurs = auteurs.filter(a => a === SAV_AUT);
   let h = "";
@@ -2677,6 +2684,15 @@ function rendreSav(){
     o.innerHTML = ord.length > 1
       ? '<select id="sav-aut"><option value="">Tous les auteurs</option>' + ord.map(a => '<option value="' + esc(a) + '"'
           + (a === SAV_AUT ? " selected" : "") + ">" + (num[a] ? num[a] + ". " : "") + esc(a) + "</option>").join("") + "</select>" : "";
+    /* Les themes du fonds de l'agent, du plus porteur au moins porteur : le nombre de materiaux
+       qu'un theme ramene est ce qui aide a choisir. Ils ne s'affichent plus sur les lignes (v84),
+       cette liste est donc le seul endroit ou ils se voient. */
+    const cpt = {};
+    SAV_MAT.forEach(m => m.tags.forEach(t => { cpt[t] = (cpt[t] || 0) + 1; }));
+    const tags = Object.keys(cpt).sort((x, y) => (cpt[y] - cpt[x]) || x.localeCompare(y, "fr"));
+    if (tags.length) o.innerHTML += ' <select id="sav-tag"><option value="">Tous les th\u00e8mes</option>'
+      + tags.map(t => '<option value="' + esc(t) + '"' + (t === SAV_TAG ? " selected" : "") + ">"
+        + esc(t) + " (" + cpt[t] + ")</option>").join("") + "</select>";
   }
   $("sav-btnthem").hidden = SAV_VUE !== "them";
   $("sav-btntxt").hidden = SAV_VUE === "them";
@@ -2686,13 +2702,14 @@ function rendreSav(){
   const mq = $("sav-mq"); if (mq) mq.onchange = ev => { SAV_MQ = ev.target.value; rendreSav(); };
   const rt = $("sav-retour"); if (rt) rt.onclick = () => { SAV_MQ = ""; rendreSav(); };
   const au = $("sav-aut"); if (au) au.onchange = ev => { SAV_AUT = ev.target.value; rendreSav(); };
+  const tg = $("sav-tag"); if (tg) tg.onchange = ev => { SAV_TAG = ev.target.value; rendreSav(); };
 }
 
 function savBranche(){
   $("sav-agent").addEventListener("change", async ev => {
     const p = ev.target.value.split("|");
     SAV_DEP = p[0]; SAV_AG = p[1];
-    SAV_Q = ""; SAV_MQ = ""; SAV_AUT = ""; SAV_VUE = "them"; $("sav-q").value = "";
+    SAV_Q = ""; SAV_MQ = ""; SAV_AUT = ""; SAV_TAG = ""; SAV_VUE = "them"; $("sav-q").value = "";
     SAV_TXT = {}; $("sav-restxt").innerHTML = ""; $("sav-txtbloc").hidden = true;
     $("voile").hidden = false;
     try { await collecteSav(); rendreSav(); }
