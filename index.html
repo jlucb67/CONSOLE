@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 86 -->
+<!-- VERSION_CONSOLE: 87 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -308,6 +308,7 @@ background:var(--carte);border:2px solid var(--ard)}
 .sav-extrait b{color:var(--enc)}
 .sav-g{flex:1;min-width:0}
 .sav-tgs{margin-top:3px;line-height:1.9}
+.sav-tg-actif{color:#fff;background:var(--ard);border-color:var(--ard)}
 .sav-acap{margin:26px 0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
 .sav-acap-l .sav-nom{color:var(--mut)}
 @media (max-width:640px){.sav-tete{row-gap:6px}.sav-tete select{max-width:44vw;padding:6px 7px}.sav-vues button{padding:6px 9px;font-size:12px}}
@@ -2069,7 +2070,7 @@ let SAV_AGENTS = null;           /* [{nom, dep}] decouverts une fois */
 let SAV_AG = "", SAV_DEP = "";   /* agent courant */
 let SAV_VUE = "them";            /* them | mat */
 let SAV_THEM = [], SAV_MARQ = [], SAV_MAT = [], SAV_Z3 = [], SAV_IDX = {}, SAV_Z3IDX = {};
-let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_TAG = "", SAV_BRANCHE = false;
+let SAV_Q = "", SAV_MQ = "", SAV_AUT = "", SAV_TAG = "", SAV_TAGVU = false, SAV_BRANCHE = false;
 let SAV_ACAP = [];
 const SAV_LISIBLE = /\.(md|txt|tsv)$/i;
 /* suffixes du corpus video : ils nomment une PROFONDEUR de lecture, pas un document distinct. */
@@ -2547,8 +2548,14 @@ function savLigneMat(m){
       boutons = m.lecture === "resume" ? savBtnLire(m.chemin, m.doc, alerte, "Court", "sav-long") : mat;
     }
   }
+  /* Les themes ne s'affichent que si JL a appuye sur le bouton (v87). Le theme sur lequel il filtre
+     est mis en evidence : c'est lui qui explique pourquoi la ligne est la. */
+  const tgs = (SAV_TAGVU && m.tags.length)
+    ? '<div class="sav-tgs">' + m.tags.map(t => '<span class="sav-tg' + (t === SAV_TAG ? " sav-tg-actif" : "") + '">'
+        + esc(t) + "</span>").join(" ") + "</div>" : "";
   return '<div class="sav-ligne" data-ch="' + esc((m.doc + " " + m.tags.join(" ") + " " + m.resume + " " + m.auteur + " " + m.materiau).toLowerCase()) + '">'
     + '<div class="sav-g"><span class="sav-nom">' + esc(m.doc) + "</span>"
+    + tgs
     + "</div>"
     + '<span class="sav-droite">' + boutons + "</span></div>";
 }
@@ -2693,6 +2700,8 @@ function rendreSav(){
     if (tags.length) o.innerHTML += ' <select id="sav-tag"><option value="">Tous les th\u00e8mes</option>'
       + tags.map(t => '<option value="' + esc(t) + '"' + (t === SAV_TAG ? " selected" : "") + ">"
         + esc(t) + " (" + cpt[t] + ")</option>").join("") + "</select>";
+    if (tags.length) o.innerHTML += ' <button class="doct-btn" id="sav-tagvu">'
+      + (SAV_TAGVU ? "Masquer les th\u00e8mes" : "Voir les th\u00e8mes") + "</button>";
   }
   $("sav-btnthem").hidden = SAV_VUE !== "them";
   $("sav-btntxt").hidden = SAV_VUE === "them";
@@ -2703,6 +2712,7 @@ function rendreSav(){
   const rt = $("sav-retour"); if (rt) rt.onclick = () => { SAV_MQ = ""; rendreSav(); };
   const au = $("sav-aut"); if (au) au.onchange = ev => { SAV_AUT = ev.target.value; rendreSav(); };
   const tg = $("sav-tag"); if (tg) tg.onchange = ev => { SAV_TAG = ev.target.value; rendreSav(); };
+  const tv = $("sav-tagvu"); if (tv) tv.onclick = () => { SAV_TAGVU = !SAV_TAGVU; rendreSav(); };
 }
 
 function savBranche(){
