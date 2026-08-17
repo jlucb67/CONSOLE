@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 90 -->
+<!-- VERSION_CONSOLE: 91 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -1231,7 +1231,7 @@ function pileStock(a, maxTotal){
   return '<div class="pile-bloc">'
     + '<div class="pile-tete"><b>' + poids(s.total) + '</b>'
     + '<span class="unites">~' + fmtTokens(s.total) + ' tokens &middot; '
-    + fmtPct(s.total) + ' de la fenêtre &middot; ' + s.nb + ' fichiers &middot; '
+    + fmtPct(s.total) + ' d\'une fenêtre d\'1 M &middot; ' + s.nb + ' fichiers &middot; '
     + (s.mesure ? 'mesuré sur la copie déclarée par l\'agent' : 'plafond estimé depuis le dépôt, l\'agent n\'a pas déclaré sa copie')
     + '</span></div>'
     + '<div class="piste"><div class="pile" style="width:' + remplissage.toFixed(2) + '%">'
@@ -1311,7 +1311,7 @@ function rendreAgents(){
       + "</div>"
       + '<div class="mesures">'
         + mesure(a.version != null ? "v" + a.version : "-", age != null ? "version, " + age + " j" : "version")
-        + mesure(fmtPct(a.stock.total), "de la fenêtre", partFenetre(a.stock.total) > 10)
+        + mesure(fmtPct(a.stock.total), "d'une fenêtre d'1 M", partFenetre(a.stock.total) > 10)
         + mesure(a.actifsSature ? a.actifs30 + " +" : a.actifs30, "gravures sur 30 j", a.actifs30 === 0)
         + (admin ? "" : mesure(attente, "en attente de toi", attente > 0))
         + (admin ? "" : mesure(dette, "résumés dus", dette > 0))
