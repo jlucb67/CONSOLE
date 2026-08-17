@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 88 -->
+<!-- VERSION_CONSOLE: 89 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -456,6 +456,7 @@ background:var(--carte);border:2px solid var(--ard)}
 
 <section id="vue-agents" hidden>
   <div class="bandeau" id="bandeau-agents"></div>
+  <div class="outils"><select id="fag"><option value="">Choisis un agent</option></select></div>
   <div id="agents"></div>
 </section>
 
@@ -821,23 +822,47 @@ async function lireVeillesEtAvatars(){
   }
 }
 
+/* 17/08/2026, demande de JL : cet onglet ne fait plus attendre pour des donnees qu'il n'a pas
+   demandees. Il ouvre sur une liste deroulante et ne lit QUE l'agent choisi ; en ajouter un second
+   ne relit pas le premier. Ce qui coutait le temps n'etait pas la lecture des arborescences (un
+   appel par depot, deja mutualise) mais la boucle par agent : commits recents, puis detail de
+   chaque commit pour etablir les contradictions - plusieurs appels en serie, dix fois de suite. */
+function listeAgentsDispo(){
+  const l = [];
+  for (const dep of DEPOTS){
+    const noms = new Set();
+    for (const n of ARBRES[dep]){
+      const p = n.path.split("/");
+      if (p.length >= 2 && ZONES.includes(p[1]) && !EXCLUS.includes(p[0])) noms.add(p[0]);
+    }
+    for (const a of [...noms].sort()) l.push({depot: dep, agent: a});
+  }
+  return l;
+}
+/* La liste ne propose que les agents PAS ENCORE lus : on ne se relit pas soi-meme par megarde. */
+function remplirChoixAgent(){
+  const s = $("fag");
+  if (!s) return;
+  const lus = new Set(AGENTS.map(a => a.depot + "/" + a.agent));
+  const reste = listeAgentsDispo().filter(x => !lus.has(x.depot + "/" + x.agent));
+  s.innerHTML = '<option value="">' + (AGENTS.length ? "Ajouter un agent" : "Choisis un agent") + "</option>"
+    + reste.map(x => '<option value="' + esc(x.depot + "|" + x.agent) + '">' + esc(x.agent)
+        + " (" + esc(x.depot.split("/")[1]) + ")</option>").join("");
+  s.disabled = !reste.length;
+}
+/* Ouvrir l'onglet ne lit RIEN d'autre que les deux fichiers legers des veilles et des avatars. */
 async function collecteAgents(){
   if (!ETAT.tunnel.fait) await collecteTunnel();
   await lireVeillesEtAvatars();
   AGENTS = [];
+  remplirChoixAgent();
+  ETAT.agents.fait = true; ETAT.agents.quand = new Date(); ETAT.agents.shas = await shasDepots();
+}
+async function collecteUnAgent(depot, agent){
+  if (AGENTS.some(a => a.depot === depot && a.agent === agent)) return;
   const arbres = ARBRES;
-  const listeAgents = [];
-  for (const dep of DEPOTS){
-    const noms = new Set();
-    for (const n of arbres[dep]){
-      const p = n.path.split("/");
-      if (p.length >= 2 && ZONES.includes(p[1]) && !EXCLUS.includes(p[0])) noms.add(p[0]);
-    }
-    for (const a of [...noms].sort()) listeAgents.push({depot: dep, agent: a});
-  }
-  let faitA = 0;
-  for (const {depot, agent} of listeAgents){
-    progres("Agent " + agent + " (" + (++faitA) + " sur " + listeAgents.length + ")...");
+  {
+    progres("Lecture de l'agent " + agent + "...");
     const vol = {};
     for (const z of ZONES) vol[z] = {n: 0, o: 0};
     for (const n of arbres[depot]){
@@ -901,8 +926,7 @@ async function collecteAgents(){
                  evolution: quoi ? quoi[0].replace(/^- /, "") : "",
                  maj: v ? derniereDate(v) : null, vol, activite: act, conf, actifs30, actifsSature, stock});
   }
-
-  ETAT.agents.fait = true; ETAT.agents.quand = new Date(); ETAT.agents.shas = await shasDepots();
+  remplirChoixAgent();
 }
 
 /* La veille : dispositif, passages, rendement des prises. */
@@ -980,7 +1004,12 @@ async function recharger(nom){
   try {
     if (nom === "tunnel"){ await collecteTunnel(); rendreCompteurs(); rendreTunnel();
       for (const k in memo){ if ($(k)) $(k).value = memo[k]; } filtrer(); }
-    else if (nom === "agents"){ ETAT.agents.fait = false; await collecteAgents(); rendreAgents(); }
+    else if (nom === "agents"){
+      const choisis = AGENTS.map(a => ({depot: a.depot, agent: a.agent}));
+      ETAT.agents.fait = false; await collecteAgents();
+      for (const c of choisis) await collecteUnAgent(c.depot, c.agent);
+      rendreAgents();
+    }
     else if (nom === "savoirs"){ ETAT.savoirs.fait = false; await collecteSavoirs(); rendreSavoirs(); }
     else if (nom === "sav"){
       ETAT.sav.fait = false; SAV_TXT = {};
@@ -1245,10 +1274,16 @@ function blocContradictions(a){
 }
 
 function rendreAgents(){
-  if (!AGENTS.length){ $("agents").innerHTML = '<div class="cadre"><p class="vide">Aucun agent trouve.</p></div>'; return; }
+  if (!AGENTS.length){
+    const n = (typeof ARBRES === "object" && ARBRES) ? listeAgentsDispo().length : 0;
+    $("agents").innerHTML = '<div class="cadre"><p class="vide">'
+      + (n ? "Choisis un agent dans la liste ci-dessus : lui seul sera lu." : "Aucun agent trouve.")
+      + "</p></div>";
+    return;
+  }
   const nonConformes = AGENTS.filter(a => !a.conf.memoire).length;
   const sansVeille = AGENTS.filter(a => !veilleDe(a)).length;
-  let h = '<div class="synthese">' + mesure(AGENTS.length, "agents")
+  let h = '<div class="synthese">' + mesure(AGENTS.length, AGENTS.length > 1 ? "agents lus" : "agent lu")
     + mesure(nonConformes, "sans protocole mémoire", nonConformes > 0)
     + mesure(sansVeille, "sans veille", sansVeille > 0)
     + mesure(AGENTS.filter(a => a.contras.length).length, "à synchroniser",
@@ -1257,7 +1292,7 @@ function rendreAgents(){
     + '<b>Stock de savoirs cumulatifs</b> - ce que notre système ajoute au fonctionnement nominal, présent à chaque échange : '
     + 'la copie des dossiers cochés (instructions, savoir, socle commun). Ce n\'est pas la mémoire vive, qui est toute la fenêtre de contexte. '
     + 'Rien au dépôt ne dit ce qui est coché : tant qu\'un agent n\'a pas déclaré sa copie dans son ETAT_COPIE.json, son chiffre est un PLAFOND, pas une occupation. '
-    + 'Total du parc : <b>' + poids(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + '</b> &middot; ~'
+    + 'Total des agents lus : <b>' + poids(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + '</b> &middot; ~'
     + fmtTokens(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + ' tokens estimés. '
     + 'Estimation au ratio de 3,3 caractères par token ; part calculée sur une fenêtre d\'un million. '
     + 'Les documents versés à la main dans le champ Contexte ne sont pas mesurables depuis le dépôt : ils s\'ajoutent à ces chiffres. '
@@ -2912,6 +2947,16 @@ $("oublier").addEventListener("click", () => {
 });
 $$("#onglets .onglet").forEach(b => b.addEventListener("click", () => vue(b.dataset.vue)));
 if ($("fsav")) $("fsav").addEventListener("change", filtrerSavoirs);
+if ($("fag")) $("fag").addEventListener("change", async ev => {
+  const v = ev.target.value;
+  ev.target.value = "";
+  if (!v) return;
+  const [depot, agent] = v.split("|");
+  $("voile").hidden = false;
+  try { await collecteUnAgent(depot, agent); rendreAgents(); }
+  catch(e){ etat("Lecture impossible : " + e.message, 1); }
+  finally { $("voile").hidden = true; }
+});
 ["q", "ft", "fa", "fz", "fc", "fe"].forEach(i => $(i).addEventListener("input", filtrer));
 $("vider").addEventListener("click", () => { $$(".sel").forEach(c => c.checked = false); majsel(); });
 $$(".barre [data-act]").forEach(b => b.addEventListener("click", () => envoyer(b.dataset.act, eligibles(choisis(), b.dataset.act))));
