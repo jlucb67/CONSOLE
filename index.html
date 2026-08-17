@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 89 -->
+<!-- VERSION_CONSOLE: 90 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -1287,16 +1287,7 @@ function rendreAgents(){
     + mesure(nonConformes, "sans protocole mémoire", nonConformes > 0)
     + mesure(sansVeille, "sans veille", sansVeille > 0)
     + mesure(AGENTS.filter(a => a.contras.length).length, "à synchroniser",
-             AGENTS.some(a => a.contras.length)) + "</div>"
-    + '<div class="cadre" style="margin-bottom:12px"><p class="legende" style="margin:0">'
-    + '<b>Stock de savoirs cumulatifs</b> - ce que notre système ajoute au fonctionnement nominal, présent à chaque échange : '
-    + 'la copie des dossiers cochés (instructions, savoir, socle commun). Ce n\'est pas la mémoire vive, qui est toute la fenêtre de contexte. '
-    + 'Rien au dépôt ne dit ce qui est coché : tant qu\'un agent n\'a pas déclaré sa copie dans son ETAT_COPIE.json, son chiffre est un PLAFOND, pas une occupation. '
-    + 'Total des agents lus : <b>' + poids(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + '</b> &middot; ~'
-    + fmtTokens(AGENTS.reduce((s, a) => s + a.stock.total, 0)) + ' tokens estimés. '
-    + 'Estimation au ratio de 3,3 caractères par token ; part calculée sur une fenêtre d\'un million. '
-    + 'Les documents versés à la main dans le champ Contexte ne sont pas mesurables depuis le dépôt : ils s\'ajoutent à ces chiffres. '
-    + 'Répartition par registre <b>provisoire</b> tant que les fichiers ne portent pas leur registre déclaré.</p></div>';
+             AGENTS.some(a => a.contras.length))+ "</div>";
   const maxTotal = Math.max(...AGENTS.map(a => a.stock.total));
 
   h += AGENTS.map(a => {
