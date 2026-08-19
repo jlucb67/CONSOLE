@@ -100,7 +100,7 @@ const nonLuTableau = rangs.filter(r => (r[entete.indexOf("resume")] || "").trim(
   console.log("Aucun bouton mort sur les documents en sous-dossier");
   const unSous = siens.find(r => r.sousDossier);
   const a = actions(unSous);
-  t("ni case a cocher ni bouton", !/input|<button/.test(a));
+  t("les documents en sous-dossier portent maintenant leurs boutons", /<button|input/.test(a));
   const unPlat = siens.find(r => !r.sousDossier && r.z["informations-publiques"]);
   t("les documents a la racine gardent leurs boutons", unPlat ? /<button/.test(actions(unPlat)) : true);
 

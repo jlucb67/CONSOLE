@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 92 -->
+<!-- VERSION_CONSOLE: 93 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -1116,9 +1116,9 @@ function zonesOccupees(r){
   return o;
 }
 function actions(r){
-  if (r.sousDossier)
-    return '<span class="zoneac"><span></span><span class="lesboutons">'
-      + '<span class="mut" title="Ce document vit dans un sous-dossier de zone : le robot de promotion ne deplace que les fichiers poses a la racine d\'une zone.">-</span></span></span>';
+  /* v93 : plus de distinction entre racine de zone et sous-dossier. Le robot de promotion
+     cherche desormais le fichier a n'importe quelle profondeur DANS la zone et conserve son
+     sous-dossier en le deplacant : les boutons valent partout. */
   const zo = zonesOccupees(r);
   const enZ1 = r.z["informations-publiques"], enZ2 = r.z["connaissances-stockees"], enZ3 = r.z["savoir"];
   const fic = (enZ1 || enZ2 || enZ3 || [r.doc])[0];
