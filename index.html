@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-<!-- VERSION_CONSOLE: 91 -->
+<!-- VERSION_CONSOLE: 92 -->
 <title>Console d'administration - système d'agents spécialisés</title>
 <style>
 :root{--enc:#16233a;--pap:#eef1f5;--carte:#ffffff;--mut:#6b7686;--fil:#d5dbe4;--sceau:#8a2433;--sceau2:#f4e6e9;
@@ -616,15 +616,33 @@ async function arbre(depot){
   const d = await api("/repos/" + depot + "/git/trees/main?recursive=1&t=" + Date.now());
   return d.tree || [];
 }
-function metaParse(txt){
-  const m = {};
-  if (!txt) return m;
-  const lignes = txt.split("\n").filter(l => l.trim() && !l.startsWith("#"));
+/* metaListe rend les lignes du tableau DANS L'ORDRE, doublons de nom compris
+   (deux documents differents peuvent porter le meme nom de fichier dans deux
+   sous-dossiers : plans/outre-mer.md et livrets/outre-mer.md). metaParse, lui,
+   indexe par nom de fichier et ne peut donc en garder qu'une : les deux usages
+   coexistent, chacun a sa place. */
+function metaListe(txt){
+  const out = [];
+  if (!txt) return out;
+  /* Une ligne de commentaire commence par un croisillon ET ne porte aucune tabulation.
+     Deux documents s'appellent « #AlloMelenchon du ... » : leur titre commence par un
+     croisillon et ils etaient jetes comme des commentaires. */
+  const lignes = txt.split("\n").filter(l => l.trim() && !(l.startsWith("#") && !l.includes("\t")));
   for (const l of lignes){
     const c = l.split("\t");
     if (c.length < 2) continue;
     if (/^document\b/i.test(c[0])) continue;
-    m[c[1].trim()] = {
+    out.push([c[1].trim(), metaUneLigne(c)]);
+  }
+  return out;
+}
+function metaParse(txt){
+  const m = {};
+  for (const [fic, o] of metaListe(txt)) m[fic] = o;
+  return m;
+}
+function metaUneLigne(c){
+    return {
       doc: (c[0]||"").trim(), tags: (c[2]||"").trim().split(/\s+/).filter(Boolean),
       statut: (c[3]||"").trim(), origine: (c[4]||"").trim(),
       resume: (c[5]||"").trim(), cat: (c[6]||"").trim().toLowerCase(),
@@ -632,8 +650,6 @@ function metaParse(txt){
       auteur: (c[8]||"").trim(), materiau: (c[9]||"").trim(), lecture: normStable((c[10]||"").trim()),
       majeurs: (c[12]||"").trim().split(/\s+/).filter(Boolean)
     };
-  }
-  return m;
 }
 function dateDe(nom){
   const m = nom.match(/(\d{4})-(\d{2})-(\d{2})/);
@@ -753,7 +769,8 @@ async function collecteTunnel(){
   let fait = 0;
   for (const {depot, agent} of listeAgents){
     progres("Documents de " + agent + " (" + (++fait) + " sur " + listeAgents.length + ")...");
-    const meta = metaParse(await texteOuNull(depot, agent + "/META_DOCUMENTS.tsv"));
+    const txtMeta = await texteOuNull(depot, agent + "/META_DOCUMENTS.tsv");
+    const meta = metaParse(txtMeta);
     /* fichiers reellement presents en Zone 3 : sert a reconnaitre un document deja couvert
        par un savoir portant un AUTRE nom (colonne « savoir » du TSV). */
     const savoirsPresents = new Set();
@@ -763,6 +780,7 @@ async function collecteTunnel(){
       if (q.length === 3 && q[0] === agent && q[1] === "savoir") savoirsPresents.add(q[2]);
     }
     const docs = {};
+    const plats = new Set();   /* fichiers vus a la RACINE d'une zone : deja portes par la boucle */
     for (const n of arbres[depot]){
       if (n.type !== "blob") continue;
       const p = n.path.split("/");
@@ -775,12 +793,13 @@ async function collecteTunnel(){
       const d = docs[cle] || (docs[cle] = {agent, depot, doc: fic, z: {}, meta: null});
       const ex = fic.match(/\.([A-Za-z0-9]{1,6})$/);
       d.z[zone] = [fic, ex ? ex[1].toLowerCase() : "texte", n.size || 0];
+      plats.add(fic);
       if (meta[fic]) { d.meta = meta[fic]; d.doc = meta[fic].doc || fic; }
     }
     for (const cle in docs){
       const d = docs[cle], m = d.meta || {};
       LIGNES.push({
-        agent, depot, doc: d.doc, z: d.z,
+        agent, depot, doc: d.doc, z: d.z, declare: !!d.meta,
         tags: m.tags && m.tags.length ? m.tags : [],
         statut: m.statut || "-", origine: m.origine || "-",
         resume: m.resume || "non lu",
@@ -788,6 +807,45 @@ async function collecteTunnel(){
                    .filter(f => savoirsPresents.has(f)),
         cat: (m.cat === "actualite" || /veille/i.test(m.origine || "")) ? "actu" : "fond",
         date: dateDe(Object.values(d.z)[0][0]) || ""
+      });
+    }
+
+    /* DEUXIEME PASSE - les lignes du tableau dont le fichier vit dans un SOUS-DOSSIER de zone.
+       La boucle ci-dessus ne lit que la racine des trois zones : ces documents n'entraient donc
+       ni dans le tunnel ni dans les compteurs (« resumes dus », « en attente de toi »), alors
+       qu'ils sont declares au tableau. Une ligne du tableau = une ligne ici.
+       Quand deux sous-dossiers portent le meme nom de fichier, on attribue les emplacements
+       dans l'ordre d'apparition (rang), sans quoi les deux lignes montreraient le meme chemin.
+       Ces documents ne portent AUCUN bouton d'action : le robot de promotion ne deplace que des
+       fichiers poses a la racine d'une zone - pas de bouton mort. */
+    const parNom = new Map();
+    for (const n of arbres[depot]){
+      if (n.type !== "blob") continue;
+      const p = n.path.split("/");
+      if (p.length <= 3 || p[0] !== agent || !ZONES.includes(p[1])) continue;
+      const f = p[p.length - 1];
+      if (!parNom.has(f)) parNom.set(f, []);
+      parNom.get(f).push([p[1], n.path, n.size || 0]);
+    }
+    const rangs = new Map();
+    for (const [fic, m] of metaListe(txtMeta)){
+      if (!fic) continue;
+      const rg = rangs.get(fic) || 0; rangs.set(fic, rg + 1);
+      if (rg === 0 && plats.has(fic)) continue;   /* cette ligne-la est deja portee par la racine */
+      const lieux = parNom.get(fic);
+      if (!lieux) continue;
+      const [zone, chemin, taille] = lieux[Math.min(plats.has(fic) ? rg - 1 : rg, lieux.length - 1)];
+      const ex = fic.match(/\.([A-Za-z0-9]{1,6})$/);
+      LIGNES.push({
+        agent, depot, doc: m.doc || fic, sousDossier: chemin, declare: true,
+        z: {[zone]: [fic, ex ? ex[1].toLowerCase() : "texte", taille]},
+        tags: m.tags && m.tags.length ? m.tags : [],
+        statut: m.statut || "-", origine: m.origine || "-",
+        resume: m.resume || "non lu",
+        couvert: (m.savoir || "").split(/[;,]/).map(x => x.trim()).filter(Boolean)
+                   .filter(f => savoirsPresents.has(f)),
+        cat: (m.cat === "actualite" || /veille/i.test(m.origine || "")) ? "actu" : "fond",
+        date: dateDe(fic) || ""
       });
     }
   }
@@ -1058,6 +1116,9 @@ function zonesOccupees(r){
   return o;
 }
 function actions(r){
+  if (r.sousDossier)
+    return '<span class="zoneac"><span></span><span class="lesboutons">'
+      + '<span class="mut" title="Ce document vit dans un sous-dossier de zone : le robot de promotion ne deplace que les fichiers poses a la racine d\'une zone.">-</span></span></span>';
   const zo = zonesOccupees(r);
   const enZ1 = r.z["informations-publiques"], enZ2 = r.z["connaissances-stockees"], enZ3 = r.z["savoir"];
   const fic = (enZ1 || enZ2 || enZ3 || [r.doc])[0];
@@ -1297,7 +1358,9 @@ function rendreAgents(){
     const age = a.maj ? jours(a.maj) : null;
     const v = veilleDe(a);
     const siens = LIGNES.filter(r => r.agent === a.agent);
-    const dette = siens.filter(r => r.resume === "non lu").length;
+    /* Un resume du est une ligne DU TABLEAU sans resume. Un fichier present mais jamais
+       declare au tableau n'est pas un resume du : c'est un document non declare. */
+    const dette = siens.filter(r => r.declare && r.resume === "non lu").length;
     const attente = siens.filter(r => r.z["informations-publiques"]).length;
     return '<article class="fiche-agent">'
       + '<header><h3>' + esc(a.agent) + '</h3><span class="eq">' + esc(eq) + "</span>"
@@ -1388,7 +1451,7 @@ function rendreCompteurs(){
     lg.querySelectorAll("[data-fz]").forEach(y => y.classList.toggle("actif", y.dataset.fz === $("fz").value));
   }));
   const z1 = LIGNES.filter(r => r.z["informations-publiques"]).length;
-  const nonLus = LIGNES.filter(r => r.resume === "non lu").length;
+  const nonLus = LIGNES.filter(r => r.declare && r.resume === "non lu").length;
   const retard = VEILLES.filter(v => !v.derniere || jours(v.derniere) > 8).length;
   const c = [["Documents", LIGNES.length], ["En Zone 1 (à décider)", z1], ["Résumés manquants", nonLus],
              ["Agents", AGENTS.length], ["Veilles en retard", retard]];
